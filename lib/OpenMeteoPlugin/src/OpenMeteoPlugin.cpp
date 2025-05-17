@@ -68,6 +68,9 @@ const char* OpenMeteoPlugin::OPEN_METEO_BASE_URI = "http://api.open-meteo.com";
 /* Initialize plugin topic. */
 const char* OpenMeteoPlugin::TOPIC_CONFIG        = "omweather";
 
+/* Initialize image path for the weather condition icons. */
+const char* OpenMeteoPlugin::IMAGE_PATH          = "/plugins/OpenMeteoPlugin/";
+
 /******************************************************************************
  * Public Methods
  *****************************************************************************/
@@ -192,6 +195,7 @@ void OpenMeteoPlugin::start(uint16_t width, uint16_t height)
     MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.init(width, height);
+    m_view.setImagePath(IMAGE_PATH);
     setViewUnits();
 
     PluginWithConfig::start(width, height);
