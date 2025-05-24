@@ -3,7 +3,7 @@
         "component": "sensor",
         "discovery": {
             "name": "Available Heap",
-            "unit_of_meas": "bytes",
+            "unit_of_meas": "B",
             "ic": "mdi:memory",
             "dev_cla": "data_size",
             "val_tpl": "{{ value_json.value }}"
