@@ -76,6 +76,27 @@ void RestService::process()
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
+            if (m_Callbacks.find(cmd.restId) != m_Callbacks.end())
+            {
+                m_client.regOnResponse(m_Callbacks[cmd.restId].first);
+                m_client.regOnError(m_Callbacks[cmd.restId].second);
+            }
+            else
+            {
+                Msg msg;
+
+                msg.restId = cmd.restId;
+                msg.isMsg  = false;
+                msg.rsp    = nullptr;
+
+                if (true == this->m_taskProxy.send(msg))
+                {
+                    LOG_ERROR("No Callbacks set");
+                }
+
+                m_mutex.give();
+            }
+
             if (true == m_client.begin(cmd.url))
             {
                 switch (cmd.id)
@@ -120,6 +141,21 @@ void RestService::process()
                     break;
                 };
             }
+            else
+            {
+                Msg msg;
+
+                msg.restId = cmd.restId;
+                msg.isMsg  = false;
+                msg.rsp    = nullptr;
+
+                if (true == this->m_taskProxy.send(msg))
+                {
+                    LOG_ERROR("URL could not be parsed");
+                }
+
+                m_mutex.give();
+            }
         }
         else
         {
@@ -133,17 +169,17 @@ int RestService::getRestId()
     return m_restIdCounter++;
 }
 
-void RestService::setFilter(int32_t* restId, DynamicJsonDocument* filter)
+void RestService::setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb)
 {
-    if (m_filters.find(restId) == m_filters.end())
+    if (m_Callbacks.find(restId) == m_Callbacks.end())
     {
-        m_filters[restId] = filter;
+        m_Callbacks[restId] = std::make_pair(rsp_cb, err_cb);
     }
 }
 
-void RestService::deleteFilter(int32_t* restId)
+void RestService::deleteCallbacks(int32_t* restId)
 {
-    m_filters.erase(restId);
+    m_Callbacks.erase(restId);
 }
 
 bool RestService::get(int32_t* restId, const String& url)
@@ -184,103 +220,6 @@ bool RestService::post(int32_t* restId, const String& url, const String& payload
     cmd.u.data.size = payload.length();
 
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
-}
-
-void RestService::handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp)
-{
-    const size_t         JSON_DOC_SIZE    = 4096U;
-    DynamicJsonDocument* jsonDoc          = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
-    bool                 isError          = false;
-    bool                 isSuccessfulSent = false;
-
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
-    {
-        if (nullptr != jsonDoc)
-        {
-            size_t      payloadSize = 0U;
-            const void* vPayload    = rsp.getPayload(payloadSize);
-            const char* payload     = static_cast<const char*>(vPayload);
-
-            if (m_filters.find(restId) != m_filters.end())
-            {
-                DynamicJsonDocument* const filter = m_filters[restId];
-                if (true == filter->overflowed())
-                {
-                    LOG_ERROR("Less memory for filter available.");
-                    isError = true;
-                }
-                else if ((nullptr == payload) ||
-                         (0U == payloadSize))
-                {
-                    LOG_ERROR("No payload.");
-                    isError = true;
-                }
-                else
-                {
-                    DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize, DeserializationOption::Filter(filter->as<JsonVariantConst>()));
-
-                    if (DeserializationError::Ok != error.code())
-                    {
-                        LOG_WARNING("JSON parse error: %s", error.c_str());
-                        isError = true;
-                    }
-                }
-            }
-            else if ((nullptr == payload) ||
-                     (0U == payloadSize))
-            {
-                LOG_ERROR("No payload.");
-                isError = true;
-            }
-            else
-            {
-                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize);
-
-                if (DeserializationError::Ok != error.code())
-                {
-                    LOG_WARNING("JSON parse error: %s", error.c_str());
-                    isError = true;
-                }
-            }
-        }
-        else
-        {
-            LOG_ERROR("Not enough memory available to store DynamicJsonDocument");
-            isError = true;
-        }
-    }
-    else
-    {
-        isError = true;
-    }
-
-    if (true == isError)
-    {
-        Msg msg;
-
-        msg.restId       = restId;
-        msg.isMsg        = false;
-        msg.rsp          = nullptr;
-        isSuccessfulSent = this->m_taskProxy.send(msg);
-    }
-    else
-    {
-        Msg msg;
-
-        msg.restId       = restId;
-        msg.isMsg        = true;
-        msg.rsp          = jsonDoc;
-
-        isSuccessfulSent = this->m_taskProxy.send(msg);
-    }
-
-    if (false == isSuccessfulSent)
-    {
-        LOG_ERROR("Msg could not be sent to Msg-Queue");
-        delete jsonDoc;
-        jsonDoc = nullptr;
-    }
-    m_mutex.give();
 }
 
 bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload)

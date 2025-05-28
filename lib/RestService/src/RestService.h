@@ -48,6 +48,7 @@
 #include <HttpStatus.h>
 #include <Logging.h>
 #include <vector>
+#include <utility>
 
 /******************************************************************************
  * Compiler Switches
@@ -105,19 +106,20 @@ public:
     int getRestId();
 
     /**
-     * Set a filter. Only one filter can be set per plugin.
+     * Set a Callbacks. Only one pair of callbacks per plugin can be set at a time.
      *
      * @param[in] restId Unique Id to identify plugin
-     * @param[in] filter Filter in JSON format, can be null
+     * @param[in] rsp_cb Callback which shall be called when a successful response arrives.
+     * @param[in] err_cb Callback which shall be called when an error happens.
      */
-    void setFilter(int32_t* restId, DynamicJsonDocument* filter);
+    void setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb);
 
     /**
-     * Delete filter if one exists.
+     * Delete Callbacks if any exist.
      *
      * @param[in] restId Unqiue Id to identify plugin
      */
-    void deleteFilter(int32_t* restId);
+    void deleteCallbacks(int32_t* restId);
 
     /**
      * Send GET request to host.
@@ -233,7 +235,7 @@ private:
      * key: restId of plugin
      * value: filter
      */
-    std::map<int32_t*, DynamicJsonDocument*> m_filters;
+    std::map<int32_t*, std::pair<AsyncHttpClient::OnResponse, AsyncHttpClient::OnError>> m_Callbacks;
 
     /**
      * Constructs the service instance.
@@ -241,7 +243,7 @@ private:
     RestService() :
         IService(),
         m_restIdCounter(0),
-        m_filters(),
+        m_Callbacks(),
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
@@ -250,31 +252,6 @@ private:
 
         (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
         (void)m_mutex.create();
-
-        /* Note: All registered callbacks are running in a different task context!
-         *       Therefore it is not allowed to access a member here directly.
-         *       The processing must be deferred via task proxy.
-         */
-        m_client.regOnResponse(
-            [this](void* restId, const HttpResponse& rsp) {
-                handleAsyncWebResponse(static_cast<int32_t*>(restId), rsp);
-            });
-
-        m_client.regOnError(
-            [this](void* restId) {
-                Msg msg;
-
-                msg.restId = static_cast<int32_t*>(restId);
-                msg.isMsg  = false;
-                msg.rsp    = nullptr;
-
-                if (false == this->m_taskProxy.send(msg))
-                {
-                    LOG_ERROR("Msg could not be sent to Msg-Queue");
-                }
-
-                this->m_mutex.give();
-            });
     }
 
     /**
@@ -288,15 +265,6 @@ private:
     /* An instance shall not be copied. */
     RestService(const RestService& service);
     RestService& operator=(const RestService& service);
-
-    /**
-     * Handle asynchronous web response from the server.
-     * This will be called in LwIP context! Don't modify any member here directly!
-     *
-     * @param[in] rsp     Web response as JSON document
-     * @param[in] restId  Unique Id to identify plugin
-     */
-    void handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp);
 };
 
 /******************************************************************************
