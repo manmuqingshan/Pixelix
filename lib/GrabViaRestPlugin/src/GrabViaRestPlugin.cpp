@@ -264,8 +264,8 @@ void GrabViaRestPlugin::stop()
 void GrabViaRestPlugin::process(bool isConnected)
 {
 
-    MutexGuard<MutexRecursive> guard(m_mutex);
     Msg                        msg;
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
 
     PluginWithConfig::process(isConnected);
@@ -273,78 +273,78 @@ void GrabViaRestPlugin::process(bool isConnected)
     /* Only if a network connection is established the required information
      * shall be periodically requested via REST API.
      */
-    if(m_isAllowedToSend){
+    if (m_isAllowedToSend)
+    {
         if (false == m_requestTimer.isTimerRunning())
-    {
-        if (true == isConnected)
         {
-            if (false == startHttpRequest())
+            if (true == isConnected)
             {
-                /* If a request fails, a '?' will be shown. */
-                m_view.setFormatText("{hc}?");
+                if (false == startHttpRequest())
+                {
+                    /* If a request fails, a '?' will be shown. */
+                    m_view.setFormatText("{hc}?");
 
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            else
-            {
-                m_requestTimer.start(UPDATE_PERIOD);
-                m_isAllowedToSend = false;
-            }
-        }
-    }
-    else
-    {
-        /* If the connection is lost, stop periodically requesting information
-         * via REST API.
-         */
-        if (false == isConnected)
-        {
-            m_requestTimer.stop();
-        }
-        /* Network connection is available and next request may be necessary for
-         * information update.
-         */
-        else if (true == m_requestTimer.isTimeout())
-        {
-            if (false == startHttpRequest())
-            {
-                /* If a request fails, a '?' will be shown. */
-                m_view.setFormatText("{hc}?");
-
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            else
-            {
-                m_requestTimer.start(UPDATE_PERIOD);
-                m_isAllowedToSend = false;
-            }
-        }
-    }
-
-    if (true == m_restService.getResponse(m_restId, msg.isValidResponse, msg.rsp))
-    {
-        if (msg.isValidResponse)
-        {
-            if (nullptr != msg.rsp)
-            {
-                handleWebResponse(*msg.rsp);
-                delete msg.rsp;
-                msg.rsp = nullptr;
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
             }
         }
         else
         {
-            LOG_WARNING("Connection error.");
+            /* If the connection is lost, stop periodically requesting information
+             * via REST API.
+             */
+            if (false == isConnected)
+            {
+                m_requestTimer.stop();
+            }
+            /* Network connection is available and next request may be necessary for
+             * information update.
+             */
+            else if (true == m_requestTimer.isTimeout())
+            {
+                if (false == startHttpRequest())
+                {
+                    /* If a request fails, a '?' will be shown. */
+                    m_view.setFormatText("{hc}?");
 
-            /* If a request fails, show standard icon and a '?' */
-            m_view.setFormatText("{hc}?");
-
-            m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
+            }
         }
-        m_isAllowedToSend = true;
+
+        if (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
+        {
+            if (msg.isValidResponse)
+            {
+                if (nullptr != msg.rsp)
+                {
+                    handleWebResponse(*msg.rsp);
+                    delete msg.rsp;
+                    msg.rsp = nullptr;
+                }
+            }
+            else
+            {
+                LOG_WARNING("Connection error.");
+
+                /* If a request fails, show standard icon and a '?' */
+                m_view.setFormatText("{hc}?");
+
+                m_requestTimer.start(UPDATE_PERIOD_SHORT);
+            }
+            m_isAllowedToSend = true;
+        }
     }
-    }
-    
 }
 
 void GrabViaRestPlugin::update(YAGfx& gfx)
@@ -480,7 +480,7 @@ bool GrabViaRestPlugin::startHttpRequest()
     {
         if (true == m_method.equalsIgnoreCase("GET"))
         {
-            if (false == m_restService.get(m_restId, m_url))
+            if (false == RestService::getInstance().get(&m_restId, m_url))
             {
                 LOG_WARNING("GET %s failed.", m_url.c_str());
             }
@@ -491,7 +491,7 @@ bool GrabViaRestPlugin::startHttpRequest()
         }
         else if (true == m_method.equalsIgnoreCase("POST"))
         {
-            if (false == m_restService.post(m_restId, m_url))
+            if (false == RestService::getInstance().post(&m_restId, m_url))
             {
                 LOG_WARNING("POST %s failed.", m_url.c_str());
             }
@@ -675,7 +675,7 @@ void GrabViaRestPlugin::clearQueue()
 {
     Msg msg;
 
-    while (true == m_restService.getResponse(m_restId, msg.isValidResponse, msg.rsp))
+    while (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
     {
         if (true == msg.isValidResponse)
         {

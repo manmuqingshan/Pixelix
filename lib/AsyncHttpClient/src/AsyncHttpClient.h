@@ -72,9 +72,9 @@ public:
     /**
      * Prototype of HTTP response callback for a complete received response.
      *
-     * @param[in] restId Unique Id to identify plugin, value only has meaning when called by RestService
+     * @param[in] userData Used to pass user-data which can be used in callbacks.
      */
-    typedef std::function<void(const int userData, const HttpResponse& rsp)> OnResponse;
+    typedef std::function<void(void* userData, const HttpResponse& rsp)> OnResponse;
 
     /**
      * Prototype of HTTP response callback for a closed connection.
@@ -84,9 +84,9 @@ public:
     /**
      * Prototype of HTTP response callback in case a error happened.
      *
-     * @param[in] restId Unique Id to identify plugin, value only has meaning when called by RestService
+     * @param[in] userData Used to pass user-data which can be used in callbacks.
      */
-    typedef std::function<void(const int userData)> OnError;
+    typedef std::function<void(void* userData)> OnError;
 
     /**
      * Constructs a http client.
@@ -188,32 +188,31 @@ public:
     /**
      * Send GET request to host.
      *
-     * @param[in] userData Used to identify plugin in RestService
-     *
+     * @param[in] userData Used to pass user-data which can be used in callbacks. 
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool GET(int userData = -1);
+    bool GET(void* userData = nullptr);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] userData  Used to identify plugin in RestService
+     * @param[in] userData  Used to pass user-data which can be used in callbacks. 
      * @param[in] payload   Payload, which must be kept alive until response is available!
      * @param[in] size      Payload size in byte
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(int userData = -1, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool POST(void* userData = nullptr, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] userData  Used to identify plugin in RestService, set to -1 if unused
+     * @param[in] userData  Used to pass user-data which can be used in callbacks. 
      * @param[in] payload   Payload, which must be kept alive until response is available!
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(int userData, const String& payload);
+    bool POST(void* userData, const String& payload);
 
 private:
 
@@ -254,7 +253,7 @@ private:
     struct Cmd
     {
         CmdId id;       /**< The command id identifies the kind of request. */
-        int   userData; /**< Used to identify plugin in RestService */
+        void* userData; /**< Points to a user's data. */
 
         /**
          * The union contains the event id specific parameters.
@@ -383,16 +382,16 @@ private:
     const uint8_t* m_payload;             /**< Request payload */
     size_t         m_payloadSize;         /**< Request payload size in byte */
 
-    ResponsePart   m_rspPart;        /**< Current parsing part of the response */
-    HttpResponse   m_rsp;            /**< Response */
-    String         m_rspLine;        /**< Single line, used for response parsing */
-    TransferCoding m_transferCoding; /**< Transfer coding */
-    size_t         m_contentLength;  /**< Content length in byte */
-    size_t         m_contentIndex;   /**< Content index */
-    size_t         m_chunkSize;      /**< Chunk size in byte */
-    size_t         m_chunkIndex;     /**< Chunk body index */
-    ChunkBodyPart  m_chunkBodyPart;  /**< Current part of chunked response */
-    int            m_userData; /**< Used to identify plugin in RestService */
+    ResponsePart   m_rspPart;            /**< Current parsing part of the response */
+    HttpResponse   m_rsp;                /**< Response */
+    String         m_rspLine;            /**< Single line, used for response parsing */
+    TransferCoding m_transferCoding;     /**< Transfer coding */
+    size_t         m_contentLength;      /**< Content length in byte */
+    size_t         m_contentIndex;       /**< Content index */
+    size_t         m_chunkSize;          /**< Chunk size in byte */
+    size_t         m_chunkIndex;         /**< Chunk body index */
+    ChunkBodyPart  m_chunkBodyPart;      /**< Current part of chunked response */
+    void*          m_pendingCmdUserData; /**< Used to identify plugin in RestService */
 
     AsyncHttpClient(const AsyncHttpClient& client);
     AsyncHttpClient& operator=(const AsyncHttpClient& client);

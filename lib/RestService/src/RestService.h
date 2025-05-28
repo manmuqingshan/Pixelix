@@ -26,7 +26,7 @@
 *******************************************************************************/
 /**
  * @brief  REST service
- * @author Niklas Kümmel
+ * @author Niklas Kümmel (niklas-kuemmel@web.de)
  *
  * @addtogroup REST_SERVICE
  *
@@ -48,6 +48,7 @@
 #include <HttpStatus.h>
 #include <Logging.h>
 #include <vector>
+
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -66,10 +67,6 @@
 class RestService : public IService
 {
 public:
-
-    /**
-     * callback prototype.
-     */
 
     /**
      * Get the REST service instance.
@@ -101,39 +98,39 @@ public:
     void process() final;
 
     /**
-     * Get restId for plugin
+     * Get restId for plugin.
      *
      * @return Unique restId
      */
-    int registerPlugin();
+    int getRestId();
 
     /**
-     * Set filter, only one per plugin
+     * Set a filter. Only one filter can be set per plugin.
      *
      * @param[in] restId Unique Id to identify plugin
      * @param[in] filter Filter in JSON format, can be null
      */
-    void setFilter(const int restId, DynamicJsonDocument* filter);
+    void setFilter(int32_t* restId, DynamicJsonDocument* filter);
 
     /**
-     * Delete filter if one exists
+     * Delete filter if one exists.
      *
      * @param[in] restId Unqiue Id to identify plugin
      */
-    void deleteFilter(const int restId);
+    void deleteFilter(int32_t* restId);
 
     /**
-     * Send GET request to host
+     * Send GET request to host.
      *
      * @param[in] restId  Unique Id to identify plugin
      * @param[in] url     URL
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool get(const int restId, const String& url);
+    bool get(int32_t* restId, const String& url);
 
     /**
-     * Send POST request to host
+     * Send POST request to host.
      *
      * @param[in] restId   Unique Id to identify plugin
      * @param[in] url      URL
@@ -142,7 +139,7 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(const int restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool post(int32_t* restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
@@ -152,10 +149,10 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(const int restId, const String& url, const String& payload);
+    bool post(int32_t* restId, const String& url, const String& payload);
 
     /**
-     * Get Response
+     * Get Response to a previously started request.
      *
      * @param[in]  restId      Unique Id to identify plugin
      * @param[out] isValidRsp  Does Response have a payload
@@ -164,7 +161,7 @@ public:
      * @return If a response is available, it will return true otherwise false
      */
 
-    bool getResponse(const int restId, bool& isValidRsp, DynamicJsonDocument* payload);
+    bool getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload);
 
 private:
 
@@ -175,7 +172,7 @@ private:
 
     struct Msg
     {
-        int                  restId; /**< Used to identify plugin in RestService */
+        int32_t*             restId; /**< Used to identify plugin in RestService */
         bool                 isMsg;  /**< true: successful Response, false: request failed*/
         DynamicJsonDocument* rsp;    /**< Response, only valid if isMsg == true */
 
@@ -189,6 +186,9 @@ private:
         }
     };
 
+    /**
+     * Command ids are used to identify what the user requests.
+     */
     enum CmdId
     {
         CMD_ID_GET = 0, /**< GET request */
@@ -200,9 +200,9 @@ private:
      */
     struct Cmd
     {
-        CmdId  id;     /**< The command id identifies the kind of request. */
-        int    restId; /**< Used to identify plugin in RestService */
-        String url;    /**< URL */
+        CmdId    id;     /**< The command id identifies the kind of request. */
+        int32_t* restId; /**< Used to identify plugin in RestService */
+        String   url;    /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -222,26 +222,26 @@ private:
         } u;
     };
 
-    int                    restIdCounter; /**< Used to generate restIds, Increases with each registered plugin */
-    AsyncHttpClient        m_client;      /**< Asynchronous HTTP client. */
-    Queue<Cmd>             m_cmdQueue;    /**< Command queue */
-    TaskProxy<Msg, 9U, 0U> m_taskProxy;   /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    Mutex                  m_mutex;       /**< Used to protect against concurrent access */
+    int32_t                m_restIdCounter; /**< Used to generate restIds, Increases with each registered plugin */
+    AsyncHttpClient        m_client;        /**< Asynchronous HTTP client. */
+    Queue<Cmd>             m_cmdQueue;      /**< Command queue */
+    TaskProxy<Msg, 9U, 0U> m_taskProxy;     /**< Task proxy used to decouple server responses, which happen in a different task context.*/
+    Mutex                  m_mutex;         /**< Used to protect against concurrent access */
 
     /**
      * Saves filters
      * key: restId of plugin
      * value: filter
      */
-    std::map<int, DynamicJsonDocument*> filters;
+    std::map<int32_t*, DynamicJsonDocument*> m_filters;
 
     /**
      * Constructs the service instance.
      */
     RestService() :
         IService(),
-        restIdCounter(0),
-        filters(),
+        m_restIdCounter(0),
+        m_filters(),
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
@@ -256,15 +256,15 @@ private:
          *       The processing must be deferred via task proxy.
          */
         m_client.regOnResponse(
-            [this](const int restId, const HttpResponse& rsp) {
-                handleAsyncWebResponse(restId, rsp);
+            [this](void* restId, const HttpResponse& rsp) {
+                handleAsyncWebResponse(static_cast<int32_t*>(restId), rsp);
             });
 
         m_client.regOnError(
-            [this](const int restId) {
+            [this](void* restId) {
                 Msg msg;
 
-                msg.restId = restId;
+                msg.restId = static_cast<int32_t*>(restId);
                 msg.isMsg  = false;
                 msg.rsp    = nullptr;
 
@@ -296,7 +296,7 @@ private:
      * @param[in] rsp     Web response as JSON document
      * @param[in] restId  Unique Id to identify plugin
      */
-    void handleAsyncWebResponse(const int restId, const HttpResponse& rsp);
+    void handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp);
 };
 
 /******************************************************************************

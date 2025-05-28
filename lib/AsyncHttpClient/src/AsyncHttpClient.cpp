@@ -106,7 +106,8 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE)
+    m_chunkBodyPart(CHUNK_SIZE),
+    m_pendingCmdUserData(nullptr)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -442,7 +443,7 @@ void AsyncHttpClient::regOnError(const OnError& onError)
     m_onErrorCallback = onError;
 }
 
-bool AsyncHttpClient::GET(int userData)
+bool AsyncHttpClient::GET(void* userData)
 {
     Cmd cmd;
 
@@ -453,7 +454,7 @@ bool AsyncHttpClient::GET(int userData)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(int userData, const uint8_t* payload, size_t size)
+bool AsyncHttpClient::POST(void* userData, const uint8_t* payload, size_t size)
 {
     Cmd cmd;
 
@@ -466,7 +467,7 @@ bool AsyncHttpClient::POST(int userData, const uint8_t* payload, size_t size)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(int userData, const String& payload)
+bool AsyncHttpClient::POST(void* userData, const String& payload)
 {
     Cmd cmd;
 
@@ -609,21 +610,19 @@ void AsyncHttpClient::processCmdQueue()
             switch (cmd.id)
             {
             case CMD_ID_GET:
-                m_userData = cmd.userData;
+                m_pendingCmdUserData = cmd.userData;
 
                 if (false == getRequest())
                 {
-                    notifyError();
                     giveGlobalMutex();
                 }
                 break;
 
             case CMD_ID_POST:
-                m_userData = cmd.userData;
+                m_pendingCmdUserData = cmd.userData;
 
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
-                    notifyError();
                     giveGlobalMutex();
                 }
                 break;
@@ -1488,7 +1487,7 @@ void AsyncHttpClient::notifyResponse()
 {
     if (nullptr != m_onRspCallback)
     {
-        m_onRspCallback(m_userData, m_rsp);
+        m_onRspCallback(m_pendingCmdUserData, m_rsp);
     }
 }
 
@@ -1504,7 +1503,7 @@ void AsyncHttpClient::notifyError()
 {
     if (nullptr != m_onErrorCallback)
     {
-        m_onErrorCallback(m_userData);
+        m_onErrorCallback(m_pendingCmdUserData);
     }
 }
 

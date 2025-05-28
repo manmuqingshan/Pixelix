@@ -185,7 +185,8 @@ void ConnectedState::exit(StateMachine& sm)
 
 void ConnectedState::initHttpClient()
 {
-    m_client.regOnResponse([](const int userData, const HttpResponse& rsp) {
+    m_client.regOnResponse([](void* userData, const HttpResponse& rsp) {
+        UTIL_NOT_USED(userData);
         uint16_t statusCode = rsp.getStatusCode();
 
         if (HttpStatus::STATUS_CODE_OK == statusCode)
@@ -194,7 +195,9 @@ void ConnectedState::initHttpClient()
         }
     });
 
-    m_client.regOnError([](const int userData) {
+    m_client.regOnError([](void* userData) {
+        UTIL_NOT_USED(userData);
+
         LOG_WARNING("Connection error happened.");
     });
 }

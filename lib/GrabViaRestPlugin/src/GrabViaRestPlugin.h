@@ -89,11 +89,10 @@ public:
         m_mutex(),
         m_isConnectionError(false),
         m_hasTopicChanged(false),
-        m_restService(RestService::getInstance()),
         m_isAllowedToSend(true)
     {
         (void)m_mutex.create();
-        m_restId = m_restService.registerPlugin();
+        m_restId = RestService::getInstance().getRestId();
     }
 
     /**
@@ -101,6 +100,7 @@ public:
      */
     ~GrabViaRestPlugin()
     {
+        m_mutex.destroy();
     }
 
     /**
@@ -295,7 +295,6 @@ private:
     String                   m_method;            /**< HTTP method. */
     String                   m_url;               /**< REST URL. */
     DynamicJsonDocument      m_filter;            /**< Filter used for the response in JSON format. */
-    RestService&             m_restService;       /**< RestService used for REST-Api request */
     FileMgrService::FileId   m_iconFileId;        /**< Icon file id. */
     String                   m_format;            /**< Format used to embed the retrieved filtered value. */
     String                   m_delimiter;         /**< Delimiter is used in case several values shall be shown, because of an JSON array. */
@@ -305,8 +304,8 @@ private:
     mutable MutexRecursive   m_mutex;             /**< Mutex to protect against concurrent access. */
     bool                     m_isConnectionError; /**< Is connection error happened? */
     bool                     m_hasTopicChanged;   /**< Has the topic content changed? */
-    int                      m_restId;
-    bool                     m_isAllowedToSend; /**< Is allowed to send REST-Api request? */
+    int32_t                  m_restId;            /**< Used to identify plugin when it interacts with RestService. */
+    bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
 
     /**
      * A message for HTTP client/server handling.

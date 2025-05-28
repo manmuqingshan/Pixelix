@@ -26,7 +26,7 @@
 *******************************************************************************/
 /**
  * @brief  REST service
- * @author Niklas Kümmel
+ * @author Niklas Kümmel (niklas-kuemmel@web.de)
  */
 
 /******************************************************************************
@@ -128,25 +128,25 @@ void RestService::process()
     }
 }
 
-int RestService::registerPlugin()
+int RestService::getRestId()
 {
-    return restIdCounter++;
+    return m_restIdCounter++;
 }
 
-void RestService::setFilter(const int restId, DynamicJsonDocument* filter)
+void RestService::setFilter(int32_t* restId, DynamicJsonDocument* filter)
 {
-    if (filters.find(restId) == filters.end())
+    if (m_filters.find(restId) == m_filters.end())
     {
-        filters[restId] = filter;
+        m_filters[restId] = filter;
     }
 }
 
-void RestService::deleteFilter(const int restId)
+void RestService::deleteFilter(int32_t* restId)
 {
-    filters.erase(restId);
+    m_filters.erase(restId);
 }
 
-bool RestService::get(const int restId, const String& url)
+bool RestService::get(int32_t* restId, const String& url)
 {
     Cmd cmd;
 
@@ -158,7 +158,7 @@ bool RestService::get(const int restId, const String& url)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool RestService::post(const int restId, const String& url, const uint8_t* payload, size_t size)
+bool RestService::post(int32_t* restId, const String& url, const uint8_t* payload, size_t size)
 {
     Cmd cmd;
 
@@ -172,7 +172,7 @@ bool RestService::post(const int restId, const String& url, const uint8_t* paylo
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool RestService::post(const int restId, const String& url, const String& payload)
+bool RestService::post(int32_t* restId, const String& url, const String& payload)
 {
     Cmd cmd;
 
@@ -186,7 +186,7 @@ bool RestService::post(const int restId, const String& url, const String& payloa
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-void RestService::handleAsyncWebResponse(const int restId, const HttpResponse& rsp)
+void RestService::handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp)
 {
     const size_t         JSON_DOC_SIZE    = 4096U;
     DynamicJsonDocument* jsonDoc          = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
@@ -201,9 +201,9 @@ void RestService::handleAsyncWebResponse(const int restId, const HttpResponse& r
             const void* vPayload    = rsp.getPayload(payloadSize);
             const char* payload     = static_cast<const char*>(vPayload);
 
-            if (filters.find(restId) != filters.end())
+            if (m_filters.find(restId) != m_filters.end())
             {
-                DynamicJsonDocument* const filter = filters[restId];
+                DynamicJsonDocument* const filter = m_filters[restId];
                 if (true == filter->overflowed())
                 {
                     LOG_ERROR("Less memory for filter available.");
@@ -253,6 +253,7 @@ void RestService::handleAsyncWebResponse(const int restId, const HttpResponse& r
     {
         isError = true;
     }
+
     if (true == isError)
     {
         Msg msg;
@@ -272,6 +273,7 @@ void RestService::handleAsyncWebResponse(const int restId, const HttpResponse& r
 
         isSuccessfulSent = this->m_taskProxy.send(msg);
     }
+
     if (false == isSuccessfulSent)
     {
         LOG_ERROR("Msg could not be sent to Msg-Queue");
@@ -281,7 +283,7 @@ void RestService::handleAsyncWebResponse(const int restId, const HttpResponse& r
     m_mutex.give();
 }
 
-bool RestService::getResponse(const int restId, bool& isValidRsp, DynamicJsonDocument* payload)
+bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload)
 {
     bool             isSuccessful = false;
     std::vector<Msg> buffer;
