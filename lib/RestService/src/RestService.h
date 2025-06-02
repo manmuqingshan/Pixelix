@@ -62,6 +62,8 @@
  * Types and Classes
  *****************************************************************************/
 
+static const int memoryLocationTest = 15;
+
 /**
  * The REST service handles outgoing REST-API calls and their responses.
  */
@@ -97,13 +99,6 @@ public:
      * Process the service.
      */
     void process() final;
-
-    /**
-     * Get restId for plugin.
-     *
-     * @return Unique restId
-     */
-    int getRestId();
 
     /**
      * Set a Callbacks. Only one pair of callbacks per plugin can be set at a time.
@@ -152,6 +147,22 @@ public:
      * @return If request is successful sent, it will return true otherwise false.
      */
     bool post(int32_t* restId, const String& url, const String& payload);
+
+    /**
+     * Send a Msg to the Taskproxy.
+     *
+     * @param[in] restId Unique Id to identify plugin
+     * @param[in] isValidRsp Does Response have a payload
+     * @param[in] payload Payload, which must be kept alive until response is available!
+     *
+     * @If a Msg is successfully sent to Taskproxy, it will return true otherwise false.
+     */
+    void sendToTaskProxy(int32_t* restId, bool isValidRsp, DynamicJsonDocument* payload);
+
+    /**
+     * Give Mutex used for serialization of api-requests.
+     */
+    void giveMutex();
 
     /**
      * Get Response to a previously started request.
@@ -226,7 +237,6 @@ private:
         } u;
     };
 
-    int32_t                m_restIdCounter; /**< Used to generate restIds, Increases with each registered plugin */
     AsyncHttpClient        m_client;        /**< Asynchronous HTTP client. */
     Queue<Cmd>             m_cmdQueue;      /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;     /**< Task proxy used to decouple server responses, which happen in a different task context.*/
@@ -244,16 +254,15 @@ private:
      */
     RestService() :
         IService(),
-        m_restIdCounter(0),
         m_Callbacks(),
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
         m_mutex()
     {
-
         (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
         (void)m_mutex.create();
+        LOG_INFO("Adresse von memoryLocationTest: %p", (void*)&memoryLocationTest);
     }
 
     /**

@@ -89,10 +89,10 @@ public:
         m_mutex(),
         m_isConnectionError(false),
         m_hasTopicChanged(false),
-        m_isAllowedToSend(true)
+        m_isAllowedToSend(true),
+        m_restId(0)
     {
         (void)m_mutex.create();
-        m_restId = RestService::getInstance().getRestId();
     }
 
     /**
@@ -100,6 +100,7 @@ public:
      */
     ~GrabViaRestPlugin()
     {
+        RestService::getInstance().deleteCallbacks(&m_restId);
         m_mutex.destroy();
     }
 
@@ -347,6 +348,15 @@ private:
      * @return If successful it will return true otherwise false.
      */
     bool startHttpRequest(void);
+
+    /**
+     * Handle asynchronous web response from the server.
+     * This will be called in LwIP context! Don't modify any member here directly!
+     *
+     * @param[in] restId    Unique Id to identify plugin in RestService.
+     * @param[in] jsonDoc   Web response as JSON document
+     */
+    void handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp);
 
     /**
      * Get value from JSON source by the filter.

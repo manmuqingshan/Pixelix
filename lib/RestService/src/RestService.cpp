@@ -164,11 +164,6 @@ void RestService::process()
     }
 }
 
-int RestService::getRestId()
-{
-    return m_restIdCounter++;
-}
-
 void RestService::setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb)
 {
     if (m_Callbacks.find(restId) == m_Callbacks.end())
@@ -220,6 +215,27 @@ bool RestService::post(int32_t* restId, const String& url, const String& payload
     cmd.u.data.size = payload.length();
 
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+}
+
+void RestService::sendToTaskProxy(int32_t* restId, bool isValidRsp, DynamicJsonDocument* payload)
+{
+    Msg msg;
+
+    msg.restId = restId;
+    msg.isMsg  = isValidRsp;
+    msg.rsp    = payload;
+
+    if (false == m_taskProxy.send(msg))
+    {
+        LOG_ERROR("Msg could not be sent to Msg-Queue");
+        delete payload;
+        payload = nullptr;
+    }
+}
+
+void RestService::giveMutex()
+{
+    m_mutex.give();
 }
 
 bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload)
