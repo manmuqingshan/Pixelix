@@ -85,12 +85,12 @@ public:
     }
 
     /**
-     * Send a item to the queue. The item will be copied!
+     * Send an item to the queue. The item will be copied!
      * Attention: The copy takes place via memcpy, consider this in case of objects.
      *
      * @param[in] item  The item, which to send.
      *
-     * @return If the item is successful sent, it will return true otherwise false.
+     * @return If the item is successfully sent, it will return true otherwise false.
      */
     bool send(const T& item)
     {
@@ -98,12 +98,12 @@ public:
     }
 
     /**
-     * Receive a item from the queue. The item will be copied, so enough space
+     * Receive an item from the queue. The item will be copied, so enough space
      * must be provided!
      *
      * @param[out] item The item, which will be overwritten from the queue.
      *
-     * @return If a item is successful received, it will return true otherwise false.
+     * @return If an item is successfully received, it will return true otherwise false.
      */
     bool receive(T& item)
     {
@@ -111,12 +111,24 @@ public:
     }
 
     /**
-     * Send a item to the front of the queue. The item will be copied!
+     * Peek an item from the queue. The item will be copied so enough space must be provided!
+     *
+     * @param[out] item The item, which will be overwritten from the queue.
+     *
+     * @return If an item is successfully peeked, it will return true otherwise false.
+     */
+    bool peek(T& item)
+    {
+        return m_queue.peek(&item, waitTimeTicks);
+    }
+
+    /**
+     * Send an item to the front of the queue. The item will be copied!
      * Attention: The copy takes place via memcpy, consider this in case of objects.
      *
      * @param[in] item  The item, which to send.
      *
-     * @return If the item is successful sent, it will return true otherwise false.
+     * @return If the item is successfully sent, it will return true otherwise false.
      */
     bool sendToFront(T& item)
     {

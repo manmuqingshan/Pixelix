@@ -188,7 +188,7 @@ public:
     /**
      * Send GET request to host.
      *
-     * @param[in] userData Used to pass user-data which can be used in callbacks. 
+     * @param[in] userData Used to pass user-data which can be used in callbacks.
      * @return If request is successful sent, it will return true otherwise false.
      */
     bool GET(void* userData = nullptr);
@@ -196,23 +196,23 @@ public:
     /**
      * Send POST request to host.
      *
-     * @param[in] userData  Used to pass user-data which can be used in callbacks. 
      * @param[in] payload   Payload, which must be kept alive until response is available!
      * @param[in] size      Payload size in byte
+     * @param[in] userData  Used to pass user-data which can be used in callbacks.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(void* userData = nullptr, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool POST(const uint8_t* payload = nullptr, size_t size = 0U, void* userData = nullptr);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] userData  Used to pass user-data which can be used in callbacks. 
      * @param[in] payload   Payload, which must be kept alive until response is available!
+     * @param[in] userData  Used to pass user-data which can be used in callbacks.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(void* userData, const String& payload);
+    bool POST(const String& payload, void* userData = nullptr);
 
 private:
 

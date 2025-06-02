@@ -120,7 +120,7 @@ void RestService::process()
                     break;
 
                 case CMD_ID_POST:
-                    if (false == m_client.POST(cmd.restId, cmd.u.data.data, cmd.u.data.size))
+                    if (false == m_client.POST(cmd.u.data.data, cmd.u.data.size, cmd.restId))
                     {
                         Msg msg;
 
@@ -224,50 +224,27 @@ bool RestService::post(int32_t* restId, const String& url, const String& payload
 
 bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload)
 {
-    bool             isSuccessful = false;
-    std::vector<Msg> buffer;
+    bool isSuccessful = false;
+    Msg  msg;
 
-    do
+    if (true == m_taskProxy.peek(msg))
     {
-        Msg msg;
-
-        if (true == m_taskProxy.receive(msg))
+        if (restId == msg.restId)
         {
-            if (restId == msg.restId)
-            {
-                isValidRsp   = msg.isMsg;
-                payload      = msg.rsp;
-                isSuccessful = true;
-                break;
-            }
-            else
-            {
-                buffer.push_back(msg);
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-    while (true);
+            isValidRsp   = msg.isMsg;
+            payload      = msg.rsp;
+            isSuccessful = true;
 
-    if (0 != buffer.size())
-    {
-        for (int i = 0; i < buffer.size(); i++)
-        {
-            Msg msg = buffer.back();
-            buffer.pop_back();
-
-            if (false == m_taskProxy.sendToFront(msg))
+            if (false == m_taskProxy.receive(msg))
             {
-                LOG_ERROR("Msg could not be sent to Msg-Queue");
+                LOG_ERROR("Two Plugins with the same restId exist!");
             }
         }
     }
 
     return isSuccessful;
 }
+
 /******************************************************************************
  * Protected Methods
  *****************************************************************************/

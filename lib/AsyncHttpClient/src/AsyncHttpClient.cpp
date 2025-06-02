@@ -454,7 +454,7 @@ bool AsyncHttpClient::GET(void* userData)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(void* userData, const uint8_t* payload, size_t size)
+bool AsyncHttpClient::POST(const uint8_t* payload, size_t size, void* userData)
 {
     Cmd cmd;
 
@@ -467,7 +467,7 @@ bool AsyncHttpClient::POST(void* userData, const uint8_t* payload, size_t size)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(void* userData, const String& payload)
+bool AsyncHttpClient::POST(const String& payload, void* userData)
 {
     Cmd cmd;
 

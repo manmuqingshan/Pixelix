@@ -162,7 +162,6 @@ public:
      *
      * @return If a response is available, it will return true otherwise false
      */
-
     bool getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload);
 
 private:
@@ -172,6 +171,9 @@ private:
      */
     static const size_t CMD_QUEUE_SIZE = 9U;
 
+    /**
+     * A message for HTTP client/server handling.
+     */
     struct Msg
     {
         int32_t*             restId; /**< Used to identify plugin in RestService */

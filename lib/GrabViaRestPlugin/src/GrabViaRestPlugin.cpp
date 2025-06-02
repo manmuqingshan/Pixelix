@@ -263,10 +263,8 @@ void GrabViaRestPlugin::stop()
 
 void GrabViaRestPlugin::process(bool isConnected)
 {
-
     Msg                        msg;
     MutexGuard<MutexRecursive> guard(m_mutex);
-
 
     PluginWithConfig::process(isConnected);
 
