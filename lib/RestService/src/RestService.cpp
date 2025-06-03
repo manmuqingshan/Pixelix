@@ -164,7 +164,7 @@ void RestService::process()
     }
 }
 
-void RestService::setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb)
+void RestService::setCallbacks(void* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb)
 {
     if (m_Callbacks.find(restId) == m_Callbacks.end())
     {
@@ -172,12 +172,12 @@ void RestService::setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_
     }
 }
 
-void RestService::deleteCallbacks(int32_t* restId)
+void RestService::deleteCallbacks(void* restId)
 {
     m_Callbacks.erase(restId);
 }
 
-bool RestService::get(int32_t* restId, const String& url)
+bool RestService::get(void* restId, const String& url)
 {
     Cmd cmd;
 
@@ -189,7 +189,7 @@ bool RestService::get(int32_t* restId, const String& url)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool RestService::post(int32_t* restId, const String& url, const uint8_t* payload, size_t size)
+bool RestService::post(void* restId, const String& url, const uint8_t* payload, size_t size)
 {
     Cmd cmd;
 
@@ -203,7 +203,7 @@ bool RestService::post(int32_t* restId, const String& url, const uint8_t* payloa
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool RestService::post(int32_t* restId, const String& url, const String& payload)
+bool RestService::post(void* restId, const String& url, const String& payload)
 {
     Cmd cmd;
 
@@ -217,7 +217,7 @@ bool RestService::post(int32_t* restId, const String& url, const String& payload
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-void RestService::sendToTaskProxy(int32_t* restId, bool isValidRsp, DynamicJsonDocument* payload)
+void RestService::sendToTaskProxy(void* restId, bool isValidRsp, DynamicJsonDocument* payload)
 {
     Msg msg;
 
@@ -238,7 +238,7 @@ void RestService::giveMutex()
     m_mutex.give();
 }
 
-bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload)
+bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument* payload)
 {
     bool isSuccessful = false;
     Msg  msg;
@@ -253,7 +253,7 @@ bool RestService::getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocu
 
             if (false == m_taskProxy.receive(msg))
             {
-                LOG_ERROR("Two Plugins with the same restId exist!");
+                LOG_ERROR("Two clients with the same restId exist!");
             }
         }
     }

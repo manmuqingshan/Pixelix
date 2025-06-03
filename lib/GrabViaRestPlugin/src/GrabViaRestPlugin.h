@@ -305,7 +305,7 @@ private:
     mutable MutexRecursive   m_mutex;             /**< Mutex to protect against concurrent access. */
     bool                     m_isConnectionError; /**< Is connection error happened? */
     bool                     m_hasTopicChanged;   /**< Has the topic content changed? */
-    int32_t                  m_restId;            /**< Used to identify plugin when it interacts with RestService. */
+    char                     m_restId;            /**< Used to identify plugin when it interacts with RestService. */
     bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
 
     /**
@@ -353,10 +353,10 @@ private:
      * Handle asynchronous web response from the server.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
-     * @param[in] restId    Unique Id to identify plugin in RestService.
      * @param[in] jsonDoc   Web response as JSON document
+     * @param[in] restId    Unique Id to identify plugin in RestService.
      */
-    void handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp);
+    void handleAsyncWebResponse(const HttpResponse& rsp, void* restId);
 
     /**
      * Get value from JSON source by the filter.

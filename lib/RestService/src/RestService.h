@@ -107,14 +107,14 @@ public:
      * @param[in] rsp_cb Callback which shall be called when a successful response arrives.
      * @param[in] err_cb Callback which shall be called when an error happens.
      */
-    void setCallbacks(int32_t* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb);
+    void setCallbacks(void* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb);
 
     /**
      * Delete Callbacks if any exist.
      *
      * @param[in] restId Unqiue Id to identify plugin
      */
-    void deleteCallbacks(int32_t* restId);
+    void deleteCallbacks(void* restId);
 
     /**
      * Send GET request to host.
@@ -124,7 +124,7 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool get(int32_t* restId, const String& url);
+    bool get(void* restId, const String& url);
 
     /**
      * Send POST request to host.
@@ -136,7 +136,7 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(int32_t* restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool post(void* restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
@@ -146,7 +146,7 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(int32_t* restId, const String& url, const String& payload);
+    bool post(void* restId, const String& url, const String& payload);
 
     /**
      * Send a Msg to the Taskproxy.
@@ -157,7 +157,7 @@ public:
      *
      * @If a Msg is successfully sent to Taskproxy, it will return true otherwise false.
      */
-    void sendToTaskProxy(int32_t* restId, bool isValidRsp, DynamicJsonDocument* payload);
+    void sendToTaskProxy(void* restId, bool isValidRsp, DynamicJsonDocument* payload);
 
     /**
      * Give Mutex used for serialization of api-requests.
@@ -173,7 +173,7 @@ public:
      *
      * @return If a response is available, it will return true otherwise false
      */
-    bool getResponse(int32_t* restId, bool& isValidRsp, DynamicJsonDocument* payload);
+    bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument* payload);
 
 private:
 
@@ -187,7 +187,7 @@ private:
      */
     struct Msg
     {
-        int32_t*             restId; /**< Used to identify plugin in RestService */
+        void*                restId; /**< Used to identify plugin in RestService */
         bool                 isMsg;  /**< true: successful Response, false: request failed*/
         DynamicJsonDocument* rsp;    /**< Response, only valid if isMsg == true */
 
@@ -215,9 +215,9 @@ private:
      */
     struct Cmd
     {
-        CmdId    id;     /**< The command id identifies the kind of request. */
-        int32_t* restId; /**< Used to identify plugin in RestService */
-        String   url;    /**< URL */
+        CmdId  id;     /**< The command id identifies the kind of request. */
+        void*  restId; /**< Used to identify plugin in RestService */
+        String url;    /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -237,17 +237,17 @@ private:
         } u;
     };
 
-    AsyncHttpClient        m_client;        /**< Asynchronous HTTP client. */
-    Queue<Cmd>             m_cmdQueue;      /**< Command queue */
-    TaskProxy<Msg, 9U, 0U> m_taskProxy;     /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    Mutex                  m_mutex;         /**< Used to protect against concurrent access */
+    AsyncHttpClient        m_client;    /**< Asynchronous HTTP client. */
+    Queue<Cmd>             m_cmdQueue;  /**< Command queue */
+    TaskProxy<Msg, 9U, 0U> m_taskProxy; /**< Task proxy used to decouple server responses, which happen in a different task context.*/
+    Mutex                  m_mutex;     /**< Used to protect against concurrent access */
 
     /**
      * Saves filters
      * key: restId of plugin
      * value: filter
      */
-    std::map<int32_t*, std::pair<AsyncHttpClient::OnResponse, AsyncHttpClient::OnError>> m_Callbacks;
+    std::map<void*, std::pair<AsyncHttpClient::OnResponse, AsyncHttpClient::OnError>> m_Callbacks;
 
     /**
      * Constructs the service instance.

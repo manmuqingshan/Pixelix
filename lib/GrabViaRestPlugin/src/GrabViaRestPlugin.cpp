@@ -251,7 +251,7 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
         m_view.setupTextOnly();
     }
 
-    RestService::getInstance().setCallbacks(&m_restId, [this](void* restId, const HttpResponse& rsp) { handleAsyncWebResponse(static_cast<int32_t*>(restId), rsp); }, [](void* restId) {
+    RestService::getInstance().setCallbacks(&m_restId, [this](void* restId, const HttpResponse& rsp) { handleAsyncWebResponse(rsp, restId); }, [](void* restId) {
                 RestService::getInstance().sendToTaskProxy(static_cast<int32_t*>(restId), false, nullptr);
                 RestService::getInstance().giveMutex(); });
 }
@@ -511,7 +511,7 @@ bool GrabViaRestPlugin::startHttpRequest()
     return status;
 }
 
-void GrabViaRestPlugin::handleAsyncWebResponse(int32_t* restId, const HttpResponse& rsp)
+void GrabViaRestPlugin::handleAsyncWebResponse(const HttpResponse& rsp, void* restId)
 {
     const size_t         JSON_DOC_SIZE    = 4096U;
     DynamicJsonDocument* jsonDoc          = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
