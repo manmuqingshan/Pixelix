@@ -170,7 +170,6 @@ bool RestService::get(void* restId, const String& url)
 {
     Cmd cmd;
 
-    memset(&cmd, 0, sizeof(cmd));
     cmd.id     = CMD_ID_GET;
     cmd.restId = restId;
     cmd.url    = url;
@@ -182,7 +181,6 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 {
     Cmd cmd;
 
-    memset(&cmd, 0, sizeof(cmd));
     cmd.id          = CMD_ID_POST;
     cmd.restId      = restId;
     cmd.url         = url;
@@ -196,7 +194,6 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 {
     Cmd cmd;
 
-    memset(&cmd, 0, sizeof(cmd));
     cmd.id          = CMD_ID_POST;
     cmd.restId      = restId;
     cmd.url         = url;
