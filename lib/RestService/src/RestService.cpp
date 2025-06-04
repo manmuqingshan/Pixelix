@@ -86,6 +86,7 @@ void RestService::process()
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
+            LOG_INFO(cmd.url);
             if (true == m_client.begin(cmd.url))
             {
                 switch (cmd.id)
@@ -99,7 +100,7 @@ void RestService::process()
                         msg.isMsg  = false;
                         msg.rsp    = nullptr;
 
-                        if (true == this->m_taskProxy.send(msg))
+                        if (false == this->m_taskProxy.send(msg))
                         {
                             LOG_ERROR("Msg could not be sent to Msg-Queue");
                         }
@@ -117,7 +118,7 @@ void RestService::process()
                         msg.isMsg  = false;
                         msg.rsp    = nullptr;
 
-                        if (true == this->m_taskProxy.send(msg))
+                        if (false == this->m_taskProxy.send(msg))
                         {
                             LOG_ERROR("Msg could not be sent to Msg-Queue");
                         }
@@ -138,7 +139,7 @@ void RestService::process()
                 msg.isMsg  = false;
                 msg.rsp    = nullptr;
 
-                if (true == this->m_taskProxy.send(msg))
+                if (false == this->m_taskProxy.send(msg))
                 {
                     LOG_ERROR("URL could not be parsed");
                 }
