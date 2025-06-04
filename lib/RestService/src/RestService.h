@@ -101,20 +101,19 @@ public:
     void process() final;
 
     /**
-     * Set a Callbacks. Only one pair of callbacks per plugin can be set at a time.
+     * Set a callback which shall be called when a successful response arrives. Only one at a time can be set per plugin.
      *
-     * @param[in] restId Unique Id to identify plugin
-     * @param[in] rsp_cb Callback which shall be called when a successful response arrives.
-     * @param[in] err_cb Callback which shall be called when an error happens.
+     * @param[in] restId       Unique Id to identify plugin
+     * @param[in] rspCallback  Plugin-callback used for preprocessing.
      */
-    void setCallbacks(void* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb);
+    void setCallback(void* restId, std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCallback);
 
     /**
-     * Delete Callbacks if any exist.
+     * Delete Callback if one exists.
      *
-     * @param[in] restId Unqiue Id to identify plugin
+     * @param[in] restId  Unqiue Id to identify plugin
      */
-    void deleteCallbacks(void* restId);
+    void deleteCallback(void* restId);
 
     /**
      * Send GET request to host.
@@ -147,22 +146,6 @@ public:
      * @return If request is successful sent, it will return true otherwise false.
      */
     bool post(void* restId, const String& url, const String& payload);
-
-    /**
-     * Send a Msg to the Taskproxy.
-     *
-     * @param[in] restId Unique Id to identify plugin
-     * @param[in] isValidRsp Does Response have a payload
-     * @param[in] payload Payload, which must be kept alive until response is available!
-     *
-     * @If a Msg is successfully sent to Taskproxy, it will return true otherwise false.
-     */
-    void sendToTaskProxy(void* restId, bool isValidRsp, DynamicJsonDocument* payload);
-
-    /**
-     * Give Mutex used for serialization of api-requests.
-     */
-    void giveMutex();
 
     /**
      * Get Response to a previously started request.
@@ -243,11 +226,11 @@ private:
     Mutex                  m_mutex;     /**< Used to protect against concurrent access */
 
     /**
-     * Saves filters
-     * key: restId of plugin
-     * value: filter
+     * Saves Callbacks of plugins
+     * key: RestId of plugin
+     * value: Callback
      */
-    std::map<void*, std::pair<AsyncHttpClient::OnResponse, AsyncHttpClient::OnError>> m_Callbacks;
+    std::map<void*, std::function<bool(const char*, size_t, DynamicJsonDocument&)>> m_Callbacks;
 
     /**
      * Constructs the service instance.
@@ -276,6 +259,23 @@ private:
     /* An instance shall not be copied. */
     RestService(const RestService& service);
     RestService& operator=(const RestService& service);
+
+    /**
+     * Handle asynchronous web response from the server. Filtering is delegated to Plugin-callbacks.
+     * This will be called in LwIP context! Don't modify any member here directly!
+     *
+     * @param[in] restId  Unique Id to identify plugin
+     * @param[in] rsp     Web Response
+     */
+    void handleAsyncWebResponse(void* restId, const HttpResponse& rsp);
+
+    /**
+     * Handle a failed web request.
+     * This will be called in LwIP context! Don't modify any member here directly!
+     *
+     * @param[in] restId  Unique Id to identify plugin
+     */
+    void handleFailedWebRequest(void* restId);
 };
 
 /******************************************************************************

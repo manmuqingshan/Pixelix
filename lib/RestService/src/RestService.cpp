@@ -60,6 +60,16 @@
 
 bool RestService::start()
 {
+    std::function<void(void*, const HttpResponse&)> rspCallback = [this](void* restId, const HttpResponse& rsp) {
+        handleAsyncWebResponse(restId, rsp);
+    };
+    std::function<void(void*)> errCallback = [this](void* restId) {
+        handleFailedWebRequest(restId);
+    };
+
+    m_client.regOnResponse(rspCallback);
+    m_client.regOnError(errCallback);
+
     return true;
 }
 
@@ -76,27 +86,6 @@ void RestService::process()
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
-            if (m_Callbacks.find(cmd.restId) != m_Callbacks.end())
-            {
-                m_client.regOnResponse(m_Callbacks[cmd.restId].first);
-                m_client.regOnError(m_Callbacks[cmd.restId].second);
-            }
-            else
-            {
-                Msg msg;
-
-                msg.restId = cmd.restId;
-                msg.isMsg  = false;
-                msg.rsp    = nullptr;
-
-                if (true == this->m_taskProxy.send(msg))
-                {
-                    LOG_ERROR("No Callbacks set");
-                }
-
-                m_mutex.give();
-            }
-
             if (true == m_client.begin(cmd.url))
             {
                 switch (cmd.id)
@@ -164,15 +153,15 @@ void RestService::process()
     }
 }
 
-void RestService::setCallbacks(void* restId, AsyncHttpClient::OnResponse rsp_cb, AsyncHttpClient::OnError err_cb)
+void RestService::setCallback(void* restId, std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCallback)
 {
     if (m_Callbacks.find(restId) == m_Callbacks.end())
     {
-        m_Callbacks[restId] = std::make_pair(rsp_cb, err_cb);
+        m_Callbacks[restId] = rspCallback;
     }
 }
 
-void RestService::deleteCallbacks(void* restId)
+void RestService::deleteCallback(void* restId)
 {
     m_Callbacks.erase(restId);
 }
@@ -217,27 +206,6 @@ bool RestService::post(void* restId, const String& url, const String& payload)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-void RestService::sendToTaskProxy(void* restId, bool isValidRsp, DynamicJsonDocument* payload)
-{
-    Msg msg;
-
-    msg.restId = restId;
-    msg.isMsg  = isValidRsp;
-    msg.rsp    = payload;
-
-    if (false == m_taskProxy.send(msg))
-    {
-        LOG_ERROR("Msg could not be sent to Msg-Queue");
-        delete payload;
-        payload = nullptr;
-    }
-}
-
-void RestService::giveMutex()
-{
-    m_mutex.give();
-}
-
 bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument* payload)
 {
     bool isSuccessful = false;
@@ -259,6 +227,99 @@ bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocumen
     }
 
     return isSuccessful;
+}
+
+void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
+{
+    const size_t         JSON_DOC_SIZE = 4096U;
+    DynamicJsonDocument* jsonDoc       = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
+    bool                 isError       = false;
+    Msg                  msg;
+
+    msg.restId = restId;
+    msg.rsp    = jsonDoc;
+
+    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+    {
+        if (nullptr != jsonDoc)
+        {
+            bool        isSuccessful = false;
+            size_t      payloadSize  = 0U;
+            const void* vPayload     = rsp.getPayload(payloadSize);
+            const char* payload      = static_cast<const char*>(vPayload);
+
+            if ((nullptr == payload) ||
+                (0U == payloadSize))
+            {
+                LOG_ERROR("No payload.");
+                isError = true;
+            }
+            else if (m_Callbacks.find(restId) != m_Callbacks.end())
+            {
+                if (true == m_Callbacks[restId](payload, payloadSize, *jsonDoc))
+                {
+                    msg.isMsg = true;
+                    isError   = !m_taskProxy.send(msg);
+                }
+                else
+                {
+                    isError = true;
+                }
+            }
+            else
+            {
+                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize);
+
+                if (DeserializationError::Ok != error.code())
+                {
+                    LOG_WARNING("JSON parse error: %s", error.c_str());
+                    isError = true;
+                }
+                else
+                {
+                    msg.isMsg = true;
+                    isError   = !m_taskProxy.send(msg);
+                }
+            }
+        }
+        else
+        {
+            LOG_ERROR("Not enough memory available to store DynamicJsonDocument");
+            isError = true;
+        }
+    }
+    else
+    {
+        isError = true;
+    }
+
+    if (isError)
+    {
+        delete jsonDoc;
+        jsonDoc   = nullptr;
+        msg.isMsg = false;
+
+        if (false == m_taskProxy.send(msg))
+        {
+            LOG_ERROR("Msg could not be sent to Msg-Queue");
+        }
+    }
+
+    m_mutex.give();
+}
+
+void RestService::handleFailedWebRequest(void* restId)
+{
+    Msg msg;
+
+    msg.restId = restId;
+    msg.isMsg  = false;
+    msg.rsp    = nullptr;
+
+    if (false == m_taskProxy.send(msg))
+    {
+        LOG_ERROR("Msg could not be sent to Msg-Queue");
+    }
 }
 
 /******************************************************************************

@@ -100,7 +100,7 @@ public:
      */
     ~GrabViaRestPlugin()
     {
-        RestService::getInstance().deleteCallbacks(&m_restId);
+        RestService::getInstance().deleteCallback(&m_restId);
         m_mutex.destroy();
     }
 
@@ -353,10 +353,13 @@ private:
      * Handle asynchronous web response from the server.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
-     * @param[in] jsonDoc   Web response as JSON document
-     * @param[in] restId    Unique Id to identify plugin in RestService.
+     * @param[in] payload     Payload of the web response
+     * @param[in] payloadSize Size of the payload
+     * @param[out] jsonDoc    DynamicJsonDocument used to store result in.
+     *
+     * @return If successful it will return true otherwise false.
      */
-    void handleAsyncWebResponse(const HttpResponse& rsp, void* restId);
+    bool preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc);
 
     /**
      * Get value from JSON source by the filter.

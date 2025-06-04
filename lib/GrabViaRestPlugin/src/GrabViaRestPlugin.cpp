@@ -221,7 +221,11 @@ bool GrabViaRestPlugin::hasTopicChanged(const String& topic)
 
 void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
+    MutexGuard<MutexRecursive>                                     guard(m_mutex);
+    std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCb =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     m_view.init(width, height);
 
@@ -251,9 +255,7 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
         m_view.setupTextOnly();
     }
 
-    RestService::getInstance().setCallbacks(&m_restId, [this](void* restId, const HttpResponse& rsp) { handleAsyncWebResponse(rsp, restId); }, [](void* restId) {
-                RestService::getInstance().sendToTaskProxy(static_cast<int32_t*>(restId), false, nullptr);
-                RestService::getInstance().giveMutex(); });
+    RestService::getInstance().setCallback(&m_restId, rspCb);
 }
 
 void GrabViaRestPlugin::stop()
@@ -511,64 +513,25 @@ bool GrabViaRestPlugin::startHttpRequest()
     return status;
 }
 
-void GrabViaRestPlugin::handleAsyncWebResponse(const HttpResponse& rsp, void* restId)
+bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    const size_t         JSON_DOC_SIZE    = 4096U;
-    DynamicJsonDocument* jsonDoc          = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
-    bool                 isError          = false;
-    bool                 isSuccessfulSent = false;
-
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+    if (true == m_filter.overflowed())
     {
-        if (nullptr != jsonDoc)
-        {
-            size_t      payloadSize = 0U;
-            const void* vPayload    = rsp.getPayload(payloadSize);
-            const char* payload     = static_cast<const char*>(vPayload);
-
-            if (true == m_filter.overflowed())
-            {
-                LOG_ERROR("Less memory for filter available.");
-                isError = true;
-            }
-            else if ((nullptr == payload) ||
-                     (0U == payloadSize))
-            {
-                LOG_ERROR("No payload.");
-                isError = true;
-            }
-            else
-            {
-                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize, DeserializationOption::Filter(m_filter));
-
-                if (DeserializationError::Ok != error.code())
-                {
-                    LOG_WARNING("JSON parse error: %s", error.c_str());
-                    isError = true;
-                }
-            }
-        }
-        else
-        {
-            LOG_ERROR("Not enough memory available to store DynamicJsonDocument");
-            isError = true;
-        }
+        LOG_ERROR("Less memory for filter available.");
+        return false;
     }
     else
     {
-        isError = true;
+        DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(m_filter));
+
+        if (DeserializationError::Ok != error.code())
+        {
+            LOG_WARNING("JSON parse error: %s", error.c_str());
+            return false;
+        }
     }
 
-    if (true == isError)
-    {
-        RestService::getInstance().sendToTaskProxy(restId, false, nullptr);
-    }
-    else
-    {
-        RestService::getInstance().sendToTaskProxy(restId, true, jsonDoc);
-    }
-
-    RestService::getInstance().giveMutex();
+    return true;
 }
 
 void GrabViaRestPlugin::getJsonValueByFilter(JsonVariantConst src, JsonVariantConst filter, JsonArray& values)
