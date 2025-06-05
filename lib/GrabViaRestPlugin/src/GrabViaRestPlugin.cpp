@@ -221,8 +221,8 @@ bool GrabViaRestPlugin::hasTopicChanged(const String& topic)
 
 void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive>                                     guard(m_mutex);
-    std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCb =
+    MutexGuard<MutexRecursive>      guard(m_mutex);
+    RestService::PreProcessCallback preProcessCallback =
         [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
             return this->preProcessAsyncWebResponse(payload, size, doc);
         };
@@ -255,7 +255,7 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
         m_view.setupTextOnly();
     }
 
-    RestService::getInstance().setCallback(&m_restId, rspCb);
+    RestService::getInstance().setCallback(&m_restId, preProcessCallback);
 }
 
 void GrabViaRestPlugin::stop()
@@ -277,7 +277,7 @@ void GrabViaRestPlugin::process(bool isConnected)
     /* Only if a network connection is established the required information
      * shall be periodically requested via REST API.
      */
-    if (m_isAllowedToSend)
+    if (true == m_isAllowedToSend)
     {
         if (false == m_requestTimer.isTimerRunning())
         {
@@ -515,10 +515,12 @@ bool GrabViaRestPlugin::startHttpRequest()
 
 bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
+    bool isSuccessful = true;
+
     if (true == m_filter.overflowed())
     {
         LOG_ERROR("Less memory for filter available.");
-        return false;
+        isSuccessful = false;
     }
     else
     {
@@ -527,11 +529,11 @@ bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t p
         if (DeserializationError::Ok != error.code())
         {
             LOG_WARNING("JSON parse error: %s", error.c_str());
-            return false;
+            isSuccessful = false;
         }
     }
 
-    return true;
+    return isSuccessful;
 }
 
 void GrabViaRestPlugin::getJsonValueByFilter(JsonVariantConst src, JsonVariantConst filter, JsonArray& values)

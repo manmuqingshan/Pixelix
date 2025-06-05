@@ -62,14 +62,17 @@
  * Types and Classes
  *****************************************************************************/
 
-static const int memoryLocationTest = 15;
-
 /**
  * The REST service handles outgoing REST-API calls and their responses.
  */
 class RestService : public IService
 {
 public:
+
+    /**
+     * Prototype of a preprocessing callback for a successful response.
+     */
+    typedef std::function<bool(const char*, size_t, DynamicJsonDocument&)> PreProcessCallback;
 
     /**
      * Get the REST service instance.
@@ -104,9 +107,9 @@ public:
      * Set a callback which shall be called when a successful response arrives. Only one at a time can be set per plugin.
      *
      * @param[in] restId       Unique Id to identify plugin
-     * @param[in] rspCallback  Plugin-callback used for preprocessing.
+     * @param[in] preProcessCallback  Plugin-callback used for preprocessing.
      */
-    void setCallback(void* restId, std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCallback);
+    void setCallback(void* restId, PreProcessCallback preProcessCallback);
 
     /**
      * Delete Callback if one exists.
@@ -245,7 +248,6 @@ private:
     {
         (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
         (void)m_mutex.create();
-        LOG_INFO("Adresse von memoryLocationTest: %p", (void*)&memoryLocationTest);
     }
 
     /**

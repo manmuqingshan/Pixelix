@@ -60,10 +60,10 @@
 
 bool RestService::start()
 {
-    std::function<void(void*, const HttpResponse&)> rspCallback = [this](void* restId, const HttpResponse& rsp) {
+    AsyncHttpClient::OnResponse rspCallback = [this](void* restId, const HttpResponse& rsp) {
         handleAsyncWebResponse(restId, rsp);
     };
-    std::function<void(void*)> errCallback = [this](void* restId) {
+    AsyncHttpClient::OnError errCallback = [this](void* restId) {
         handleFailedWebRequest(restId);
     };
 
@@ -86,7 +86,6 @@ void RestService::process()
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
-            LOG_INFO(cmd.url);
             if (true == m_client.begin(cmd.url))
             {
                 switch (cmd.id)
@@ -154,11 +153,11 @@ void RestService::process()
     }
 }
 
-void RestService::setCallback(void* restId, std::function<bool(const char*, size_t, DynamicJsonDocument&)> rspCallback)
+void RestService::setCallback(void* restId, PreProcessCallback preProcessCallback)
 {
     if (m_Callbacks.find(restId) == m_Callbacks.end())
     {
-        m_Callbacks[restId] = rspCallback;
+        m_Callbacks[restId] = preProcessCallback;
     }
 }
 

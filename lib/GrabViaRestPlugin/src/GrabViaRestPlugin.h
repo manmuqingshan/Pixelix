@@ -305,7 +305,7 @@ private:
     mutable MutexRecursive   m_mutex;             /**< Mutex to protect against concurrent access. */
     bool                     m_isConnectionError; /**< Is connection error happened? */
     bool                     m_hasTopicChanged;   /**< Has the topic content changed? */
-    char                     m_restId;            /**< Used to identify plugin when it interacts with RestService. */
+    int8_t                   m_restId;            /**< Used to identify plugin when it interacts with RestService. */
     bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
 
     /**
