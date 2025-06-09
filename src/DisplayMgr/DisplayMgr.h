@@ -51,6 +51,7 @@
 #include <FadeMoveX.h>
 #include <FadeMoveY.h>
 #include <Mutex.hpp>
+#include <Task.hpp>
 #include <YAGfxBitmap.h>
 
 #include "IPluginMaintenance.hpp"
@@ -397,7 +398,7 @@ public:
 private:
 
     /** The process task stack size in bytes */
-    static const uint32_t PROCESS_TASK_STACK_SIZE  = 4096U;
+    static const uint32_t PROCESS_TASK_STACK_SIZE  = 5120U;
 
     /** The process task period in ms. */
     static const uint32_t PROCESS_TASK_PERIOD      = 100U;
@@ -426,23 +427,11 @@ private:
     /** Mutex to protect the display update against concurrent access. */
     mutable MutexRecursive m_mutexUpdate;
 
-    /** Process task handle */
-    TaskHandle_t m_processTaskHandle;
+    /** Process task */
+    Task<DisplayMgr> m_processTask;
 
-    /** Flag to signal the process task to exit. */
-    bool m_processTaskExit;
-
-    /** Binary semaphore used to signal the process task exited. */
-    SemaphoreHandle_t m_processTaskSemaphore;
-
-    /** Update task handle */
-    TaskHandle_t m_updateTaskHandle;
-
-    /** Flag to signal the update task to exit. */
-    bool m_updateTaskExit;
-
-    /** Binary semaphore used to signal the update task exited. */
-    SemaphoreHandle_t m_updateTaskSemaphore;
+    /** Update task */
+    Task<DisplayMgr> m_updateTask;
 
     /** List of all slots with their connected plugins. */
     SlotList m_slotList;
@@ -551,42 +540,18 @@ private:
     void update(void);
 
     /**
-     * Create the process task which is responsible to process all plugins.
+     * Display update task is responsible to refresh the display content.
      *
-     * @return If successful it will return true otherwise false.
+     * @param[in] self Display manager instance.
      */
-    bool createProcessTask();
-
-    /**
-     * Destroy the process task gracefully.
-     */
-    void destroyProcessTask();
-
-    /**
-     * Create the update task which is responsible to update the display content.
-     *
-     * @return If successful it will return true otherwise false.
-     */
-    bool createUpdateTask();
-
-    /**
-     * Destroy the update task gracefully.
-     */
-    void destroyUpdateTask();
+    static void processTask(DisplayMgr* self);
 
     /**
      * Display update task is responsible to refresh the display content.
      *
-     * @param[in]   parameters  Task pParameters
+     * @param[in] self Display manager instance.
      */
-    static void processTask(void* parameters);
-
-    /**
-     * Display update task is responsible to refresh the display content.
-     *
-     * @param[in]   parameters  Task pParameters
-     */
-    static void updateTask(void* parameters);
+    static void updateTask(DisplayMgr* self);
 };
 
 /******************************************************************************

@@ -129,7 +129,7 @@ bool DisplayMgr::begin()
     brightnessCtrl.setBrightness(static_cast<uint8_t>(brightness));
 
     /* Set fade effect */
-    m_fadeEffectIndex = static_cast<FadeEffect>(fadeEffect);
+    m_fadeEffectIndex  = static_cast<FadeEffect>(fadeEffect);
     m_fadeEffectUpdate = true;
 
     /* No slots available? */
@@ -191,21 +191,29 @@ bool DisplayMgr::begin()
 
         /* Process task not started yet? */
         if ((false == isError) &&
-            (nullptr == m_processTaskHandle))
+            (false == m_processTask.isRunning()))
         {
-            if (false == createProcessTask())
+            if (false == m_processTask.start(this))
             {
                 isError = true;
+            }
+            else
+            {
+                LOG_DEBUG("Process task is up.");
             }
         }
 
         /* Update task not started yet? */
         if ((false == isError) &&
-            (nullptr == m_updateTaskHandle))
+            (false == m_updateTask.isRunning()))
         {
-            if (false == createUpdateTask())
+            if (false == m_updateTask.start(this))
             {
                 isError = true;
+            }
+            else
+            {
+                LOG_DEBUG("Update task is up.");
             }
         }
     }
@@ -213,8 +221,8 @@ bool DisplayMgr::begin()
     /* Any error happened? */
     if (true == isError)
     {
-        destroyProcessTask();
-        destroyUpdateTask();
+        (void)m_processTask.stop();
+        (void)m_updateTask.stop();
     }
     else
     {
@@ -230,15 +238,32 @@ void DisplayMgr::end()
 {
     uint8_t idx = 0U;
 
-    /* Already running? */
-    if (nullptr != m_processTaskHandle)
+    /* Process task already running? */
+    if (true == m_processTask.isRunning())
     {
-        destroyProcessTask();
+        /* Stop the process task. */
+        if (false == m_processTask.stop())
+        {
+            LOG_ERROR("Failed to stop process task.");
+        }
+        else
+        {
+            LOG_DEBUG("Process task is down.");
+        }
     }
 
-    if (nullptr != m_updateTaskHandle)
+    /* Update task already running? */
+    if (true == m_updateTask.isRunning())
     {
-        destroyUpdateTask();
+        /* Stop the update task. */
+        if (false == m_updateTask.stop())
+        {
+            LOG_ERROR("Failed to stop update task.");
+        }
+        else
+        {
+            LOG_DEBUG("Update task is down.");
+        }
     }
 
     m_mutexUpdate.destroy();
@@ -805,12 +830,8 @@ bool DisplayMgr::isDisplayOn() const
 DisplayMgr::DisplayMgr() :
     m_mutexInterf(),
     m_mutexUpdate(),
-    m_processTaskHandle(nullptr),
-    m_processTaskExit(false),
-    m_processTaskSemaphore(nullptr),
-    m_updateTaskHandle(nullptr),
-    m_updateTaskExit(false),
-    m_updateTaskSemaphore(nullptr),
+    m_processTask("processTask", processTask, PROCESS_TASK_STACK_SIZE, PROCESS_TASK_PRIORITY, PROCESS_TASK_RUN_CORE),
+    m_updateTask("updateTask", updateTask, UPDATE_TASK_STACK_SIZE, UPDATE_TASK_PRIORITY, UPDATE_TASK_RUN_CORE),
     m_slotList(),
     m_selectedSlotId(SlotList::SLOT_ID_INVALID),
     m_selectedPlugin(nullptr),
@@ -1280,274 +1301,120 @@ void DisplayMgr::update()
     display.show();
 }
 
-bool DisplayMgr::createProcessTask()
+void DisplayMgr::processTask(DisplayMgr* self)
 {
-    bool isSuccessful = false;
+    uint32_t timestamp = millis();
+    uint32_t duration  = 0U;
 
-    if (nullptr == m_processTaskSemaphore)
+    /* Process all slot and plugin related stuff. */
+    self->process();
+
+    /* Calculate overall duration */
+    duration = millis() - timestamp;
+
+    /* Give other tasks a chance. */
+    if (PROCESS_TASK_PERIOD <= duration)
     {
-        /* Create binary semaphore to signal task exit. */
-        m_processTaskSemaphore = xSemaphoreCreateBinary();
-
-        if (nullptr != m_processTaskSemaphore)
-        {
-            BaseType_t osRet  = pdFAIL;
-
-            /* Task shall run */
-            m_processTaskExit = false;
-
-            osRet             = xTaskCreateUniversal(processTask,
-                "processTask",
-                PROCESS_TASK_STACK_SIZE,
-                this,
-                PROCESS_TASK_PRIORITY,
-                &m_processTaskHandle,
-                PROCESS_TASK_RUN_CORE);
-
-            /* Couldn't task be created? */
-            if (pdPASS != osRet)
-            {
-                vSemaphoreDelete(m_processTaskSemaphore);
-                m_processTaskSemaphore = nullptr;
-            }
-            else
-            {
-                (void)xSemaphoreGive(m_processTaskSemaphore);
-
-                LOG_DEBUG("ProcessTask is up.");
-
-                isSuccessful = true;
-            }
-        }
+        delay(1U);
     }
-
-    return isSuccessful;
-}
-
-void DisplayMgr::destroyProcessTask()
-{
-    /* Is the task running? */
-    if (nullptr != m_processTaskSemaphore)
+    else
     {
-        /* Request task to exit and wait until its done. */
-        m_processTaskExit = true;
-        (void)xSemaphoreTake(m_processTaskSemaphore, portMAX_DELAY);
-        m_processTaskHandle = nullptr;
-
-        /* After task is destroyed, the signal semaphore can safely be destroyed. */
-        vSemaphoreDelete(m_processTaskSemaphore);
-        m_processTaskSemaphore = nullptr;
-
-        LOG_DEBUG("ProcessTask is down.");
+        delay(PROCESS_TASK_PERIOD - duration);
     }
 }
 
-bool DisplayMgr::createUpdateTask()
+void DisplayMgr::updateTask(DisplayMgr* self)
 {
-    bool isSuccessful = false;
-
-    if (nullptr == m_updateTaskSemaphore)
-    {
-        /* Create binary semaphore to signal task exit. */
-        m_updateTaskSemaphore = xSemaphoreCreateBinary();
-
-        if (nullptr != m_updateTaskSemaphore)
-        {
-            BaseType_t osRet = pdFAIL;
-
-            /* Task shall run */
-            m_updateTaskExit = false;
-
-            osRet            = xTaskCreateUniversal(updateTask,
-                "updateTask",
-                UPDATE_TASK_STACK_SIZE,
-                this,
-                UPDATE_TASK_PRIORITY,
-                &m_updateTaskHandle,
-                UPDATE_TASK_RUN_CORE);
-
-            /* Couldn't task be created? */
-            if (pdPASS != osRet)
-            {
-                vSemaphoreDelete(m_updateTaskSemaphore);
-                m_updateTaskSemaphore = nullptr;
-            }
-            else
-            {
-                (void)xSemaphoreGive(m_updateTaskSemaphore);
-
-                LOG_DEBUG("UpdateTask is up.");
-
-                isSuccessful = true;
-            }
-        }
-    }
-
-    return isSuccessful;
-}
-
-void DisplayMgr::destroyUpdateTask()
-{
-    /* Is the task running? */
-    if (nullptr != m_updateTaskSemaphore)
-    {
-        /* Request task to exit and wait until its done. */
-        m_updateTaskExit = true;
-        (void)xSemaphoreTake(m_updateTaskSemaphore, portMAX_DELAY);
-        m_updateTaskHandle = nullptr;
-
-        /* After task is destroyed, the signal semaphore can safely be destroyed. */
-        vSemaphoreDelete(m_updateTaskSemaphore);
-        m_updateTaskSemaphore = nullptr;
-
-        LOG_DEBUG("UpdateTask is down.");
-    }
-}
-
-void DisplayMgr::processTask(void* parameters)
-{
-    DisplayMgr* tthis = static_cast<DisplayMgr*>(parameters);
-
-    if ((nullptr != tthis) &&
-        (nullptr != tthis->m_processTaskSemaphore))
-    {
-        (void)xSemaphoreTake(tthis->m_processTaskSemaphore, portMAX_DELAY);
-
-        while (false == tthis->m_processTaskExit)
-        {
-            uint32_t timestamp = millis();
-            uint32_t duration  = 0U;
-
-            /* Process all slot and plugin related stuff. */
-            tthis->process();
-
-            /* Calculate overall duration */
-            duration = millis() - timestamp;
-
-            /* Give other tasks a chance. */
-            if (PROCESS_TASK_PERIOD <= duration)
-            {
-                delay(1U);
-            }
-            else
-            {
-                delay(PROCESS_TASK_PERIOD - duration);
-            }
-        }
-
-        (void)xSemaphoreGive(tthis->m_processTaskSemaphore);
-    }
-
-    vTaskDelete(nullptr);
-}
-
-void DisplayMgr::updateTask(void* parameters)
-{
-    DisplayMgr* tthis = static_cast<DisplayMgr*>(parameters);
-
-    if ((nullptr != tthis) &&
-        (nullptr != tthis->m_updateTaskSemaphore))
-    {
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-        Statistics     statistics;
-        SimpleTimer    statisticsLogTimer;
-        const uint32_t STATISTICS_LOG_PERIOD = 4000U; /* [ms] */
-        uint32_t       timestampLastUpdate   = millis();
+    Statistics     statistics;
+    SimpleTimer    statisticsLogTimer;
+    const uint32_t STATISTICS_LOG_PERIOD = 4000U; /* [ms] */
 
-        statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
+    statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
 
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
-        (void)xSemaphoreTake(tthis->m_updateTaskSemaphore, portMAX_DELAY);
+    uint32_t timestampLastUpdate = millis();
+    uint32_t timestamp           = millis();
+    uint32_t duration            = 0U;
+    uint32_t timestampPhyUpdate  = 0U;
+    uint32_t durationPhyUpdate   = 0U;
+    bool     abort               = false;
 
-        while (false == tthis->m_updateTaskExit)
+    /* Observe the physical display refresh and limit the duration to 70% of refresh period. */
+    const uint32_t MAX_LOOP_TIME = (UPDATE_TASK_PERIOD * 7U) / (10U);
+
+    /* Refresh display content periodically */
+    self->update();
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    statistics.pluginProcessing.update(millis() - timestamp);
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
+    /* Wait until the physical update is ready to avoid flickering
+     * and artifacts on the display, because of e.g. webserver flash
+     * access.
+     */
+    timestampPhyUpdate = millis();
+    while ((false == Display::getInstance().isReady()) && (false == abort))
+    {
+        durationPhyUpdate = millis() - timestampPhyUpdate;
+
+        if (MAX_LOOP_TIME <= durationPhyUpdate)
         {
-            uint32_t timestamp           = millis();
-            uint32_t duration            = 0U;
-            uint32_t timestampPhyUpdate  = 0U;
-            uint32_t durationPhyUpdate   = 0U;
-            bool     abort               = false;
-
-            /* Observe the physical display refresh and limit the duration to 70% of refresh period. */
-            const uint32_t MAX_LOOP_TIME = (UPDATE_TASK_PERIOD * 7U) / (10U);
-
-            /* Refresh display content periodically */
-            tthis->update();
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.pluginProcessing.update(millis() - timestamp);
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
-            /* Wait until the physical update is ready to avoid flickering
-             * and artifacts on the display, because of e.g. webserver flash
-             * access.
-             */
-            timestampPhyUpdate = millis();
-            while ((false == Display::getInstance().isReady()) && (false == abort))
-            {
-                durationPhyUpdate = millis() - timestampPhyUpdate;
-
-                if (MAX_LOOP_TIME <= durationPhyUpdate)
-                {
-                    abort = true;
-                }
-            }
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.displayUpdate.update(durationPhyUpdate);
-            statistics.total.update(statistics.pluginProcessing.getCurrent() + statistics.displayUpdate.getCurrent());
-
-            if (true == statisticsLogTimer.isTimeout())
-            {
-                LOG_DEBUG("[ %2u, %2u, %2u ]",
-                    statistics.refreshPeriod.getMin(),
-                    statistics.refreshPeriod.getAvg(),
-                    statistics.refreshPeriod.getMax());
-
-                LOG_DEBUG("[ %2u, %2u, %2u ] [ %2u, %2u, %2u ] [ %2u, %2u, %2u ]",
-                    statistics.pluginProcessing.getMin(),
-                    statistics.pluginProcessing.getAvg(),
-                    statistics.pluginProcessing.getMax(),
-                    statistics.displayUpdate.getMin(),
-                    statistics.displayUpdate.getAvg(),
-                    statistics.displayUpdate.getMax(),
-                    statistics.total.getMin(),
-                    statistics.total.getAvg(),
-                    statistics.total.getMax());
-
-                /* Reset the statistics to get a new min./max. determination. */
-                statistics.pluginProcessing.reset();
-                statistics.displayUpdate.reset();
-                statistics.total.reset();
-                statistics.refreshPeriod.reset();
-
-                statisticsLogTimer.restart();
-            }
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
-            /* Calculate overall duration */
-            duration = millis() - timestamp;
-
-            /* Give other tasks a chance. */
-            if (UPDATE_TASK_PERIOD <= duration)
-            {
-                delay(1U);
-            }
-            else
-            {
-                delay(UPDATE_TASK_PERIOD - duration);
-            }
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.refreshPeriod.update(millis() - timestampLastUpdate);
-            timestampLastUpdate = millis();
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+            abort = true;
         }
-
-        (void)xSemaphoreGive(tthis->m_updateTaskSemaphore);
     }
 
-    vTaskDelete(nullptr);
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    statistics.displayUpdate.update(durationPhyUpdate);
+    statistics.total.update(statistics.pluginProcessing.getCurrent() + statistics.displayUpdate.getCurrent());
+
+    if (true == statisticsLogTimer.isTimeout())
+    {
+        LOG_DEBUG("[ %2u, %2u, %2u ]",
+            statistics.refreshPeriod.getMin(),
+            statistics.refreshPeriod.getAvg(),
+            statistics.refreshPeriod.getMax());
+
+        LOG_DEBUG("[ %2u, %2u, %2u ] [ %2u, %2u, %2u ] [ %2u, %2u, %2u ]",
+            statistics.pluginProcessing.getMin(),
+            statistics.pluginProcessing.getAvg(),
+            statistics.pluginProcessing.getMax(),
+            statistics.displayUpdate.getMin(),
+            statistics.displayUpdate.getAvg(),
+            statistics.displayUpdate.getMax(),
+            statistics.total.getMin(),
+            statistics.total.getAvg(),
+            statistics.total.getMax());
+
+        /* Reset the statistics to get a new min./max. determination. */
+        statistics.pluginProcessing.reset();
+        statistics.displayUpdate.reset();
+        statistics.total.reset();
+        statistics.refreshPeriod.reset();
+
+        statisticsLogTimer.restart();
+    }
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
+    /* Calculate overall duration */
+    duration = millis() - timestamp;
+
+    /* Give other tasks a chance. */
+    if (UPDATE_TASK_PERIOD <= duration)
+    {
+        delay(1U);
+    }
+    else
+    {
+        delay(UPDATE_TASK_PERIOD - duration);
+    }
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    statistics.refreshPeriod.update(millis() - timestampLastUpdate);
+    timestampLastUpdate = millis();
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 }
 
 /******************************************************************************
