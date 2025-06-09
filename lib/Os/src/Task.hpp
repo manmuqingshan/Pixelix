@@ -149,6 +149,8 @@ public:
      * The task will be requested to exit and the task handle will be deleted.
      * If the task does not exit within the default timeout, it will be aborted.
      *
+     * @param[in] timeout    Timeout in ms for task stop (optional).
+     * 
      * @return If successful, it will return true otherwise false.
      */
     bool stop(uint32_t timeout = DEFAULT_TIMEOUT);
