@@ -399,9 +399,9 @@ public:
     /**
      * Get indicator state.
      * If the indicator id is invalid, it will return false.
-     * 
+     *
      * @param[in] indicatorId  Id of indicator.
-     * 
+     *
      * @return If the indicator is on, it will return true otherwise false.
      */
     bool getIndicator(uint8_t indicatorId) const;
@@ -409,7 +409,7 @@ public:
     /**
      * Set indicator state.
      * If the indicator id is invalid, it will do nothing.
-     * 
+     *
      * The indicator id 255 will be used to turn on/off all indicators at once.
      *
      * @param[in] indicatorId  Id of indicator
@@ -420,7 +420,12 @@ public:
     /**
      * Indicator id for all indicators.
      */
-    static const uint8_t INDICATOR_ID_ALL = IndicatorViewBase::INDICATOR_ID_ALL;
+    static const uint8_t INDICATOR_ID_ALL     = IndicatorViewBase::INDICATOR_ID_ALL;
+
+    /**
+     * Indicator id for network connection.
+     */
+    static const uint8_t INDICATOR_ID_NETWORK = 0U;
 
 private:
 
