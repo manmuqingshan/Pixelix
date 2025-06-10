@@ -55,7 +55,7 @@
  * available heap memory, lowest level of available heap memory since boot and
  * largest block of heap memory that can be allocated.
  */
-#define SENSOR_TOPICS_COUNT (7U)
+#define SENSOR_TOPICS_COUNT (8U)
 
 /******************************************************************************
  * Types and classes
@@ -114,11 +114,15 @@ static const SensorTopic gSensorTopics[SENSOR_TOPICS_COUNT] = {
         10000U },
     { ISensorChannel::TYPE_MAX_ALLOC_HEAP_BYTES,
         "/extra/heapLargest.json",
+        10000U },
+    { ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM,
+        "/extra/wifiSignalStrength.json",
         10000U }
 };
 
 /** The runtime sensor topic data. */
 static SensorTopicRunData gSensorLastValue[SENSOR_TOPICS_COUNT] = {
+    { String(), 0U },
     { String(), 0U },
     { String(), 0U },
     { String(), 0U },
