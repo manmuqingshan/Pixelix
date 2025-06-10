@@ -96,17 +96,6 @@ void SysMsgPlugin::update(YAGfx& gfx)
 
     m_view.update(gfx);
 
-    if (true == m_isSignalEnabled)
-    {
-        int16_t xMax = static_cast<int16_t>(gfx.getWidth()) - 1;
-        int16_t yMax = static_cast<int16_t>(gfx.getHeight()) - 1;
-
-        gfx.drawPixel(0, 0, ColorDef::YELLOW);
-        gfx.drawPixel(0, yMax, ColorDef::YELLOW);
-        gfx.drawPixel(xMax, 0, ColorDef::YELLOW);
-        gfx.drawPixel(xMax, yMax, ColorDef::YELLOW);
-    }
-
     status = m_view.getScrollInfo(isScrollingEnabled, scrollingCnt);
 
     /* In initialization phase? */

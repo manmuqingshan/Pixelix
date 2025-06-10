@@ -819,6 +819,22 @@ bool DisplayMgr::isDisplayOn() const
     return isDisplayOn;
 }
 
+bool DisplayMgr::getIndicator(uint8_t indicatorId) const
+{
+    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    bool                       isOn = m_indicatorView.isIndicatorOn(indicatorId);
+
+    return isOn;
+}
+
+void DisplayMgr::setIndicator(uint8_t indicatorId, bool isOn)
+{
+    MutexGuard<MutexRecursive> guard1(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard2(m_mutexUpdate);
+
+    m_indicatorView.setIndicator(indicatorId, isOn);
+}
+
 /******************************************************************************
  * Protected Methods
  *****************************************************************************/
@@ -846,7 +862,8 @@ DisplayMgr::DisplayMgr() :
     m_fadeEffect(&m_fadeLinearEffect),
     m_fadeEffectIndex(FADE_EFFECT_LINEAR),
     m_fadeEffectUpdate(false),
-    m_isNetworkConnected(false)
+    m_isNetworkConnected(false),
+    m_indicatorView()
 {
 }
 
@@ -981,6 +998,7 @@ void DisplayMgr::fadeInOut(YAGfx& dst)
         if (nullptr != m_selectedPlugin)
         {
             m_selectedPlugin->update(*m_selectedFrameBuffer);
+            m_indicatorView.update(*m_selectedFrameBuffer);
         }
 
         /* No fade effect? */
@@ -1290,6 +1308,7 @@ void DisplayMgr::update()
     else if (nullptr != m_selectedPlugin)
     {
         m_selectedPlugin->update(display);
+        m_indicatorView.update(display);
     }
     /* No plugin selected. */
     else

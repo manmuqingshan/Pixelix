@@ -25,16 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  Indicator view interface
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup APP_LAYER
+ * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef SYSMSG_HPP
-#define SYSMSG_HPP
+#ifndef IINDICATOR_VIEW_H
+#define IINDICATOR_VIEW_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,8 +42,7 @@
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <SysMsgPlugin.h>
+#include <YAGfx.h>
 #include <WString.h>
 
 /******************************************************************************
@@ -56,81 +54,73 @@
  *****************************************************************************/
 
 /**
- * System message handler.
+ * Interface for a view with indicators in each corner of the display.
+ * The indicators can be used to show the state of a certain functionality.
+ *
+ * If a indicator is set to on, it will be drawn with the corresponding color,
+ * otherwise it will not be drawn at all.
  */
-class SysMsg
+class IIndicatorView
 {
 public:
 
     /**
-     * Get system message handler instance.
-     *
-     * @return System message handler instance
+     * Destroy the interface.
      */
-    static SysMsg& getInstance()
-    {
-        static SysMsg instance; /* singleton idiom to force initialization in the first usage. */
-
-        return instance;
-    }
-
-    /**
-     * Initialize system message handler.
-     * It will hook into the display manager.
-     *
-     * @return If initialization is successful, it will return true otherwise false.
-     */
-    bool init(void);
-
-    /**
-     * Show message with the given duration. If the duration is infinite, it will be shown infinite.
-     *
-     * @param[in] msg       Message to show
-     * @param[in] duration  Duration in ms, how long a non-scrolling message shall be shown.
-     * @param[in] max       How often shall a scrolling message be shown.
-     */
-    void show(const String& msg, uint32_t duration = 0U, uint32_t max = 0U);
-
-    /**
-     * Is a system message shown in this moment?
-     *
-     * @return If a system message is shown, it will return true otherwise false.
-     */
-    bool isActive() const;
-
-    /**
-     * Show next message in the queue.
-     */
-    void next();
-
-private:
-
-    SysMsgPlugin* m_plugin; /**< Plugin, used to show system messages */
-
-    /**
-     * Constructs the system message handler.
-     */
-    SysMsg() :
-        m_plugin(nullptr)
+    virtual ~IIndicatorView()
     {
     }
 
     /**
-     * Destroys the system message handler.
+     * Initialize view, which will prepare the widgets and the default values.
+     *
+     * @param[in] width     Display width in pixel.
+     * @param[in] height    Display height in pixel.
      */
-    ~SysMsg()
-    {
-        /* Will never be called. */
-    }
+    virtual void init(uint16_t width, uint16_t height)        = 0;
 
-    SysMsg(const SysMsg& sysMsg);
-    SysMsg& operator=(const SysMsg& sysMsg);
+    /**
+     * Update the underlying canvas.
+     *
+     * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
+     */
+    virtual void update(YAGfx& gfx)                           = 0;
+
+    /**
+     * Set the indicator at given position to on/off state.
+     * If the indicator id is invalid, it will do nothing.
+     *
+     * The indicator id 255 will be used to turn on/off all indicators at once.
+     *
+     * @param[in] indicatorId   Id of the indicator, which to set.
+     * @param[in] isOn          If true, the indicator will be set to on state, otherwise off.
+     */
+    virtual void setIndicator(uint8_t indicatorId, bool isOn) = 0;
+
+    /**
+     * Get the indicator state at given position.
+     * If the indicator id is invalid, it will return false.
+     *
+     * @param[in]  indicatorId   Id of the indicator, which to set.
+     *
+     * @return If the indicator is on, it will return true otherwise false.
+     */
+    virtual bool isIndicatorOn(uint8_t indicatorId) const     = 0;
+
+protected:
+
+    /**
+     * Construct the interface.
+     */
+    IIndicatorView()
+    {
+    }
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* SYSMSG_HPP */
+#endif /* IINDICATOR_VIEW_H */
 
 /** @} */

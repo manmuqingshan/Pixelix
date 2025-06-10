@@ -25,16 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  Base class for view with indicators.
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup APP_LAYER
+ * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef SYSMSG_HPP
-#define SYSMSG_HPP
+#ifndef INDICATOR_VIEW_BASE_HPP
+#define INDICATOR_VIEW_BASE_HPP
 
 /******************************************************************************
  * Compile Switches
@@ -43,9 +42,8 @@
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <SysMsgPlugin.h>
-#include <WString.h>
+#include "Layouts.h"
+#include "./layouts/IndicatorViewGeneric.h"
 
 /******************************************************************************
  * Macros
@@ -56,81 +54,27 @@
  *****************************************************************************/
 
 /**
- * System message handler.
+ * View for indicators in each display corner.
+ * 
+ * @tparam option   Layout which to choose
  */
-class SysMsg
+template< Layout option >
+class IndicatorView : public IndicatorViewGeneric
 {
 public:
-
     /**
-     * Get system message handler instance.
-     *
-     * @return System message handler instance
+     * Destroys the view.
      */
-    static SysMsg& getInstance()
-    {
-        static SysMsg instance; /* singleton idiom to force initialization in the first usage. */
-
-        return instance;
-    }
-
-    /**
-     * Initialize system message handler.
-     * It will hook into the display manager.
-     *
-     * @return If initialization is successful, it will return true otherwise false.
-     */
-    bool init(void);
-
-    /**
-     * Show message with the given duration. If the duration is infinite, it will be shown infinite.
-     *
-     * @param[in] msg       Message to show
-     * @param[in] duration  Duration in ms, how long a non-scrolling message shall be shown.
-     * @param[in] max       How often shall a scrolling message be shown.
-     */
-    void show(const String& msg, uint32_t duration = 0U, uint32_t max = 0U);
-
-    /**
-     * Is a system message shown in this moment?
-     *
-     * @return If a system message is shown, it will return true otherwise false.
-     */
-    bool isActive() const;
-
-    /**
-     * Show next message in the queue.
-     */
-    void next();
-
-private:
-
-    SysMsgPlugin* m_plugin; /**< Plugin, used to show system messages */
-
-    /**
-     * Constructs the system message handler.
-     */
-    SysMsg() :
-        m_plugin(nullptr)
-    {
-    }
-
-    /**
-     * Destroys the system message handler.
-     */
-    ~SysMsg()
-    {
-        /* Will never be called. */
-    }
-
-    SysMsg(const SysMsg& sysMsg);
-    SysMsg& operator=(const SysMsg& sysMsg);
+    virtual ~IndicatorView() = default;
 };
+
+/** View for indicators in each display corner, considering the display size. */
+using IndicatorViewBase = IndicatorView<LAYOUT_TYPE>;
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* SYSMSG_HPP */
+#endif  /* INDICATOR_VIEW_BASE_HPP */
 
 /** @} */

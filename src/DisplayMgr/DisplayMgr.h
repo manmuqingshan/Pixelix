@@ -53,6 +53,7 @@
 #include <Mutex.hpp>
 #include <Task.hpp>
 #include <YAGfxBitmap.h>
+#include <IndicatorViewBase.hpp>
 
 #include "IPluginMaintenance.hpp"
 #include "SlotList.h"
@@ -246,7 +247,7 @@ public:
      * If no enabled plugin is in the slot, it will fail.
      *
      * @param[in] slotId    Id of the slot which to activate.
-     * 
+     *
      * @return If successful activated, it will return true otherwise false.
      */
     bool activateSlot(uint8_t slotId);
@@ -301,7 +302,7 @@ public:
 
     /**
      * Is slot locked?
-     * 
+     *
      * @param[in] slotId    Slot id
      *
      * @return If slot is locked, it will return true otherwise false.
@@ -328,7 +329,7 @@ public:
 
     /**
      * Is slot disabled?
-     * 
+     *
      * @param[in] slotId    Slot id
      *
      * @return If slot is disabled, it will return true otherwise false.
@@ -394,6 +395,32 @@ public:
      * @return If the display is powered on, it will return true otherwise false.
      */
     bool isDisplayOn() const;
+
+    /**
+     * Get indicator state.
+     * If the indicator id is invalid, it will return false.
+     * 
+     * @param[in] indicatorId  Id of indicator.
+     * 
+     * @return If the indicator is on, it will return true otherwise false.
+     */
+    bool getIndicator(uint8_t indicatorId) const;
+
+    /**
+     * Set indicator state.
+     * If the indicator id is invalid, it will do nothing.
+     * 
+     * The indicator id 255 will be used to turn on/off all indicators at once.
+     *
+     * @param[in] indicatorId  Id of indicator
+     * @param[in] isOn         Set to true to turn on the indicator, otherwise false.
+     */
+    void setIndicator(uint8_t indicatorId, bool isOn);
+
+    /**
+     * Indicator id for all indicators.
+     */
+    static const uint8_t INDICATOR_ID_ALL = IndicatorViewBase::INDICATOR_ID_ALL;
 
 private:
 
@@ -478,6 +505,7 @@ private:
     FadeEffect         m_fadeEffectIndex;         /**< Fade effect index to determine the next fade effect. */
     bool               m_fadeEffectUpdate;        /**< Flag to indicate that the fadeEffect was updated. */
     bool               m_isNetworkConnected;      /**< Is a network connection established? */
+    IndicatorViewBase  m_indicatorView;           /**< Indicator view shown as overlay to indicate user defined states. */
 
     /**
      * Constructs the display manager.
