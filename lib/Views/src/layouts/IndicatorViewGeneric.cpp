@@ -64,7 +64,13 @@ void IndicatorViewGeneric::update(YAGfx& gfx)
 
     for (idx = 0U; idx < MAX_LAMPS; ++idx)
     {
-        m_lampWidgets[idx].update(gfx);
+        LampWidget& lampWidget = m_lampWidgets[idx];
+
+        /* If the lamp is on, it will be drawn otherwise not. */
+        if (true == lampWidget.getOnState())
+        {
+            lampWidget.update(gfx);
+        }
     }
 }
 

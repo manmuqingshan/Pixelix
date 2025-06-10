@@ -193,7 +193,7 @@ void ConnectingState::process(StateMachine& sm)
 void ConnectingState::exit(StateMachine& sm)
 {
     /* If connection established, the no connection indicator shall be removed. */
-    if (static_cast<AbstractState*>(&ConnectedState::getInstance()) == sm.getState())
+    if (true == WiFi.isConnected())
     {
         DisplayMgr::getInstance().setIndicator(DisplayMgr::INDICATOR_ID_NETWORK, false);
     }
