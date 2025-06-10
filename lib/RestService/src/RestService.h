@@ -159,7 +159,7 @@ public:
      *
      * @return If a response is available, it will return true otherwise false
      */
-    bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument* payload);
+    bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload);
 
 private:
 
@@ -201,9 +201,9 @@ private:
      */
     struct Cmd
     {
-        CmdId  id;     /**< The command id identifies the kind of request. */
-        void*  restId; /**< Used to identify plugin in RestService */
-        String url;    /**< URL */
+        CmdId id;       /**< The command id identifies the kind of request. */
+        void* restId;   /**< Used to identify plugin in RestService */
+        char  url[256]; /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -223,10 +223,10 @@ private:
         } u;
     };
 
-    AsyncHttpClient        m_client;    /**< Asynchronous HTTP client. */
-    Queue<Cmd>             m_cmdQueue;  /**< Command queue */
-    TaskProxy<Msg, 9U, 0U> m_taskProxy; /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    Mutex                  m_mutex;     /**< Used to protect against concurrent access */
+    AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
+    Queue<Cmd>             m_cmdQueue;             /**< Command queue */
+    TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
+    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
 
     /**
      * Saves Callbacks of plugins
@@ -244,10 +244,8 @@ private:
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
-        m_mutex()
+        m_isWaitingForResponse(false)
     {
-        (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
-        (void)m_mutex.create();
     }
 
     /**

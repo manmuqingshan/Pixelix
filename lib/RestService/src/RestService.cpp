@@ -60,33 +60,49 @@
 
 bool RestService::start()
 {
+    bool                        isError     = false;
     AsyncHttpClient::OnResponse rspCallback = [this](void* restId, const HttpResponse& rsp) {
         handleAsyncWebResponse(restId, rsp);
     };
     AsyncHttpClient::OnError errCallback = [this](void* restId) {
         handleFailedWebRequest(restId);
     };
+    AsyncHttpClient::OnClosed closedCallback = [this]() {
+        m_isWaitingForResponse = false;
+    };
 
-    m_client.regOnResponse(rspCallback);
-    m_client.regOnError(errCallback);
+    isError = m_cmdQueue.create(CMD_QUEUE_SIZE);
 
-    return true;
+    if (true == isError)
+    {
+        m_client.regOnResponse(rspCallback);
+        m_client.regOnError(errCallback);
+        m_client.regOnClosed(closedCallback);
+    }
+
+    return isError;
 }
 
 void RestService::stop()
 {
+    m_client.regOnResponse(nullptr);
+    m_client.regOnError(nullptr);
+    m_client.regOnClosed(nullptr);
+
+    m_cmdQueue.destroy();
 }
 
 void RestService::process()
 {
-    if (true == m_mutex.take(portMAX_DELAY))
+    if (false == m_isWaitingForResponse)
     {
-
         Cmd cmd;
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
-            if (true == m_client.begin(cmd.url))
+            m_isWaitingForResponse = true;
+
+            if (true == m_client.begin(String(cmd.url)))
             {
                 switch (cmd.id)
                 {
@@ -104,7 +120,7 @@ void RestService::process()
                             LOG_ERROR("Msg could not be sent to Msg-Queue");
                         }
 
-                        m_mutex.give();
+                        m_isWaitingForResponse = false;
                     }
                     break;
 
@@ -122,7 +138,7 @@ void RestService::process()
                             LOG_ERROR("Msg could not be sent to Msg-Queue");
                         }
 
-                        m_mutex.give();
+                        m_isWaitingForResponse = false;
                     }
                     break;
 
@@ -143,12 +159,8 @@ void RestService::process()
                     LOG_ERROR("URL could not be parsed");
                 }
 
-                m_mutex.give();
+                m_isWaitingForResponse = false;
             }
-        }
-        else
-        {
-            m_mutex.give();
         }
     }
 }
@@ -168,42 +180,75 @@ void RestService::deleteCallback(void* restId)
 
 bool RestService::get(void* restId, const String& url)
 {
-    Cmd cmd;
+    bool isSuccessful = true;
 
-    cmd.id     = CMD_ID_GET;
-    cmd.restId = restId;
-    cmd.url    = url;
+    if (url.length() > 255)
+    {
+        isSuccessful = false;
+    }
+    else
+    {
+        Cmd cmd;
 
-    return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd.id     = CMD_ID_GET;
+        cmd.restId = restId;
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
+        cmd.url[sizeof(cmd.url) - 1] = '\0';
+        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+    }
+
+    return isSuccessful;
 }
 
 bool RestService::post(void* restId, const String& url, const uint8_t* payload, size_t size)
 {
-    Cmd cmd;
+    bool isSuccessful = true;
 
-    cmd.id          = CMD_ID_POST;
-    cmd.restId      = restId;
-    cmd.url         = url;
-    cmd.u.data.data = payload;
-    cmd.u.data.size = size;
+    if (url.length() > 255)
+    {
+        isSuccessful = false;
+    }
+    else
+    {
+        Cmd cmd;
 
-    return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd.id     = CMD_ID_POST;
+        cmd.restId = restId;
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
+        cmd.url[sizeof(cmd.url) - 1] = '\0';
+        cmd.u.data.data              = payload;
+        cmd.u.data.size              = size;
+        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+    }
+
+    return isSuccessful;
 }
 
 bool RestService::post(void* restId, const String& url, const String& payload)
 {
-    Cmd cmd;
+    bool isSuccessful = true;
 
-    cmd.id          = CMD_ID_POST;
-    cmd.restId      = restId;
-    cmd.url         = url;
-    cmd.u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
-    cmd.u.data.size = payload.length();
+    if (url.length() > 255)
+    {
+        isSuccessful = false;
+    }
+    else
+    {
+        Cmd cmd;
 
-    return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd.id     = CMD_ID_POST;
+        cmd.restId = restId;
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
+        cmd.url[sizeof(cmd.url) - 1] = '\0';
+        cmd.u.data.data              = reinterpret_cast<const uint8_t*>(payload.c_str());
+        cmd.u.data.size              = payload.length();
+        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+    }
+
+    return isSuccessful;
 }
 
-bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument* payload)
+bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload)
 {
     bool isSuccessful = false;
     Msg  msg;
@@ -234,7 +279,6 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
     Msg                  msg;
 
     msg.restId = restId;
-    msg.rsp    = jsonDoc;
 
     if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
     {
@@ -251,16 +295,25 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
                 LOG_ERROR("No payload.");
                 isError = true;
             }
+
+            /* If a filter is found, it shall be applied.*/
             else if (m_Callbacks.find(restId) != m_Callbacks.end())
             {
                 if (true == m_Callbacks[restId](payload, payloadSize, *jsonDoc))
                 {
                     msg.isMsg = true;
-                    isError   = !m_taskProxy.send(msg);
+                    msg.rsp   = jsonDoc;
+
+                    if (false == m_taskProxy.send(msg))
+                    {
+                        isError = true;
+                        LOG_ERROR("Could not send msg with rsp");
+                    }
                 }
                 else
                 {
                     isError = true;
+                    LOG_ERROR("Error while preprocessing!");
                 }
             }
             else
@@ -275,7 +328,12 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
                 else
                 {
                     msg.isMsg = true;
-                    isError   = !m_taskProxy.send(msg);
+                    msg.rsp   = jsonDoc;
+
+                    if (false == m_taskProxy.send(msg))
+                    {
+                        isError = true;
+                    }
                 }
             }
         }
@@ -288,21 +346,21 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
     else
     {
         isError = true;
+        LOG_ERROR("Http-Status not ok");
     }
 
-    if (isError)
+    if (true == isError)
     {
         delete jsonDoc;
         jsonDoc   = nullptr;
         msg.isMsg = false;
+        msg.rsp   = nullptr;
 
         if (false == m_taskProxy.send(msg))
         {
             LOG_ERROR("Msg could not be sent to Msg-Queue");
         }
     }
-
-    m_mutex.give();
 }
 
 void RestService::handleFailedWebRequest(void* restId)

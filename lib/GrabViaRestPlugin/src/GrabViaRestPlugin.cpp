@@ -269,19 +269,20 @@ void GrabViaRestPlugin::stop()
 
 void GrabViaRestPlugin::process(bool isConnected)
 {
-    Msg                        msg;
     MutexGuard<MutexRecursive> guard(m_mutex);
+    Msg                        msg;
 
     PluginWithConfig::process(isConnected);
 
     /* Only if a network connection is established the required information
      * shall be periodically requested via REST API.
      */
-    if (true == m_isAllowedToSend)
+
+    if (false == m_requestTimer.isTimerRunning())
     {
-        if (false == m_requestTimer.isTimerRunning())
+        if (true == isConnected)
         {
-            if (true == isConnected)
+            if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
                 {
@@ -295,59 +296,67 @@ void GrabViaRestPlugin::process(bool isConnected)
                     m_requestTimer.start(UPDATE_PERIOD);
                     m_isAllowedToSend = false;
                 }
+            }
+        }
+    }
+    else
+    {
+        /* If the connection is lost, stop periodically requesting information
+         * via REST API.
+         */
+        if (false == isConnected)
+        {
+            m_requestTimer.stop();
+        }
+        /* Network connection is available and next request may be necessary for
+         * information update.
+         */
+        else if (true == m_requestTimer.isTimeout())
+        {
+            if (true == m_isAllowedToSend)
+            {
+                if (false == startHttpRequest())
+                {
+                    /* If a request fails, a '?' will be shown. */
+                    m_view.setFormatText("{hc}?");
+
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
+            }
+        }
+    }
+
+    if (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
+    {
+        if (true == msg.isValidResponse)
+        {
+            if (nullptr != msg.rsp)
+            {
+                handleWebResponse(*msg.rsp);
             }
         }
         else
         {
-            /* If the connection is lost, stop periodically requesting information
-             * via REST API.
-             */
-            if (false == isConnected)
-            {
-                m_requestTimer.stop();
-            }
-            /* Network connection is available and next request may be necessary for
-             * information update.
-             */
-            else if (true == m_requestTimer.isTimeout())
-            {
-                if (false == startHttpRequest())
-                {
-                    /* If a request fails, a '?' will be shown. */
-                    m_view.setFormatText("{hc}?");
+            LOG_WARNING("Connection error.");
 
-                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
-                }
-                else
-                {
-                    m_requestTimer.start(UPDATE_PERIOD);
-                    m_isAllowedToSend = false;
-                }
-            }
+            /* If a request fails, show standard icon and a '?' */
+            m_view.setFormatText("{hc}?");
+
+            m_requestTimer.start(UPDATE_PERIOD_SHORT);
         }
 
-        if (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
+        if (nullptr != msg.rsp)
         {
-            if (msg.isValidResponse)
-            {
-                if (nullptr != msg.rsp)
-                {
-                    handleWebResponse(*msg.rsp);
-                    delete msg.rsp;
-                    msg.rsp = nullptr;
-                }
-            }
-            else
-            {
-                LOG_WARNING("Connection error.");
-
-                /* If a request fails, show standard icon and a '?' */
-                m_view.setFormatText("{hc}?");
-
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            m_isAllowedToSend = true;
+            delete msg.rsp;
+            msg.rsp = nullptr;
         }
+
+        m_isAllowedToSend = true;
     }
 }
 
@@ -525,6 +534,11 @@ bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t p
     else
     {
         DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(m_filter));
+
+        String               jsonString;
+        serializeJson(jsonDoc, jsonString);
+        LOG_INFO("%s", jsonString.c_str());
+
 
         if (DeserializationError::Ok != error.code())
         {
