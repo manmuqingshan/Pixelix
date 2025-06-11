@@ -227,8 +227,8 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
             return this->preProcessAsyncWebResponse(payload, size, doc);
         };
 
+    RestService::getInstance().setCallback(&m_restId, preProcessCallback);
     m_view.init(width, height);
-
     PluginWithConfig::start(width, height);
 
     if (FileMgrService::FILE_ID_INVALID != m_iconFileId)
@@ -254,8 +254,6 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
     {
         m_view.setupTextOnly();
     }
-
-    RestService::getInstance().setCallback(&m_restId, preProcessCallback);
 }
 
 void GrabViaRestPlugin::stop()
@@ -277,7 +275,6 @@ void GrabViaRestPlugin::process(bool isConnected)
     /* Only if a network connection is established the required information
      * shall be periodically requested via REST API.
      */
-
     if (false == m_requestTimer.isTimerRunning())
     {
         if (true == isConnected)
@@ -534,11 +531,6 @@ bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t p
     else
     {
         DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(m_filter));
-
-        String               jsonString;
-        serializeJson(jsonDoc, jsonString);
-        LOG_INFO("%s", jsonString.c_str());
-
 
         if (DeserializationError::Ok != error.code())
         {

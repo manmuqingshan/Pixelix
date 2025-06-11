@@ -60,8 +60,8 @@
 
 bool RestService::start()
 {
-    bool                        isError     = false;
-    AsyncHttpClient::OnResponse rspCallback = [this](void* restId, const HttpResponse& rsp) {
+    bool                        isSuccessful = false;
+    AsyncHttpClient::OnResponse rspCallback  = [this](void* restId, const HttpResponse& rsp) {
         handleAsyncWebResponse(restId, rsp);
     };
     AsyncHttpClient::OnError errCallback = [this](void* restId) {
@@ -71,16 +71,16 @@ bool RestService::start()
         m_isWaitingForResponse = false;
     };
 
-    isError = m_cmdQueue.create(CMD_QUEUE_SIZE);
+    isSuccessful = m_cmdQueue.create(CMD_QUEUE_SIZE);
 
-    if (true == isError)
+    if (true == isSuccessful)
     {
         m_client.regOnResponse(rspCallback);
         m_client.regOnError(errCallback);
         m_client.regOnClosed(closedCallback);
     }
 
-    return isError;
+    return isSuccessful;
 }
 
 void RestService::stop()
@@ -182,7 +182,7 @@ bool RestService::get(void* restId, const String& url)
 {
     bool isSuccessful = true;
 
-    if (url.length() > 255)
+    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
     {
         isSuccessful = false;
     }
@@ -204,7 +204,7 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 {
     bool isSuccessful = true;
 
-    if (url.length() > 255)
+    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
     {
         isSuccessful = false;
     }
@@ -228,7 +228,7 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 {
     bool isSuccessful = true;
 
-    if (url.length() > 255)
+    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
     {
         isSuccessful = false;
     }
