@@ -167,22 +167,40 @@ void RestService::process()
 
 void RestService::setCallback(void* restId, PreProcessCallback preProcessCallback)
 {
-    if (m_Callbacks.find(restId) == m_Callbacks.end())
+    if (nullptr == restId)
     {
-        m_Callbacks[restId] = preProcessCallback;
+        LOG_ERROR("Callback cannot be set with nullptr as restId!");
+    }
+    else
+    {
+        if (m_Callbacks.find(restId) == m_Callbacks.end())
+        {
+            m_Callbacks[restId] = preProcessCallback;
+        }
     }
 }
 
 void RestService::deleteCallback(void* restId)
 {
-    m_Callbacks.erase(restId);
+    if (nullptr == restId)
+    {
+        LOG_ERROR("Cannot delete callback for restId: nullptr!");
+    }
+    else
+    {
+        m_Callbacks.erase(restId);
+    }
 }
 
 bool RestService::get(void* restId, const String& url)
 {
     bool isSuccessful = true;
 
-    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
+    if (restId == nullptr)
+    {
+        isSuccessful = false;
+    }
+    else if (url.length() > CMD_URL_SIZE - 1U)
     {
         isSuccessful = false;
     }
@@ -192,9 +210,9 @@ bool RestService::get(void* restId, const String& url)
 
         cmd.id     = CMD_ID_GET;
         cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1U);
+        cmd.url[sizeof(cmd.url) - 1U] = '\0';
+        isSuccessful                  = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
@@ -204,7 +222,11 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 {
     bool isSuccessful = true;
 
-    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
+    if (restId == nullptr)
+    {
+        isSuccessful = false;
+    }
+    else if (url.length() > CMD_URL_SIZE - 1U)
     {
         isSuccessful = false;
     }
@@ -214,11 +236,11 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 
         cmd.id     = CMD_ID_POST;
         cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        cmd.u.data.data              = payload;
-        cmd.u.data.size              = size;
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1U);
+        cmd.url[sizeof(cmd.url) - 1U] = '\0';
+        cmd.u.data.data               = payload;
+        cmd.u.data.size               = size;
+        isSuccessful                  = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
@@ -228,7 +250,11 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 {
     bool isSuccessful = true;
 
-    if (url.length() > sizeof(((Cmd*)nullptr)->url) - 1 || restId == nullptr)
+    if (restId == nullptr)
+    {
+        isSuccessful = false;
+    }
+    else if (url.length() > CMD_URL_SIZE - 1U)
     {
         isSuccessful = false;
     }
@@ -238,11 +264,11 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 
         cmd.id     = CMD_ID_POST;
         cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        cmd.u.data.data              = reinterpret_cast<const uint8_t*>(payload.c_str());
-        cmd.u.data.size              = payload.length();
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1U);
+        cmd.url[sizeof(cmd.url) - 1U] = '\0';
+        cmd.u.data.data               = reinterpret_cast<const uint8_t*>(payload.c_str());
+        cmd.u.data.size               = payload.length();
+        isSuccessful                  = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
