@@ -62,13 +62,13 @@
  *****************************************************************************/
 
 /* Initialize static variables. */
-const char* FileMgrService::WORKING_DIRECTORY   = "/configuration";
-const char* FileMgrService::CONFIG_FILE_NAME    = "fileMgr.json";
-const char* FileMgrService::ENTITY_ID           = "files";
-const char* FileMgrService::TOPIC_UPLOAD        = "upload";
-const char* FileMgrService::TOPIC_REMOVE        = "remove";
-const char* FileMgrService::FILE_EXTENSIONS[]   =
-{
+const char* FileMgrService::WORKING_DIRECTORY = "/configuration";
+const char* FileMgrService::CONFIG_FILE_NAME  = "fileMgr.json";
+const char* FileMgrService::ENTITY_ID         = "fileMgrService";
+const char* FileMgrService::TOPIC_FILES       = "files";
+const char* FileMgrService::TOPIC_UPLOAD      = "upload";
+const char* FileMgrService::TOPIC_REMOVE      = "remove";
+const char* FileMgrService::FILE_EXTENSIONS[] = {
     ".bmp",
     ".gif"
 };
@@ -79,55 +79,60 @@ const char* FileMgrService::FILE_EXTENSIONS[]   =
 
 bool FileMgrService::start()
 {
-    bool                            isSuccessful        = true;
-    SettingsService&                settings            = SettingsService::getInstance();
-    TopicHandlerService&            topicHandlerService = TopicHandlerService::getInstance();
-    const size_t                    JSON_DOC_SIZE       = 512U;
-    DynamicJsonDocument             jsonDoc(JSON_DOC_SIZE);
-    JsonObjectConst                 extra               = jsonDoc.as<JsonObjectConst>();
-    ITopicHandler::SetTopicFunc     uploadTopicFunc     =
-        [this](const String& topic, const JsonObjectConst& value) -> bool
-        {
-            return this->uploadTopic(topic, value);
-        };
-    ITopicHandler::UploadReqFunc    uploadReqFunc       =
-        [this](const String& topic, const String& srcFilename, String& dstFilename) -> bool
-        {
-            return this->isUploadAccepted(topic, srcFilename, dstFilename);
-        };
-    ITopicHandler::SetTopicFunc     removeTopicFunc     =
-        [this](const String& topic, const JsonObjectConst& value) -> bool
-        {
-            return this->removeTopic(topic, value);
-        };
-    ITopicHandler::UploadReqFunc    uploadRejectFunc    =
-        [this](const String& topic, const String& srcFilename, String& dstFilename) -> bool
-        {
-            UTIL_NOT_USED(topic);
-            UTIL_NOT_USED(srcFilename);
-            UTIL_NOT_USED(dstFilename);
+    bool                        isSuccessful        = true;
+    SettingsService&            settings            = SettingsService::getInstance();
+    TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
+    JsonObjectConst             jsonExtra; /* Empty */
+    ITopicHandler::GetTopicFunc getTopicFunc =
+        [this](const String& topic, JsonObject& jsonValue) -> bool {
+        return this->getTopic(topic, jsonValue);
+    };
+    TopicHandlerService::HasChangedFunc hasChangedFunc =
+        [this](const String& topic) -> bool {
+        return this->hasTopicChanged(topic);
+    };
+    ITopicHandler::SetTopicFunc uploadTopicFunc =
+        [this](const String& topic, const JsonObjectConst& value) -> bool {
+        return this->uploadTopic(topic, value);
+    };
+    ITopicHandler::UploadReqFunc uploadReqFunc =
+        [this](const String& topic, const String& srcFilename, String& dstFilename) -> bool {
+        return this->isUploadAccepted(topic, srcFilename, dstFilename);
+    };
+    ITopicHandler::SetTopicFunc removeTopicFunc =
+        [this](const String& topic, const JsonObjectConst& value) -> bool {
+        return this->removeTopic(topic, value);
+    };
+    ITopicHandler::UploadReqFunc uploadRejectFunc =
+        [this](const String& topic, const String& srcFilename, String& dstFilename) -> bool {
+        UTIL_NOT_USED(topic);
+        UTIL_NOT_USED(srcFilename);
+        UTIL_NOT_USED(dstFilename);
 
-            return false;
-        };
+        return false;
+    };
 
     /* Setup file tables and create a configuration file on demand. */
     if (false == load())
     {
-        m_isDirty = true;
+        m_hasFileTableChanged = true;
+        m_isDirty             = true;
     }
     else
     {
         /* Remove file entries, where the file is missing. */
         if (true == checkForFiles(m_fileTable))
         {
-            m_isDirty = true;
+            m_hasFileTableChanged = true;
+            m_isDirty             = true;
         }
     }
 
     /* Add new files to file table. */
     if (true == scanForFiles(m_fileTable, FILE_EXTENSIONS, UTIL_ARRAY_NUM(FILE_EXTENSIONS)))
     {
-        m_isDirty = true;
+        m_hasFileTableChanged = true;
+        m_isDirty             = true;
     }
 
     m_timer.start(TIMER_PERIOD);
@@ -144,8 +149,9 @@ bool FileMgrService::start()
     }
 
     /* Register file upload and file remove topic. */
-    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC_UPLOAD, extra, nullptr, nullptr, uploadTopicFunc, uploadReqFunc);
-    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC_REMOVE, extra, nullptr, nullptr, removeTopicFunc, uploadRejectFunc);
+    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC_FILES, jsonExtra, getTopicFunc, hasChangedFunc, nullptr, nullptr);
+    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC_UPLOAD, jsonExtra, nullptr, nullptr, uploadTopicFunc, uploadReqFunc);
+    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC_REMOVE, jsonExtra, nullptr, nullptr, removeTopicFunc, uploadRejectFunc);
 
     LOG_INFO("File manager service started.");
 
@@ -195,8 +201,8 @@ FileMgrService::FileId FileMgrService::getFileIdByName(const String& name)
 
 bool FileMgrService::getFileFullPathById(String& fullPath, FileId fileId)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
-    FileTableEntry*             entry = getFileEntry(m_fileTable, fileId);
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    FileTableEntry*            entry = getFileEntry(m_fileTable, fileId);
 
     if (nullptr != entry)
     {
@@ -223,18 +229,18 @@ bool FileMgrService::getFileFullPathById(String& fullPath, FileId fileId)
 
 bool FileMgrService::addFileEntry(FileTableEntry* fileTable, const String& fullPath)
 {
-    bool    isAdded = false;
-    FileId  fileId;
+    bool   isAdded = false;
+    FileId fileId;
 
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
         FileTableEntry* entry = &fileTable[fileId];
 
         if (true == entry->fullPath.isEmpty())
         {
-            entry->fullPath     = fullPath;
-            entry->removeReq    = false;
-            isAdded             = true;
+            entry->fullPath  = fullPath;
+            entry->removeReq = false;
+            isAdded          = true;
 
             LOG_DEBUG("[%08X][%u] %s - added.", fileTable, fileId, fullPath.c_str());
             break;
@@ -263,7 +269,7 @@ void FileMgrService::clearFileTable(FileTableEntry* fileTable)
 {
     FileId fileId;
 
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
         removeFileEntry(fileTable, fileId);
     }
@@ -271,20 +277,20 @@ void FileMgrService::clearFileTable(FileTableEntry* fileTable)
 
 bool FileMgrService::scanForFiles(FileTableEntry* fileTable, const char* fileExtension[], size_t count)
 {
-    bool    anyChange   = false;
-    File    fdRoot      = FILESYSTEM.open(WORKING_DIRECTORY, "r");
-    File    fd          = fdRoot.openNextFile();
+    bool anyChange = false;
+    File fdRoot    = FILESYSTEM.open(WORKING_DIRECTORY, "r");
+    File fd        = fdRoot.openNextFile();
 
     /* Scan for files only flat! */
-    while(true == fd)
+    while (true == fd)
     {
         /* Filter for files with the requested extension. */
         if (false == fd.isDirectory())
         {
-            String  fullPath = fd.path();
-            size_t  idx;
+            String fullPath = fd.path();
+            size_t idx;
 
-            for(idx = 0U; idx < count; ++idx)
+            for (idx = 0U; idx < count; ++idx)
             {
                 int32_t fileExtIdx = fullPath.lastIndexOf(".");
 
@@ -318,7 +324,7 @@ bool FileMgrService::scanForFiles(FileTableEntry* fileTable, const char* fileExt
         fd.close();
         fd = fdRoot.openNextFile();
     }
-    
+
     /* Cleanup */
     if (true == fd)
     {
@@ -330,10 +336,10 @@ bool FileMgrService::scanForFiles(FileTableEntry* fileTable, const char* fileExt
 
 bool FileMgrService::checkForFiles(FileTableEntry* fileTable)
 {
-    bool    anyChange = false;
-    FileId  fileId;
+    bool   anyChange = false;
+    FileId fileId;
 
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
         FileTableEntry* entry = &fileTable[fileId];
 
@@ -349,10 +355,63 @@ bool FileMgrService::checkForFiles(FileTableEntry* fileTable)
     return anyChange;
 }
 
+bool FileMgrService::hasTopicChanged(const String& topic)
+{
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    bool                       hasChanged = m_hasFileTableChanged;
+
+    m_hasFileTableChanged                 = false;
+
+    return hasChanged;
+}
+
+bool FileMgrService::getTopic(const String& topic, JsonObject& jsonValue)
+{
+    FileId                     fileId;
+    JsonArray                  jsonFileTable = jsonValue.createNestedArray("fileTable");
+    MutexGuard<MutexRecursive> guard(m_mutex);
+
+    /* The callback is dedicated to a topic, therefore the
+     * topic parameter is not used.
+     */
+    UTIL_NOT_USED(topic);
+
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
+    {
+        FileTableEntry* entry         = &m_fileTable[fileId];
+        JsonObject      jsonFileEntry = jsonFileTable.createNestedObject();
+
+        jsonFileEntry["fileId"]       = fileId;
+
+        if (true == entry->fullPath.isEmpty())
+        {
+            jsonFileEntry["fileName"] = "";
+        }
+        else
+        {
+            int lastSlash = entry->fullPath.lastIndexOf('/');
+
+            /* Only the filename without path? */
+            if (0 > lastSlash)
+            {
+                jsonFileEntry["fileName"] = entry->fullPath;
+            }
+            /* Filename with path. */
+            else
+            {
+                /* Remove path. */
+                jsonFileEntry["fileName"] = entry->fullPath.substring(lastSlash + 1U);
+            }
+        }
+    }
+
+    return true;
+}
+
 bool FileMgrService::uploadTopic(const String& topic, const JsonObjectConst& value)
 {
-    bool                isSuccessful = false;
-    JsonVariantConst    jsonFullPath = value["fullPath"];
+    bool             isSuccessful = false;
+    JsonVariantConst jsonFullPath = value["fullPath"];
 
     if (true == topic.equals(TOPIC_UPLOAD))
     {
@@ -363,8 +422,8 @@ bool FileMgrService::uploadTopic(const String& topic, const JsonObjectConst& val
 
             if (false == fullPath.isEmpty())
             {
-                MutexGuard<MutexRecursive>  guard(m_mutex);
-                FileId                      fileId          = getFileIdByName(fullPath);
+                MutexGuard<MutexRecursive> guard(m_mutex);
+                FileId                     fileId = getFileIdByName(fullPath);
 
                 /* New file uploaded? */
                 if (FILE_ID_INVALID == fileId)
@@ -378,9 +437,10 @@ bool FileMgrService::uploadTopic(const String& topic, const JsonObjectConst& val
                     }
                     else
                     {
-                        m_isDirty = true;
+                        m_hasFileTableChanged = true;
+                        m_isDirty             = true;
 
-                        isSuccessful = true;
+                        isSuccessful          = true;
                     }
                 }
                 /* File uploaded which is already known. */
@@ -404,7 +464,7 @@ bool FileMgrService::isUploadAccepted(const String& topic, const String& srcFile
         size_t idx;
 
         /* Accept only files with the right file extension. */
-        for(idx = 0U; idx < UTIL_ARRAY_NUM(FILE_EXTENSIONS); ++idx)
+        for (idx = 0U; idx < UTIL_ARRAY_NUM(FILE_EXTENSIONS); ++idx)
         {
             int32_t fileExtIdx = srcFilename.lastIndexOf(".");
 
@@ -422,7 +482,7 @@ bool FileMgrService::isUploadAccepted(const String& topic, const String& srcFile
 
         if (true == isAccepted)
         {
-            dstFilename = WORKING_DIRECTORY;
+            dstFilename  = WORKING_DIRECTORY;
             dstFilename += "/";
             dstFilename += srcFilename;
         }
@@ -434,7 +494,7 @@ bool FileMgrService::isUploadAccepted(const String& topic, const String& srcFile
 bool FileMgrService::removeTopic(const String& topic, const JsonObjectConst& value)
 {
     bool isSuccessful = false;
-    
+
 
     if (true == topic.equals(TOPIC_REMOVE))
     {
@@ -446,9 +506,9 @@ bool FileMgrService::removeTopic(const String& topic, const JsonObjectConst& val
         }
         else
         {
-            MutexGuard<MutexRecursive>  guard(m_mutex);
-            FileId                      fileId      = jsonFileId.as<String>().toInt();
-            FileTableEntry*             fileEntry   = getFileEntry(m_fileTable, fileId);
+            MutexGuard<MutexRecursive> guard(m_mutex);
+            FileId                     fileId    = jsonFileId.as<String>().toInt();
+            FileTableEntry*            fileEntry = getFileEntry(m_fileTable, fileId);
 
             if (nullptr == fileEntry)
             {
@@ -458,7 +518,7 @@ bool FileMgrService::removeTopic(const String& topic, const JsonObjectConst& val
             {
                 fileEntry->removeReq = true;
 
-                isSuccessful = true;
+                isSuccessful         = true;
             }
         }
     }
@@ -482,7 +542,7 @@ FileMgrService::FileId FileMgrService::getFileId(FileTableEntry* fileTable, cons
 {
     FileId fileId;
 
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
         if (0 <= fileTable[fileId].fullPath.indexOf(fullPath))
         {
@@ -500,14 +560,14 @@ FileMgrService::FileId FileMgrService::getFileId(FileTableEntry* fileTable, cons
 
 bool FileMgrService::load()
 {
-    bool                isSuccessful            = true;
+    bool                isSuccessful = true;
     JsonFile            jsonFile(FILESYSTEM);
-    const size_t        JSON_DOC_SIZE           = 4096U;
+    const size_t        JSON_DOC_SIZE = 4096U;
     DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-    String              fullConfigFileName      = WORKING_DIRECTORY;
+    String              fullConfigFileName  = WORKING_DIRECTORY;
 
-    fullConfigFileName += "/";
-    fullConfigFileName += CONFIG_FILE_NAME;
+    fullConfigFileName                     += "/";
+    fullConfigFileName                     += CONFIG_FILE_NAME;
 
     if (false == jsonFile.load(fullConfigFileName, jsonDoc))
     {
@@ -521,13 +581,13 @@ bool FileMgrService::load()
     }
     else
     {
-        JsonArray   jsonFileTable   = jsonDoc["fileTable"].as<JsonArray>();
-        FileId      fileId          = 0U;
+        JsonArray jsonFileTable = jsonDoc["fileTable"].as<JsonArray>();
+        FileId    fileId        = 0U;
 
-        for(JsonObject jsonFileTableEntry: jsonFileTable)
+        for (JsonObject jsonFileTableEntry : jsonFileTable)
         {
-            JsonVariantConst    jsonFullPath    = jsonFileTableEntry["fullPath"];
-            FileTableEntry*     entry           = &m_fileTable[fileId];
+            JsonVariantConst jsonFullPath = jsonFileTableEntry["fullPath"];
+            FileTableEntry*  entry        = &m_fileTable[fileId];
 
             entry->clear();
 
@@ -535,7 +595,7 @@ bool FileMgrService::load()
             {
                 entry->fullPath = jsonFullPath.as<String>();
             }
-            
+
             ++fileId;
             if (MAX_FILES <= fileId)
             {
@@ -551,18 +611,18 @@ void FileMgrService::save()
 {
     String              installation;
     FileId              fileId;
-    const size_t        JSON_DOC_SIZE       = 4096U;
+    const size_t        JSON_DOC_SIZE = 4096U;
     DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-    JsonArray           jsonFileTable       = jsonDoc.createNestedArray("fileTable");
+    JsonArray           jsonFileTable = jsonDoc.createNestedArray("fileTable");
     JsonFile            jsonFile(FILESYSTEM);
     String              fullConfigFileName  = WORKING_DIRECTORY;
 
-    fullConfigFileName += "/";
-    fullConfigFileName += CONFIG_FILE_NAME;
+    fullConfigFileName                     += "/";
+    fullConfigFileName                     += CONFIG_FILE_NAME;
 
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
-        JsonObject jsonFileTableEntry = jsonFileTable.createNestedObject();
+        JsonObject jsonFileTableEntry  = jsonFileTable.createNestedObject();
 
         jsonFileTableEntry["fullPath"] = m_fileTable[fileId].fullPath;
     }
@@ -588,7 +648,7 @@ void FileMgrService::removeFiles()
     /* Walk through file table and check whether one entry is marked as
      * to be removed.
      */
-    for(fileId = 0U; fileId < MAX_FILES; ++fileId)
+    for (fileId = 0U; fileId < MAX_FILES; ++fileId)
     {
         FileTableEntry* entry = &m_fileTable[fileId];
 
@@ -598,7 +658,8 @@ void FileMgrService::removeFiles()
             if (true == FILESYSTEM.remove(entry->fullPath))
             {
                 removeFileEntry(m_fileTable, fileId);
-                m_isDirty = true;
+                m_hasFileTableChanged = true;
+                m_isDirty             = true;
             }
         }
     }
