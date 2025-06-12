@@ -447,7 +447,7 @@ void DateTimePlugin::updateDateTime(bool force)
             break;
         }
 
-        /* cache time every second in view  (i.e. for analog clock) */
+        /* cache time every second in view (i.e. for analog clock) */
         if ((true == force) ||
             (m_shownSecond != timeInfo.tm_sec))
         {
@@ -504,7 +504,7 @@ void DateTimePlugin::updateDateTime(bool force)
     {
         if (true == force)
         {
-            m_view.setFormatText("{hc}?");
+            m_view.setFormatText("{hc}Time Sync");
         }
     }
 }
