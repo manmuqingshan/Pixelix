@@ -164,7 +164,7 @@ public:
 private:
 
     static const size_t   CMD_QUEUE_SIZE = 9U;  /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
-    static const uint16_t CMD_URL_SIZE   = 256; /**< Max. size of URLs that can be stored in a cmd. */
+    static const uint16_t CMD_URL_SIZE   = 256U; /**< Max. size of URLs that can be stored in a cmd. */
 
     /**
      * A message for HTTP client/server handling.
