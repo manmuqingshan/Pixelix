@@ -263,7 +263,7 @@ bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocumen
 
             if (false == m_taskProxy.receive(msg))
             {
-                LOG_ERROR("Two clients with the same restId exist!");
+                LOG_FATAL("Two clients with the same restId exist!");
             }
         }
     }
