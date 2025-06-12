@@ -224,7 +224,7 @@ private:
     };
 
     AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
-    Queue<Cmd>             m_cmdQueue;             /**< Command queue */
+    Queue<Cmd*>             m_cmdQueue;             /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
     bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
 

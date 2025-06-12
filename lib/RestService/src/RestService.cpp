@@ -96,22 +96,22 @@ void RestService::process()
 {
     if (false == m_isWaitingForResponse)
     {
-        Cmd cmd;
+        Cmd* cmd;
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
             m_isWaitingForResponse = true;
 
-            if (true == m_client.begin(String(cmd.url)))
+            if (true == m_client.begin(String(cmd->url)))
             {
-                switch (cmd.id)
+                switch (cmd->id)
                 {
                 case CMD_ID_GET:
-                    if (false == m_client.GET(cmd.restId))
+                    if (false == m_client.GET(cmd->restId))
                     {
                         Msg msg;
 
-                        msg.restId = cmd.restId;
+                        msg.restId = cmd->restId;
                         msg.isMsg  = false;
                         msg.rsp    = nullptr;
 
@@ -125,11 +125,11 @@ void RestService::process()
                     break;
 
                 case CMD_ID_POST:
-                    if (false == m_client.POST(cmd.u.data.data, cmd.u.data.size, cmd.restId))
+                    if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size, cmd->restId))
                     {
                         Msg msg;
 
-                        msg.restId = cmd.restId;
+                        msg.restId = cmd->restId;
                         msg.isMsg  = false;
                         msg.rsp    = nullptr;
 
@@ -150,7 +150,7 @@ void RestService::process()
             {
                 Msg msg;
 
-                msg.restId = cmd.restId;
+                msg.restId = cmd->restId;
                 msg.isMsg  = false;
                 msg.rsp    = nullptr;
 
@@ -188,13 +188,13 @@ bool RestService::get(void* restId, const String& url)
     }
     else
     {
-        Cmd cmd;
+        Cmd* cmd    = new Cmd();
 
-        cmd.id     = CMD_ID_GET;
-        cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd->id     = CMD_ID_GET;
+        cmd->restId = restId;
+        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1);
+        cmd->url[sizeof(cmd->url) - 1] = '\0';
+        isSuccessful                   = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
@@ -210,15 +210,15 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
     }
     else
     {
-        Cmd cmd;
+        Cmd* cmd    = new Cmd();
 
-        cmd.id     = CMD_ID_POST;
-        cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        cmd.u.data.data              = payload;
-        cmd.u.data.size              = size;
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd->id     = CMD_ID_POST;
+        cmd->restId = restId;
+        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1);
+        cmd->url[sizeof(cmd->url) - 1] = '\0';
+        cmd->u.data.data               = payload;
+        cmd->u.data.size               = size;
+        isSuccessful                   = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
@@ -234,15 +234,15 @@ bool RestService::post(void* restId, const String& url, const String& payload)
     }
     else
     {
-        Cmd cmd;
+        Cmd* cmd    = new Cmd();
 
-        cmd.id     = CMD_ID_POST;
-        cmd.restId = restId;
-        strncpy(cmd.url, url.c_str(), sizeof(cmd.url) - 1);
-        cmd.url[sizeof(cmd.url) - 1] = '\0';
-        cmd.u.data.data              = reinterpret_cast<const uint8_t*>(payload.c_str());
-        cmd.u.data.size              = payload.length();
-        isSuccessful                 = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        cmd->id     = CMD_ID_POST;
+        cmd->restId = restId;
+        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1);
+        cmd->url[sizeof(cmd->url) - 1] = '\0';
+        cmd->u.data.data               = reinterpret_cast<const uint8_t*>(payload.c_str());
+        cmd->u.data.size               = payload.length();
+        isSuccessful                   = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
     }
 
     return isSuccessful;
