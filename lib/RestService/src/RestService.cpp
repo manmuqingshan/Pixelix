@@ -200,7 +200,7 @@ bool RestService::get(void* restId, const String& url)
     {
         isSuccessful = false;
     }
-    else if (url.length() > CMD_URL_SIZE - 1U)
+    else if (url.length() > (CMD_URL_SIZE - 1U))
     {
         isSuccessful = false;
     }
@@ -226,7 +226,7 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
     {
         isSuccessful = false;
     }
-    else if (url.length() > CMD_URL_SIZE - 1U)
+    else if (url.length() > (CMD_URL_SIZE - 1U))
     {
         isSuccessful = false;
     }
@@ -254,7 +254,7 @@ bool RestService::post(void* restId, const String& url, const String& payload)
     {
         isSuccessful = false;
     }
-    else if (url.length() > CMD_URL_SIZE - 1U)
+    else if (url.length() > (CMD_URL_SIZE - 1U))
     {
         isSuccessful = false;
     }
