@@ -270,7 +270,8 @@ void GrabViaRestPlugin::stop()
 void GrabViaRestPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    Msg                        msg;
+    DynamicJsonDocument*       jsonDoc;
+    bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
 
@@ -330,13 +331,13 @@ void GrabViaRestPlugin::process(bool isConnected)
         }
     }
 
-    if (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
+    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
     {
-        if (true == msg.isValidResponse)
+        if (true == isValidResponse)
         {
-            if (nullptr != msg.rsp)
+            if (nullptr != jsonDoc)
             {
-                handleWebResponse(*msg.rsp);
+                handleWebResponse(*jsonDoc);
             }
         }
         else
@@ -349,10 +350,10 @@ void GrabViaRestPlugin::process(bool isConnected)
             m_requestTimer.start(UPDATE_PERIOD_SHORT);
         }
 
-        if (nullptr != msg.rsp)
+        if (nullptr != jsonDoc)
         {
-            delete msg.rsp;
-            msg.rsp = nullptr;
+            delete jsonDoc;
+            jsonDoc = nullptr;
         }
 
         m_isAllowedToSend = true;
@@ -708,16 +709,6 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
 
 void GrabViaRestPlugin::clearQueue()
 {
-    Msg msg;
-
-    while (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
-    {
-        if (true == msg.isValidResponse)
-        {
-            delete msg.rsp;
-            msg.rsp = nullptr;
-        }
-    }
 }
 
 /******************************************************************************
