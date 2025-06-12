@@ -263,6 +263,8 @@ void GrabViaRestPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    RestService::getInstance().deleteCallback(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
