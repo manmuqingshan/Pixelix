@@ -163,10 +163,8 @@ public:
 
 private:
 
-    /**
-     *  Max. number of commands which can be queued. Must be increased when new user of RestService is added
-     */
-    static const size_t CMD_QUEUE_SIZE = 9U;
+    static const size_t   CMD_QUEUE_SIZE = 9U;  /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    static const uint16_t CMD_URL_SIZE   = 256U; /**< Max. size of URLs that can be stored in a cmd. */
 
     /**
      * A message for HTTP client/server handling.
@@ -201,9 +199,9 @@ private:
      */
     struct Cmd
     {
-        CmdId id;       /**< The command id identifies the kind of request. */
-        void* restId;   /**< Used to identify plugin in RestService */
-        char  url[256]; /**< URL */
+        CmdId id;                /**< The command id identifies the kind of request. */
+        void* restId;            /**< Used to identify plugin in RestService */
+        char  url[CMD_URL_SIZE]; /**< URL */
 
         /**
          * The union contains the event id specific parameters.
