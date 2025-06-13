@@ -47,16 +47,14 @@
 #include <Board.h>
 #include <TextWidget.h>
 #include <SimpleTimer.hpp>
-#include <FadeLinear.h>
-#include <FadeMoveX.h>
-#include <FadeMoveY.h>
 #include <Mutex.hpp>
 #include <Task.hpp>
-#include <YAGfxBitmap.h>
 #include <IndicatorViewBase.hpp>
 
 #include "IPluginMaintenance.hpp"
 #include "SlotList.h"
+#include "FadeEffectController.h"
+#include "DoubleFrameBuffer.h"
 
 /******************************************************************************
  * Macros
@@ -74,16 +72,6 @@
 class DisplayMgr
 {
 public:
-
-    /** Fade effects */
-    enum FadeEffect
-    {
-        FADE_EFFECT_NONE = 0, /**< No fade effect */
-        FADE_EFFECT_LINEAR,   /**< Linear dimming fade effect. */
-        FADE_EFFECT_MOVE_X,   /**< Moving fade effect into the direction of negative x-coordinates. */
-        FADE_EFFECT_MOVE_Y,   /**< Moving fade effect into the direction of negative y-coordinates. */
-        FADE_EFFECT_COUNT     /**< Number of fade effects. */
-    };
 
     /**
      * Get display manager instance.
@@ -264,17 +252,20 @@ public:
 
     /**
      * Activate next fade effect.
+     * If selected fade effect is FadeEffectController::FADE_EFFECT_COUNT,
+     * the next fade effect will be selected in the order as defined in the
+     * FadeEffectController::FadeEffect enum.
      *
-     * @param[in] fadeEffect fadeEffect to be activated.
+     * @param[in] fadeEffect Fade effect to be activated.
      */
-    void activateNextFadeEffect(FadeEffect fadeEffect);
+    void activateNextFadeEffect(FadeEffectController::FadeEffect fadeEffect);
 
     /**
      * Get fade effect.
      *
-     * @return the currently active fadeEffect.
+     * @return The currently active fade effect.
      */
-    FadeEffect getFadeEffect();
+    FadeEffectController::FadeEffect getFadeEffect();
 
     /**
      * Move plugin to a different slot.
@@ -478,39 +469,13 @@ private:
     IPluginMaintenance* m_requestedPlugin;
 
     /** Timer, used for changing the slot after a specific duration. */
-    SimpleTimer m_slotTimer;
+    SimpleTimer                      m_slotTimer;
 
-    /** Display fade state */
-    enum FadeState
-    {
-        FADE_IDLE = 0, /**< No fading */
-        FADE_IN,       /**< Find in */
-        FADE_OUT       /**< Fade out */
-    };
-
-    /** Frame buffer ids */
-    enum FbId
-    {
-        FB_ID_0 = 0, /**< 1. frame buffer */
-        FB_ID_1,     /**< 2. frame buffer */
-        FB_ID_MAX    /**< Number of frame buffers */
-    };
-
-    /**
-     * A plugin change (inactive -> active) will fade the display content of
-     * the old plugin out and from the new plugin in.
-     */
-    FadeState          m_displayFadeState;
-    YAGfxBitmap*       m_selectedFrameBuffer;     /**< Points to the current framebuffer, used to update the display. */
-    YAGfxDynamicBitmap m_framebuffers[FB_ID_MAX]; /**< Two framebuffers, which will contain the old and the new plugin content. */
-    FadeLinear         m_fadeLinearEffect;        /**< Linear fade effect. */
-    FadeMoveX          m_fadeMoveXEffect;         /**< Moving along x-axis fade effect. */
-    FadeMoveY          m_fadeMoveYEffect;         /**< Moving along y-axis fade effect. */
-    IFadeEffect*       m_fadeEffect;              /**< The fade effect itself. */
-    FadeEffect         m_fadeEffectIndex;         /**< Fade effect index to determine the next fade effect. */
-    bool               m_fadeEffectUpdate;        /**< Flag to indicate that the fadeEffect was updated. */
-    bool               m_isNetworkConnected;      /**< Is a network connection established? */
-    IndicatorViewBase  m_indicatorView;           /**< Indicator view shown as overlay to indicate user defined states. */
+    DoubleFrameBuffer                m_doubleFrameBuffer;    /**< Double framebuffer. */
+    FadeEffectController             m_fadeEffectController; /**< Fade effect controller. */
+    FadeEffectController::FadeEffect m_nextFadeEffect;       /**< Next fade effect to be activated. */
+    bool                             m_isNetworkConnected;   /**< Is a network connection established? */
+    IndicatorViewBase                m_indicatorView;        /**< Indicator view shown as overlay to indicate user defined states. */
 
     /**
      * Constructs the display manager.
@@ -543,18 +508,6 @@ private:
      * @return Id of previous slot
      */
     uint8_t previousSlot(uint8_t slotId);
-
-    /**
-     * Start fade effect.
-     */
-    void startFadeOut();
-
-    /**
-     * Fade display content in/out.
-     *
-     * @param[in] dst   Destination display
-     */
-    void fadeInOut(YAGfx& dst);
 
     /**
      * Process the slots. This shall be called periodically in

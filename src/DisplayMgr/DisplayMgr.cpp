@@ -129,100 +129,65 @@ bool DisplayMgr::begin()
     brightnessCtrl.setBrightness(static_cast<uint8_t>(brightness));
 
     /* Set fade effect */
-    m_fadeEffectIndex  = static_cast<FadeEffect>(fadeEffect);
-    m_fadeEffectUpdate = true;
+    m_fadeEffectController.selectFadeEffect(static_cast<FadeEffectController::FadeEffect>(fadeEffect));
+    m_nextFadeEffect = m_fadeEffectController.getFadeEffect();
 
-    /* No slots available? */
-    if (false == m_slotList.isAvailable())
+    /* Allocate some stuff. */
+    if (false == m_slotList.create(maxSlots))
     {
-        if (false == m_slotList.create(maxSlots))
-        {
-            LOG_FATAL("Not enough heap space available.");
-
-            isError = true;
-        }
+        LOG_FATAL("Not enough heap space available.");
+        isError = true;
+    }
+    else if (false == m_doubleFrameBuffer.create(Display::getInstance().getWidth(), Display::getInstance().getHeight()))
+    {
+        LOG_FATAL("Couldn't create double framebuffer.");
+        isError = true;
+    }
+    else if (false == m_mutexInterf.create())
+    {
+        isError = true;
+    }
+    else if (false == m_mutexUpdate.create())
+    {
+        isError = true;
+    }
+    else
+    {
+        ;
     }
 
-    if (false == isError)
+    /* Process task not started yet? */
+    if ((false == isError) &&
+        (false == m_processTask.isRunning()))
     {
-        uint8_t idx = 0U;
-
-        /* Allocate framebuffer memory. */
-        for (idx = 0U; idx < UTIL_ARRAY_NUM(m_framebuffers); ++idx)
+        if (false == m_processTask.start(this))
         {
-            if (false == m_framebuffers[idx].isAllocated())
-            {
-                if (false == m_framebuffers[idx].create(Display::getInstance().getWidth(), Display::getInstance().getHeight()))
-                {
-                    isError = true;
-
-                    LOG_WARNING("Couldn't create framebuffer canvas for fade effect.");
-                }
-            }
-        }
-
-        if (false == isError)
-        {
-            m_selectedFrameBuffer = &m_framebuffers[0U];
+            isError = true;
         }
         else
         {
-            /* If fade effects are not available, it just looks not so nice but
-             * thats it.
-             */
-            isError = false;
+            LOG_DEBUG("Process task is up.");
         }
+    }
 
-        if (false == m_mutexInterf.isAllocated())
+    /* Update task not started yet? */
+    if ((false == isError) &&
+        (false == m_updateTask.isRunning()))
+    {
+        if (false == m_updateTask.start(this))
         {
-            if (false == m_mutexInterf.create())
-            {
-                isError = true;
-            }
+            isError = true;
         }
-
-        if (false == m_mutexUpdate.isAllocated())
+        else
         {
-            if (false == m_mutexUpdate.create())
-            {
-                isError = true;
-            }
-        }
-
-        /* Process task not started yet? */
-        if ((false == isError) &&
-            (false == m_processTask.isRunning()))
-        {
-            if (false == m_processTask.start(this))
-            {
-                isError = true;
-            }
-            else
-            {
-                LOG_DEBUG("Process task is up.");
-            }
-        }
-
-        /* Update task not started yet? */
-        if ((false == isError) &&
-            (false == m_updateTask.isRunning()))
-        {
-            if (false == m_updateTask.start(this))
-            {
-                isError = true;
-            }
-            else
-            {
-                LOG_DEBUG("Update task is up.");
-            }
+            LOG_DEBUG("Update task is up.");
         }
     }
 
     /* Any error happened? */
     if (true == isError)
     {
-        (void)m_processTask.stop();
-        (void)m_updateTask.stop();
+        end();
     }
     else
     {
@@ -236,47 +201,30 @@ bool DisplayMgr::begin()
 
 void DisplayMgr::end()
 {
-    uint8_t idx = 0U;
-
-    /* Process task already running? */
-    if (true == m_processTask.isRunning())
+    /* Stop the process task. */
+    if (false == m_processTask.stop())
     {
-        /* Stop the process task. */
-        if (false == m_processTask.stop())
-        {
-            LOG_ERROR("Failed to stop process task.");
-        }
-        else
-        {
-            LOG_DEBUG("Process task is down.");
-        }
+        LOG_ERROR("Failed to stop process task.");
+    }
+    else
+    {
+        LOG_DEBUG("Process task is down.");
     }
 
-    /* Update task already running? */
-    if (true == m_updateTask.isRunning())
+    /* Stop the update task. */
+    if (false == m_updateTask.stop())
     {
-        /* Stop the update task. */
-        if (false == m_updateTask.stop())
-        {
-            LOG_ERROR("Failed to stop update task.");
-        }
-        else
-        {
-            LOG_DEBUG("Update task is down.");
-        }
+        LOG_ERROR("Failed to stop update task.");
+    }
+    else
+    {
+        LOG_DEBUG("Update task is down.");
     }
 
     m_mutexUpdate.destroy();
     m_mutexInterf.destroy();
 
-    m_selectedFrameBuffer = nullptr;
-
-    /* Release framebuffer memory. */
-    for (idx = 0U; idx < UTIL_ARRAY_NUM(m_framebuffers); ++idx)
-    {
-        m_framebuffers[idx].release();
-    }
-
+    m_doubleFrameBuffer.release();
     m_slotList.destroy();
 
     LOG_INFO("DisplayMgr is down.");
@@ -605,28 +553,19 @@ void DisplayMgr::activatePreviousSlot()
     }
 }
 
-void DisplayMgr::activateNextFadeEffect(FadeEffect fadeEffect)
+void DisplayMgr::activateNextFadeEffect(FadeEffectController::FadeEffect fadeEffect)
 {
     MutexGuard<MutexRecursive> guard(m_mutexInterf);
 
-    if (FADE_EFFECT_COUNT <= fadeEffect)
-    {
-        m_fadeEffectIndex = FADE_EFFECT_NONE;
-    }
-    else
-    {
-        m_fadeEffectIndex = fadeEffect;
-    }
-
-    m_fadeEffectUpdate = true;
+    m_nextFadeEffect = fadeEffect;
 }
 
-DisplayMgr::FadeEffect DisplayMgr::getFadeEffect()
+FadeEffectController::FadeEffect DisplayMgr::getFadeEffect()
 {
-    FadeEffect                 currentFadeEffect;
-    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    FadeEffectController ::FadeEffect currentFadeEffect;
+    MutexGuard<MutexRecursive>        guard(m_mutexInterf);
 
-    currentFadeEffect = m_fadeEffectIndex;
+    currentFadeEffect = m_fadeEffectController.getFadeEffect();
 
     return currentFadeEffect;
 }
@@ -853,15 +792,9 @@ DisplayMgr::DisplayMgr() :
     m_selectedPlugin(nullptr),
     m_requestedPlugin(nullptr),
     m_slotTimer(),
-    m_displayFadeState(FADE_IN),
-    m_selectedFrameBuffer(nullptr),
-    m_framebuffers(),
-    m_fadeLinearEffect(),
-    m_fadeMoveXEffect(),
-    m_fadeMoveYEffect(),
-    m_fadeEffect(&m_fadeLinearEffect),
-    m_fadeEffectIndex(FADE_EFFECT_LINEAR),
-    m_fadeEffectUpdate(false),
+    m_doubleFrameBuffer(),
+    m_fadeEffectController(m_doubleFrameBuffer),
+    m_nextFadeEffect(FadeEffectController::FADE_EFFECT_NONE),
     m_isNetworkConnected(false),
     m_indicatorView()
 {
@@ -968,91 +901,6 @@ uint8_t DisplayMgr::previousSlot(uint8_t slotId)
     return slotId;
 }
 
-void DisplayMgr::startFadeOut()
-{
-    /* Select next framebuffer and keep old content, until
-     * the fade effect is finished.
-     */
-    if (m_selectedFrameBuffer == &m_framebuffers[FB_ID_0])
-    {
-        m_selectedFrameBuffer = &m_framebuffers[FB_ID_1];
-    }
-    else
-    {
-        m_selectedFrameBuffer = &m_framebuffers[FB_ID_0];
-    }
-
-    m_displayFadeState = FADE_OUT;
-
-    if (nullptr != m_fadeEffect)
-    {
-        m_fadeEffect->init();
-    }
-}
-
-void DisplayMgr::fadeInOut(YAGfx& dst)
-{
-    if (nullptr != m_selectedFrameBuffer)
-    {
-        /* Continuously update the current canvas with its framebuffer. */
-        if (nullptr != m_selectedPlugin)
-        {
-            m_selectedPlugin->update(*m_selectedFrameBuffer);
-            m_indicatorView.update(*m_selectedFrameBuffer);
-        }
-
-        /* No fade effect? */
-        if (nullptr == m_fadeEffect)
-        {
-            dst.drawBitmap(0, 0, *m_selectedFrameBuffer);
-            m_displayFadeState = FADE_IDLE;
-        }
-        /* Process fade effect. */
-        else
-        {
-            YAGfxBitmap* prevFb = nullptr;
-
-            /* Determine previous frame buffer. */
-            if (m_selectedFrameBuffer == &m_framebuffers[FB_ID_0])
-            {
-                prevFb = &m_framebuffers[FB_ID_1];
-            }
-            else
-            {
-                prevFb = &m_framebuffers[FB_ID_0];
-            }
-
-            /* Handle fading */
-            switch (m_displayFadeState)
-            {
-            /* No fading at all */
-            case FADE_IDLE:
-                dst.drawBitmap(0, 0, *m_selectedFrameBuffer);
-                break;
-
-            /* Fade new display content in */
-            case FADE_IN:
-                if (true == m_fadeEffect->fadeIn(dst, *prevFb, *m_selectedFrameBuffer))
-                {
-                    m_displayFadeState = FADE_IDLE;
-                }
-                break;
-
-            /* Fade old display content out! */
-            case FADE_OUT:
-                if (true == m_fadeEffect->fadeOut(dst, *prevFb, *m_selectedFrameBuffer))
-                {
-                    m_displayFadeState = FADE_IN;
-                }
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-}
-
 void DisplayMgr::process()
 {
     IDisplay&                  display    = Display::getInstance();
@@ -1133,7 +981,7 @@ void DisplayMgr::process()
                 m_selectedPlugin = nullptr;
 
                 /* Fade old display content out */
-                startFadeOut();
+                m_fadeEffectController.start();
             }
         }
         else
@@ -1145,7 +993,7 @@ void DisplayMgr::process()
 
     /* Any plugin selected? */
     if ((nullptr != m_selectedPlugin) &&
-        (FADE_IDLE == m_displayFadeState))
+        (false == m_fadeEffectController.isRunning()))
     {
         MutexGuard<MutexRecursive> guard(m_mutexUpdate);
 
@@ -1159,7 +1007,7 @@ void DisplayMgr::process()
             m_slotTimer.stop();
 
             /* Fade old display content out */
-            startFadeOut();
+            m_fadeEffectController.start();
         }
         /* Plugin run duration timeout? */
         else if ((true == m_slotTimer.isTimerRunning()) &&
@@ -1184,7 +1032,7 @@ void DisplayMgr::process()
                 m_slotTimer.stop();
 
                 /* Fade old display content out */
-                startFadeOut();
+                m_fadeEffectController.start();
             }
         }
         else
@@ -1197,6 +1045,7 @@ void DisplayMgr::process()
     /* If no plugin is selected, choose the next one. */
     if (nullptr == m_selectedPlugin)
     {
+        YAGfxDynamicBitmap&        selectedFrameBuffer = m_doubleFrameBuffer.getSelectedFramebuffer();
         MutexGuard<MutexRecursive> guard(m_mutexUpdate);
 
         /* Plugin requested to choose? */
@@ -1229,56 +1078,23 @@ void DisplayMgr::process()
                 m_slotTimer.start(duration);
             }
 
-            if (nullptr != m_selectedFrameBuffer)
-            {
-                m_selectedPlugin->active(*m_selectedFrameBuffer);
-            }
-            else
-            {
-                m_selectedPlugin->active(display);
-            }
+            m_selectedPlugin->active(selectedFrameBuffer);
 
             LOG_INFO("Slot %u (%s) now active.", m_selectedSlotId, m_selectedPlugin->getName());
         }
         /* No plugin is active, clear the display. */
         else
         {
-            if (nullptr != m_selectedFrameBuffer)
-            {
-                m_selectedFrameBuffer->fillScreen(ColorDef::BLACK);
-            }
+            selectedFrameBuffer.fillScreen(ColorDef::BLACK);
             display.clear();
         }
     }
 
-    /* Avoid changing to next effect, if the there is a pending slot change. */
-    if ((false != m_fadeEffectUpdate) && (FADE_IDLE == m_displayFadeState))
+    /* If no fade effect is running, select next fade effect. */
+    if ((m_nextFadeEffect != m_fadeEffectController.getFadeEffect()) &&
+        (false == m_fadeEffectController.isRunning()))
     {
-        switch (m_fadeEffectIndex)
-        {
-        case FADE_EFFECT_NONE:
-            m_fadeEffect = nullptr;
-            break;
-
-        case FADE_EFFECT_LINEAR:
-            m_fadeEffect = &m_fadeLinearEffect;
-            break;
-
-        case FADE_EFFECT_MOVE_X:
-            m_fadeEffect = &m_fadeMoveXEffect;
-            break;
-
-        case FADE_EFFECT_MOVE_Y:
-            m_fadeEffect = &m_fadeMoveYEffect;
-            break;
-
-        default:
-            m_fadeEffect      = nullptr;
-            m_fadeEffectIndex = FADE_EFFECT_NONE;
-            break;
-        }
-
-        m_fadeEffectUpdate = false;
+        m_fadeEffectController.selectFadeEffect(m_nextFadeEffect);
     }
 
     /* Process all installed plugins. */
@@ -1298,25 +1114,21 @@ void DisplayMgr::update()
 {
     IDisplay&                  display = Display::getInstance();
     MutexGuard<MutexRecursive> guard(m_mutexUpdate);
+    YAGfxDynamicBitmap&        selectedFrameBuffer = m_doubleFrameBuffer.getSelectedFramebuffer();
 
-    /* Update display (main canvas available) */
-    if (nullptr != m_selectedFrameBuffer)
+    /* Update frame buffer with plugin content. */
+    if (nullptr != m_selectedPlugin)
     {
-        fadeInOut(display);
+        m_selectedPlugin->update(selectedFrameBuffer);
     }
-    /* Update display (main canvas not available) */
-    else if (nullptr != m_selectedPlugin)
-    {
-        m_selectedPlugin->update(display);
-        m_indicatorView.update(display);
-    }
-    /* No plugin selected. */
-    else
-    {
-        /* Nothing to do. */
-        ;
-    }
-
+    
+    /* Update frame buffer with indicators (foreground). */
+    m_indicatorView.update(selectedFrameBuffer);
+    
+    /* Update the display buffer. */
+    m_fadeEffectController.update(display);
+    
+    /* Latch display buffer. */
     display.show();
 }
 

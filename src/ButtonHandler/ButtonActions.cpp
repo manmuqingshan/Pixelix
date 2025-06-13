@@ -262,11 +262,7 @@ void ButtonActions::previousSlot() const
 
 void ButtonActions::nextFadeEffect() const
 {
-    DisplayMgr::FadeEffect currentFadeEffect = DisplayMgr::getInstance().getFadeEffect();
-    uint8_t                fadeEffectId      = static_cast<uint8_t>(currentFadeEffect);
-    DisplayMgr::FadeEffect nextFadeEffect    = static_cast<DisplayMgr::FadeEffect>(fadeEffectId + 1U);
-
-    DisplayMgr::getInstance().activateNextFadeEffect(nextFadeEffect);
+    DisplayMgr::getInstance().activateNextFadeEffect(FadeEffectController::FADE_EFFECT_COUNT);
 }
 
 void ButtonActions::showIpAddress() const
