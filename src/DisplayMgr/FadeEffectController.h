@@ -130,6 +130,8 @@ public:
 
     /**
      * Update the display.
+     * 
+     * @param[in] gfx  Graphics interface to draw on the display.
      */
     void update(YAGfx& gfx);
 
