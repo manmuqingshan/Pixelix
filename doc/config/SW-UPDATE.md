@@ -69,8 +69,8 @@ The recommeded way how to program the software to the board depends on the skill
 11. Select binaries in the order and with the addresses of the [flash layout table](#flash-layout-information).
 12. Choose _SPI SPPED_: 40 MHz
 13. Choose _SPI MODE_:
-    * esp32: DIO
-    * esp32-s3: QIO
+    - esp32: DIO
+    - esp32-s3: QIO
 14. Choose _COM_, e.g. COM4 which depends how the virtual COM port was mounted for the plugged in development board.
 15. Start flashing by clicking on _START_ in the DownloadPanel 1.
 16. The state will change from _IDLE_ to _SYNC_.
@@ -83,9 +83,9 @@ The recommeded way how to program the software to the board depends on the skill
 #### Debian Linux
 
 1. Update system packages: ```sudo apt-get update```
-3. Install python toolchain: ```sudo apt-get install python3-pip```
-4. Verify successful installation: ```pip3 --version```
-5. Install esptool: ```sudo pip3 install esptool```
+2. Install python toolchain: ```sudo apt-get install python3-pip```
+3. Verify successful installation: ```pip3 --version```
+4. Install esptool: ```sudo pip3 install esptool```
 
 #### Windows
 
@@ -97,11 +97,11 @@ The recommeded way how to program the software to the board depends on the skill
 
 1. Verify successful esptool installation: ```esptool --version```
 2. Erase flash: ```esptool -c <chip-type> -p <port> erase_flash```
-    * Note: Replace &lt;chip-type&gt; with the chip type of your development board, e.g. esp32. Replace &lt;port&gt; with the serial port the development board is connected too, e.g. ```COM4``` on Windows or ```/dev/ttyUSB0``` on Linux.
+    - Note: Replace &lt;chip-type&gt; with the chip type of your development board, e.g. esp32. Replace &lt;port&gt; with the serial port the development board is connected too, e.g. ```COM4``` on Windows or ```/dev/ttyUSB0``` on Linux.
 3. After the "Connecting" message appears, keep _BOOT_ button on the development board pressed until procedure starts.
 4. Write binaries to flash and choose the addresses from the [flash layout table](#flash-layout-information): ```esptool -p <port> write_flash --flash_mode <spi-mode> --flash_size <flash-size> <bootloader-address> bootloader.bin <partitions-address> partitions.bin <firmware-address> firmware.bin <littlefs-address> littlefs.bin```
-    * Replace &lt;port&gt; with the serial port the development board is connected too, e.g. ```COM4``` on Windows or ```/dev/ttyUSB0``` on Linux.
-    * Use _DIO_ for &lt;spi-mode&gt; in case of esp32, except esp32-s3 use _QIO_.
+    - Replace &lt;port&gt; with the serial port the development board is connected too, e.g. ```COM4``` on Windows or ```/dev/ttyUSB0``` on Linux.
+    - Use _DIO_ for &lt;spi-mode&gt; in case of esp32, except esp32-s3 use _QIO_.
 
 ### Use VSCode and Platformio
 
@@ -109,8 +109,8 @@ If your board is not available out of the box, have a look for the [supported bo
 
 The update consists of two parts:
 
-* The software.
-* The filesystem.
+- The software.
+- The filesystem.
 
 ## Update via USB
 
@@ -135,7 +135,7 @@ Note: Sometimes it happens that the _Platform_ sub-menu in the PlatformIO Projec
 
 Preconditions:
 
-* PIXELIX runs already on the target.
+- PIXELIX runs already on the target.
 
 Steps:
 

@@ -34,14 +34,8 @@ The [PlatformIO IDE](https://platformio.org/platformio-ide) is used for the deve
 
 ### Linux (Debian, Ubuntu)
 
-1.
-```
-$ sudo apt update
-```
-2.
-```
-$ sudo apt install git
-```
+1. ```sudo apt update```
+2. ```sudo apt install git```
 
 ### Windows
 
@@ -54,28 +48,15 @@ The test environment is only necessary if you want to modify the sourcecode and 
 
 ### Linux (Debian, Ubuntu)
 
-1.
-```
-$ sudo apt update
-```
-2.
-```
-$ sudo apt install build-essential
-```
-3.
-```
-$ sudo apt-get install manpages-dev
-```
+1. ```sudo apt update```
+2. ```sudo apt install build-essential```
+3. ```sudo apt-get install manpages-dev```
 
 ### Windows
 
-1. For the test environment on windows platform, install [Mingw-w64](http://mingw-w64.org/) by using the [online installer](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer) and following installation settings:
-    * Version: Choose the newest
-    * Architecture: x86_64
-    * Threads: posix
-    * [Exception](https://wiki.qt.io/MinGW-64-bit#Exception_handling:_SJLJ.2C_DWARF.2C_and_SEH): seh
-    * Build revision: 0
-2. Add Mingw binary folder (```C:\Program Files\mingw-w64\<depends-on-your-installation-settings>\mingw64\bin```)to path, see environment variables.
+1. For the test environment on windows platform, install [MSYS2](https://www.msys2.org/) by following its instructions
+2. Open MSYS2 UCRT64 terminal.
+3. Install the gcc compiler package: ```pacman -S mingw-w64-ucrt-x86_64-gcc```
 
 ## Next Step
 
