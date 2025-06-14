@@ -73,6 +73,7 @@ void SysMsgPlugin::stop()
 void SysMsgPlugin::active(YAGfx& gfx)
 {
     /* Nothing to do. */
+    UTIL_NOT_USED(gfx);
 }
 
 void SysMsgPlugin::inactive()

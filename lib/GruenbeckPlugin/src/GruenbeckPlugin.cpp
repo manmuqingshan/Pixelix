@@ -259,18 +259,6 @@ void GruenbeckPlugin::process(bool isConnected)
     }
 }
 
-void GruenbeckPlugin::active(YAGfx& gfx)
-{
-    MutexGuard<MutexRecursive> guard(m_mutex);
-
-    m_view.update(gfx);
-}
-
-void GruenbeckPlugin::inactive()
-{
-    /* Nothing to do */
-}
-
 void GruenbeckPlugin::update(YAGfx& gfx)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);

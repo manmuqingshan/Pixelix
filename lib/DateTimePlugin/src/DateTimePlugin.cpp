@@ -170,6 +170,8 @@ void DateTimePlugin::active(YAGfx& gfx)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
 
+    UTIL_NOT_USED(gfx);
+
     /* The date/time information shall be retrieved every second while plugin is activated. */
     m_durationCounter = 0U;
     m_checkUpdateTimer.start(CHECK_UPDATE_PERIOD);

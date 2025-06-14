@@ -236,6 +236,7 @@ void SignalDetectorPlugin::stop()
 void SignalDetectorPlugin::active(YAGfx& gfx)
 {
     /* Nothing to do. */
+    UTIL_NOT_USED(gfx);
 }
 
 void SignalDetectorPlugin::inactive()
