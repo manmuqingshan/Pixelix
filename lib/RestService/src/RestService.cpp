@@ -96,57 +96,45 @@ void RestService::process()
 {
     if (false == m_isWaitingForResponse)
     {
-        Cmd* cmd;
+        bool isError = false;
+        Cmd* cmd     = nullptr;
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
             m_isWaitingForResponse = true;
 
-            if (true == m_client.begin(String(cmd->url)))
+            if (nullptr != cmd)
             {
-                switch (cmd->id)
+                if (true == m_client.begin(String(cmd->url)))
                 {
-                case CMD_ID_GET:
-                    if (false == m_client.GET(cmd->restId))
+                    switch (cmd->id)
                     {
-                        Msg msg;
-
-                        msg.restId = cmd->restId;
-                        msg.isMsg  = false;
-                        msg.rsp    = nullptr;
-
-                        if (false == this->m_taskProxy.send(msg))
+                    case CMD_ID_GET:
+                        if (false == m_client.GET(cmd->restId))
                         {
-                            LOG_ERROR("Msg could not be sent to Msg-Queue");
+                            isError = true;
                         }
+                        break;
 
-                        m_isWaitingForResponse = false;
-                    }
-                    break;
-
-                case CMD_ID_POST:
-                    if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size, cmd->restId))
-                    {
-                        Msg msg;
-
-                        msg.restId = cmd->restId;
-                        msg.isMsg  = false;
-                        msg.rsp    = nullptr;
-
-                        if (false == this->m_taskProxy.send(msg))
+                    case CMD_ID_POST:
+                        if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size, cmd->restId))
                         {
-                            LOG_ERROR("Msg could not be sent to Msg-Queue");
+                            isError = true;
                         }
+                        break;
 
-                        m_isWaitingForResponse = false;
-                    }
-                    break;
-
-                default:
-                    break;
-                };
+                    default:
+                        break;
+                    };
+                }
+                else
+                {
+                    LOG_ERROR("URL could not be parsed");
+                    isError = true;
+                }
             }
-            else
+
+            if (true == isError)
             {
                 Msg msg;
 
@@ -156,11 +144,17 @@ void RestService::process()
 
                 if (false == this->m_taskProxy.send(msg))
                 {
-                    LOG_ERROR("URL could not be parsed");
+                    LOG_ERROR("Msg could not be sent to Msg-Queue");
                 }
 
                 m_isWaitingForResponse = false;
             }
+        }
+
+        if (nullptr != cmd)
+        {
+            delete cmd;
+            cmd = nullptr;
         }
     }
 }
@@ -198,21 +192,25 @@ bool RestService::get(void* restId, const String& url)
 
     if (restId == nullptr)
     {
-        isSuccessful = false;
-    }
-    else if (url.length() > (CMD_URL_SIZE - 1U))
-    {
+        LOG_ERROR("get() can only be called with a valid restId!");
         isSuccessful = false;
     }
     else
     {
-        Cmd* cmd    = new Cmd();
+        Cmd* cmd = new (std::nothrow) Cmd();
 
-        cmd->id     = CMD_ID_GET;
-        cmd->restId = restId;
-        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1U);
-        cmd->url[sizeof(cmd->url) - 1U] = '\0';
-        isSuccessful                    = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        if (nullptr == cmd)
+        {
+            LOG_ERROR("Couldn't allocate enough memory.");
+            isSuccessful = false;
+        }
+        else
+        {
+            cmd->id      = CMD_ID_GET;
+            cmd->restId  = restId;
+            cmd->url     = url;
+            isSuccessful = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        }
     }
 
     return isSuccessful;
@@ -224,23 +222,27 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 
     if (restId == nullptr)
     {
-        isSuccessful = false;
-    }
-    else if (url.length() > (CMD_URL_SIZE - 1U))
-    {
+        LOG_ERROR("post() can only be called with a valid restId!");
         isSuccessful = false;
     }
     else
     {
-        Cmd* cmd    = new Cmd();
+        Cmd* cmd = new (std::nothrow) Cmd();
 
-        cmd->id     = CMD_ID_POST;
-        cmd->restId = restId;
-        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1U);
-        cmd->url[sizeof(cmd->url) - 1U] = '\0';
-        cmd->u.data.data                = payload;
-        cmd->u.data.size                = size;
-        isSuccessful                    = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        if (nullptr == cmd)
+        {
+            LOG_ERROR("Couldn't allocate enough memory.");
+            isSuccessful = false;
+        }
+        else
+        {
+            cmd->id          = CMD_ID_POST;
+            cmd->restId      = restId;
+            cmd->url         = url;
+            cmd->u.data.data = payload;
+            cmd->u.data.size = size;
+            isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        }
     }
 
     return isSuccessful;
@@ -252,23 +254,27 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 
     if (restId == nullptr)
     {
-        isSuccessful = false;
-    }
-    else if (url.length() > (CMD_URL_SIZE - 1U))
-    {
+        LOG_ERROR("post() can only be called with a valid restId!");
         isSuccessful = false;
     }
     else
     {
-        Cmd* cmd    = new Cmd();
+        Cmd* cmd = new (std::nothrow) Cmd();
 
-        cmd->id     = CMD_ID_POST;
-        cmd->restId = restId;
-        strncpy(cmd->url, url.c_str(), sizeof(cmd->url) - 1U);
-        cmd->url[sizeof(cmd->url) - 1U] = '\0';
-        cmd->u.data.data                = reinterpret_cast<const uint8_t*>(payload.c_str());
-        cmd->u.data.size                = payload.length();
-        isSuccessful                    = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        if (nullptr == cmd)
+        {
+            LOG_ERROR("Couldn't allocate enough memory.");
+            isSuccessful = false;
+        }
+        else
+        {
+            cmd->id          = CMD_ID_POST;
+            cmd->restId      = restId;
+            cmd->url         = url;
+            cmd->u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
+            cmd->u.data.size = payload.length();
+            isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        }
     }
 
     return isSuccessful;
