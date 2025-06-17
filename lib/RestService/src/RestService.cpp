@@ -85,9 +85,17 @@ bool RestService::start()
 
 void RestService::stop()
 {
+    Cmd* cmd = nullptr;
+
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
+
+    while (true == m_cmdQueue.receive(&cmd, 0U))
+    {
+        delete cmd;
+        cmd = nullptr;
+    }
 
     m_cmdQueue.destroy();
 }
@@ -211,6 +219,12 @@ bool RestService::get(void* restId, const String& url)
             cmd->url     = url;
             isSuccessful = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
         }
+
+        if (false == isSuccessful)
+        {
+            delete cmd;
+            cmd = nullptr;
+        }
     }
 
     return isSuccessful;
@@ -243,6 +257,12 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
             cmd->u.data.size = size;
             isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
         }
+
+        if (false == isSuccessful)
+        {
+            delete cmd;
+            cmd = nullptr;
+        }
     }
 
     return isSuccessful;
@@ -274,6 +294,12 @@ bool RestService::post(void* restId, const String& url, const String& payload)
             cmd->u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
             cmd->u.data.size = payload.length();
             isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+        }
+
+        if (false == isSuccessful)
+        {
+            delete cmd;
+            cmd = nullptr;
         }
     }
 
