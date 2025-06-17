@@ -263,6 +263,9 @@ void GrabViaRestPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+    RestService::getInstance().addToRemovedPluginIds(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
