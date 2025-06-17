@@ -94,6 +94,9 @@ void RestService::stop()
 
 void RestService::process()
 {
+    bool                 isValidRsp = false;
+    DynamicJsonDocument* jsonDoc    = nullptr;
+
     if (false == m_isWaitingForResponse)
     {
         Cmd cmd;
@@ -161,6 +164,18 @@ void RestService::process()
 
                 m_isWaitingForResponse = false;
             }
+        }
+    }
+
+    for (size_t i = 0; i < (removedPluginIds.size()); i++)
+    {
+        getResponse(removedPluginIds[i], isValidRsp, jsonDoc);
+
+        if (true == isValidRsp)
+        {
+            delete jsonDoc;
+            jsonDoc    = nullptr;
+            isValidRsp = false;
         }
     }
 }
@@ -295,6 +310,18 @@ bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocumen
     }
 
     return isSuccessful;
+}
+
+void RestService::addToRemovedPluginIds(void* restId)
+{
+    if (nullptr == restId)
+    {
+        LOG_ERROR("Cannot add nullptr to removedPluginIds!");
+    }
+    else
+    {
+        removedPluginIds.push_back(restId);
+    }
 }
 
 void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)

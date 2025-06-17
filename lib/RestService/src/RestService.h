@@ -161,9 +161,16 @@ public:
      */
     bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload);
 
+    /**
+     * Adds restId of a plugin to vector removedPluginIds.
+     *
+     * @param[in] restId Unique Id to identify plugin
+     */
+    void addToRemovedPluginIds(void* restId);
+
 private:
 
-    static const size_t   CMD_QUEUE_SIZE = 9U;  /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    static const size_t   CMD_QUEUE_SIZE = 9U;   /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
     static const uint16_t CMD_URL_SIZE   = 256U; /**< Max. size of URLs that can be stored in a cmd. */
 
     /**
@@ -224,14 +231,15 @@ private:
     AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
     Queue<Cmd>             m_cmdQueue;             /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
+    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access. */
+    std::vector<void*>     removedPluginIds;       /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
 
     /**
      * Saves Callbacks of plugins
      * key: RestId of plugin
      * value: Callback
      */
-    std::map<void*, std::function<bool(const char*, size_t, DynamicJsonDocument&)>> m_Callbacks;
+    std::map<void*, PreProcessCallback> m_Callbacks;
 
     /**
      * Constructs the service instance.
@@ -242,7 +250,8 @@ private:
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
-        m_isWaitingForResponse(false)
+        m_isWaitingForResponse(false),
+        removedPluginIds()
     {
     }
 
