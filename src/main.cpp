@@ -178,12 +178,18 @@ void setup()
     /* Set severity for Pixelix logging system. */
     Logging::getInstance().setLogLevel(CONFIG_LOG_SEVERITY);
 
+    /* Setup memory monitoring. */
+    MemMon::getInstance().start();
+
     /* The setup routine shall handle only the initialization state.
      * All other states are handled in the loop routine.
      */
     do
     {
         gSysStateMachine.process();
+
+        /* Memory monitor */
+        MemMon::getInstance().process();
     }
     while(static_cast<AbstractState*>(&InitState::getInstance()) == gSysStateMachine.getState());
 

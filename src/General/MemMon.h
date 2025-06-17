@@ -75,38 +75,56 @@ public:
     }
 
     /**
+     * Start memory monitor.
+     *
+     * @return If successful started, it will return true otherwise false.
+     */
+    bool start();
+
+    /**
      * Process memory monitor.
      */
     void process();
 
+    /**
+     * Stop memory monitor.
+     */
+    void stop();
+
     /** Processing cycle in ms. */
-    static const uint32_t   PROCESSING_CYCLE            = 60U * 1000U;
+    static const uint32_t PROCESSING_CYCLE        = 60U * 1000U;
 
     /**
      * Minimum size of current heap memory in bytes, the monitor starts to warn.
      * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
      */
-    static const size_t     MIN_HEAP_MEMORY             = (60U * 1024U);
+    static const size_t MIN_HEAP_MEMORY           = (60U * 1024U);
 
     /**
      * Lowest size of heap memory in bytes, the monitor starts to warn.
      * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
      */
-    static const size_t     LOWEST_HEAP_MEMORY          = (50U * 1024U);
+    static const size_t LOWEST_HEAP_MEMORY        = (50U * 1024U);
 
     /**
      * Minimum size of largest block of heap that can be allocated at once in bytes, the monitor starts to warn.
      */
-    static const size_t     LARGEST_HEAP_BLOCK_MEMORY   = CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN;
+    static const size_t LARGEST_HEAP_BLOCK_MEMORY = CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN;
 
 private:
 
-    SimpleTimer m_timer;    /**< Timer used for cyclic processing. */
+    /**
+     * Memory capabilities used for heap operations.
+     */
+    static const uint32_t MEM_CAPABILITIES = MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT;
+
+    SimpleTimer           m_timer; /**< Timer used for cyclic processing. */
 
     /**
      * Constructs the memory monitor.
      */
-    MemMon()
+    MemMon() :
+        m_timer()
     {
     }
 
@@ -126,6 +144,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif  /* MEM_MON_H */
+#endif /* MEM_MON_H */
 
 /** @} */
