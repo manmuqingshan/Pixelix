@@ -163,8 +163,7 @@ public:
 
 private:
 
-    static const size_t   CMD_QUEUE_SIZE = 9U;  /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
-    static const uint16_t CMD_URL_SIZE   = 256U; /**< Max. size of URLs that can be stored in a cmd. */
+    static const size_t   CMD_QUEUE_SIZE = 9U;   /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
 
     /**
      * A message for HTTP client/server handling.
@@ -199,9 +198,9 @@ private:
      */
     struct Cmd
     {
-        CmdId id;                /**< The command id identifies the kind of request. */
-        void* restId;            /**< Used to identify plugin in RestService */
-        char  url[CMD_URL_SIZE]; /**< URL */
+        CmdId  id;     /**< The command id identifies the kind of request. */
+        void*  restId; /**< Used to identify plugin in RestService */
+        String url;    /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -222,7 +221,7 @@ private:
     };
 
     AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
-    Queue<Cmd>             m_cmdQueue;             /**< Command queue */
+    Queue<Cmd*>            m_cmdQueue;             /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
     bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
 
