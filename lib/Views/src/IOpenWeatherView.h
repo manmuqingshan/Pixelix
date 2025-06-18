@@ -99,6 +99,13 @@ public:
     virtual void update(YAGfx& gfx) = 0;
 
     /**
+     * Set the image path for the weather condition icons.
+     * 
+     * @param[in] path  The image path for the weather condition icons.
+     */
+    virtual void setImagePath(const char* path) = 0;
+
+    /**
      * Set the duration in ms, how long the view will be shown on the display.
      * It will be used to derive how long every enabled weather info is shown.
      * All enabled weather infos together will be equal to the configured duration.
