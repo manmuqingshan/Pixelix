@@ -707,10 +707,6 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     m_view.setFormatText(outputStr);
 }
 
-void GrabViaRestPlugin::clearQueue()
-{
-}
-
 /******************************************************************************
  * External Functions
  *****************************************************************************/
