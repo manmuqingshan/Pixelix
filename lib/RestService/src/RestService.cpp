@@ -86,6 +86,7 @@ bool RestService::start()
 void RestService::stop()
 {
     Cmd* cmd = nullptr;
+    Msg  msg;
 
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
@@ -95,6 +96,14 @@ void RestService::stop()
     {
         delete cmd;
         cmd = nullptr;
+    }
+
+    m_client.end();
+
+    while (true == m_taskProxy.receive(msg))
+    {
+        delete msg.rsp;
+        msg.rsp = nullptr;
     }
 
     m_cmdQueue.destroy();
