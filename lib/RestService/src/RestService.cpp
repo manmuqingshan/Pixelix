@@ -80,6 +80,8 @@ bool RestService::start()
         m_client.regOnClosed(closedCallback);
     }
 
+    m_status = true;
+
     return isSuccessful;
 }
 
@@ -88,6 +90,7 @@ void RestService::stop()
     Cmd* cmd = nullptr;
     Msg  msg;
 
+    m_status = false;
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
@@ -363,6 +366,10 @@ void RestService::addToRemovedPluginIds(void* restId)
     {
         removedPluginIds.push_back(restId);
     }
+}
+
+bool RestService::getStatus(){
+    return m_status;
 }
 
 void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
