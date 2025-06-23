@@ -270,7 +270,7 @@ void GrabViaRestPlugin::stop()
 void GrabViaRestPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    DynamicJsonDocument*       jsonDoc;
+    DynamicJsonDocument*       jsonDoc = nullptr;
     bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
