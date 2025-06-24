@@ -309,24 +309,6 @@ private:
     bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
 
     /**
-     * A message for HTTP client/server handling.
-     */
-    struct Msg
-    {
-        bool                 isValidResponse; /**< Message type */
-        DynamicJsonDocument* rsp;             /**< Response, only valid if message type is a response. */
-
-        /**
-         * Constructs a message.
-         */
-        Msg() :
-            isValidResponse(false),
-            rsp(nullptr)
-        {
-        }
-    };
-
-    /**
      * Get configuration in JSON.
      *
      * @param[out] cfg  Configuration
@@ -377,11 +359,6 @@ private:
      * @param[in] jsonDoc   Web response as JSON document
      */
     void handleWebResponse(const DynamicJsonDocument& jsonDoc);
-
-    /**
-     * Clear the task proxy queue.
-     */
-    void clearQueue();
 };
 
 /******************************************************************************

@@ -266,12 +266,15 @@ void GrabViaRestPlugin::stop()
 
     m_isAllowedToSend = false;
     RestService::getInstance().addToRemovedPluginIds(&m_restId);
+
+    RestService::getInstance().deleteCallback(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    Msg                        msg;
+    DynamicJsonDocument*       jsonDoc = nullptr;
+    bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
 
@@ -333,18 +336,18 @@ void GrabViaRestPlugin::process(bool isConnected)
             }
         }
 
-        if (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
+    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
+    {
+        if (true == isValidResponse)
         {
-            if (true == msg.isValidResponse)
+            if (nullptr != jsonDoc)
             {
-                if (nullptr != msg.rsp)
-                {
-                    handleWebResponse(*msg.rsp);
-                }
+                handleWebResponse(*jsonDoc);
             }
-            else
-            {
-                LOG_WARNING("Connection error.");
+        }
+        else
+        {
+            LOG_WARNING("Connection error.");
 
                 /* If a request fails, show standard icon and a '?' */
                 m_view.setFormatText("{hc}?");
@@ -352,11 +355,11 @@ void GrabViaRestPlugin::process(bool isConnected)
                 m_requestTimer.start(UPDATE_PERIOD_SHORT);
             }
 
-            if (nullptr != msg.rsp)
-            {
-                delete msg.rsp;
-                msg.rsp = nullptr;
-            }
+        if (nullptr != jsonDoc)
+        {
+            delete jsonDoc;
+            jsonDoc = nullptr;
+        }
 
             m_isAllowedToSend = true;
         }
@@ -712,20 +715,6 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     LOG_INFO("Grabbed: %s", outputStr.c_str());
 
     m_view.setFormatText(outputStr);
-}
-
-void GrabViaRestPlugin::clearQueue()
-{
-    Msg msg;
-
-    while (true == RestService::getInstance().getResponse(&m_restId, msg.isValidResponse, msg.rsp))
-    {
-        if (true == msg.isValidResponse)
-        {
-            delete msg.rsp;
-            msg.rsp = nullptr;
-        }
-    }
 }
 
 /******************************************************************************
