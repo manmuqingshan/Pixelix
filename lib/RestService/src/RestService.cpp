@@ -80,7 +80,7 @@ bool RestService::start()
         m_client.regOnClosed(closedCallback);
     }
 
-    m_status = true;
+    m_isRunning = true;
 
     return isSuccessful;
 }
@@ -90,7 +90,7 @@ void RestService::stop()
     Cmd* cmd = nullptr;
     Msg  msg;
 
-    m_status = false;
+    m_isRunning = false;
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
@@ -114,9 +114,6 @@ void RestService::stop()
 
 void RestService::process()
 {
-    bool                 isValidRsp = false;
-    DynamicJsonDocument* jsonDoc    = nullptr;
-
     if (false == m_isWaitingForResponse)
     {
         bool isError = false;
@@ -179,18 +176,8 @@ void RestService::process()
             delete cmd;
             cmd = nullptr;
         }
-    }
 
-    for (size_t i = 0; i < (removedPluginIds.size()); i++)
-    {
-        getResponse(removedPluginIds[i], isValidRsp, jsonDoc);
-
-        if (true == isValidRsp)
-        {
-            delete jsonDoc;
-            jsonDoc    = nullptr;
-            isValidRsp = false;
-        }
+        removeExpiredResponses();
     }
 }
 
@@ -225,33 +212,40 @@ bool RestService::get(void* restId, const String& url)
 {
     bool isSuccessful = true;
 
-    if (restId == nullptr)
+    if (true == m_isRunning)
     {
-        LOG_ERROR("get() can only be called with a valid restId!");
-        isSuccessful = false;
-    }
-    else
-    {
-        Cmd* cmd = new (std::nothrow) Cmd();
-
-        if (nullptr == cmd)
+        if (restId == nullptr)
         {
-            LOG_ERROR("Couldn't allocate enough memory.");
+            LOG_ERROR("get() can only be called with a valid restId!");
             isSuccessful = false;
         }
         else
         {
-            cmd->id      = CMD_ID_GET;
-            cmd->restId  = restId;
-            cmd->url     = url;
-            isSuccessful = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
-        }
+            Cmd* cmd = new (std::nothrow) Cmd();
 
-        if (false == isSuccessful)
-        {
-            delete cmd;
-            cmd = nullptr;
+            if (nullptr == cmd)
+            {
+                LOG_ERROR("Couldn't allocate enough memory.");
+                isSuccessful = false;
+            }
+            else
+            {
+                cmd->id      = CMD_ID_GET;
+                cmd->restId  = restId;
+                cmd->url     = url;
+                isSuccessful = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+            }
+
+            if (false == isSuccessful)
+            {
+                delete cmd;
+                cmd = nullptr;
+            }
         }
+    }
+    else
+    {
+        isSuccessful = false;
     }
 
     return isSuccessful;
@@ -261,35 +255,42 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 {
     bool isSuccessful = true;
 
-    if (restId == nullptr)
+    if (true == m_isRunning)
     {
-        LOG_ERROR("post() can only be called with a valid restId!");
-        isSuccessful = false;
-    }
-    else
-    {
-        Cmd* cmd = new (std::nothrow) Cmd();
-
-        if (nullptr == cmd)
+        if (restId == nullptr)
         {
-            LOG_ERROR("Couldn't allocate enough memory.");
+            LOG_ERROR("post() can only be called with a valid restId!");
             isSuccessful = false;
         }
         else
         {
-            cmd->id          = CMD_ID_POST;
-            cmd->restId      = restId;
-            cmd->url         = url;
-            cmd->u.data.data = payload;
-            cmd->u.data.size = size;
-            isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
-        }
+            Cmd* cmd = new (std::nothrow) Cmd();
 
-        if (false == isSuccessful)
-        {
-            delete cmd;
-            cmd = nullptr;
+            if (nullptr == cmd)
+            {
+                LOG_ERROR("Couldn't allocate enough memory.");
+                isSuccessful = false;
+            }
+            else
+            {
+                cmd->id          = CMD_ID_POST;
+                cmd->restId      = restId;
+                cmd->url         = url;
+                cmd->u.data.data = payload;
+                cmd->u.data.size = size;
+                isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+            }
+
+            if (false == isSuccessful)
+            {
+                delete cmd;
+                cmd = nullptr;
+            }
         }
+    }
+    else
+    {
+        isSuccessful = false;
     }
 
     return isSuccessful;
@@ -299,35 +300,42 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 {
     bool isSuccessful = true;
 
-    if (restId == nullptr)
+    if (true == m_isRunning)
     {
-        LOG_ERROR("post() can only be called with a valid restId!");
-        isSuccessful = false;
-    }
-    else
-    {
-        Cmd* cmd = new (std::nothrow) Cmd();
-
-        if (nullptr == cmd)
+        if (restId == nullptr)
         {
-            LOG_ERROR("Couldn't allocate enough memory.");
+            LOG_ERROR("post() can only be called with a valid restId!");
             isSuccessful = false;
         }
         else
         {
-            cmd->id          = CMD_ID_POST;
-            cmd->restId      = restId;
-            cmd->url         = url;
-            cmd->u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
-            cmd->u.data.size = payload.length();
-            isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
-        }
+            Cmd* cmd = new (std::nothrow) Cmd();
 
-        if (false == isSuccessful)
-        {
-            delete cmd;
-            cmd = nullptr;
+            if (nullptr == cmd)
+            {
+                LOG_ERROR("Couldn't allocate enough memory.");
+                isSuccessful = false;
+            }
+            else
+            {
+                cmd->id          = CMD_ID_POST;
+                cmd->restId      = restId;
+                cmd->url         = url;
+                cmd->u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
+                cmd->u.data.size = payload.length();
+                isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+            }
+
+            if (false == isSuccessful)
+            {
+                delete cmd;
+                cmd = nullptr;
+            }
         }
+    }
+    else
+    {
+        isSuccessful = false;
     }
 
     return isSuccessful;
@@ -338,19 +346,27 @@ bool RestService::getResponse(void* restId, bool& isValidRsp, DynamicJsonDocumen
     bool isSuccessful = false;
     Msg  msg;
 
-    if (true == m_taskProxy.peek(msg))
+    if (true == m_isRunning)
     {
-        if (restId == msg.restId)
+        if (true == m_taskProxy.peek(msg))
         {
-            isValidRsp   = msg.isMsg;
-            payload      = msg.rsp;
-            isSuccessful = true;
-
-            if (false == m_taskProxy.receive(msg))
+            if (restId == msg.restId)
             {
-                LOG_FATAL("Two clients with the same restId exist!");
+                isValidRsp   = msg.isMsg;
+                payload      = msg.rsp;
+                isSuccessful = true;
+
+                if (false == m_taskProxy.receive(msg))
+                {
+                    LOG_FATAL("Two clients with the same restId exist!");
+                }
             }
         }
+    }
+    else
+    {
+        isValidRsp = false;
+        payload    = nullptr;
     }
 
     return isSuccessful;
@@ -368,8 +384,25 @@ void RestService::addToRemovedPluginIds(void* restId)
     }
 }
 
-bool RestService::getStatus(){
-    return m_status;
+void RestService::removeExpiredResponses()
+{
+    bool                 isValidRsp = false;
+    DynamicJsonDocument* jsonDoc    = nullptr;
+
+    for (size_t i = 0; i < (removedPluginIds.size()); i++)
+    {
+        if (true == getResponse(removedPluginIds[i], isValidRsp, jsonDoc))
+        {
+            removedPluginIds.erase(removedPluginIds.begin() + i);
+        }
+
+        if (true == isValidRsp)
+        {
+            delete jsonDoc;
+            jsonDoc    = nullptr;
+            isValidRsp = false;
+        }
+    }
 }
 
 void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)

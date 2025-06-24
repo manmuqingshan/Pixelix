@@ -277,94 +277,89 @@ void GrabViaRestPlugin::process(bool isConnected)
 
     PluginWithConfig::process(isConnected);
 
-    /* Only if a network connection is established and RestService is running the required information
+    /* Only if a network connection is established, the required information
      * shall be periodically requested via REST API.
      */
-    if (true == RestService::getInstance().getStatus())
+    if (false == m_requestTimer.isTimerRunning())
     {
-        if (false == m_requestTimer.isTimerRunning())
+        if (true == isConnected)
         {
-            if (true == isConnected)
+            /*Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
             {
-                if (true == m_isAllowedToSend)
+                if (false == startHttpRequest())
                 {
-                    if (false == startHttpRequest())
-                    {
-                        /* If a request fails, a '?' will be shown. */
-                        m_view.setFormatText("{hc}?");
+                    /* If a request fails, a '?' will be shown. */
+                    m_view.setFormatText("{hc}?");
 
-                        m_requestTimer.start(UPDATE_PERIOD_SHORT);
-                    }
-                    else
-                    {
-                        m_requestTimer.start(UPDATE_PERIOD);
-                        m_isAllowedToSend = false;
-                    }
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
                 }
             }
-        }
-        else
-        {
-            /* If the connection is lost, stop periodically requesting information
-             * via REST API.
-             */
-            if (false == isConnected)
-            {
-                m_requestTimer.stop();
-            }
-            /* Network connection is available and next request may be necessary for
-             * information update.
-             */
-            else if (true == m_requestTimer.isTimeout())
-            {
-                if (true == m_isAllowedToSend)
-                {
-                    if (false == startHttpRequest())
-                    {
-                        /* If a request fails, a '?' will be shown. */
-                        m_view.setFormatText("{hc}?");
-
-                        m_requestTimer.start(UPDATE_PERIOD_SHORT);
-                    }
-                    else
-                    {
-                        m_requestTimer.start(UPDATE_PERIOD);
-                        m_isAllowedToSend = false;
-                    }
-                }
-            }
-        }
-
-        if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
-        {
-            if (true == isValidResponse)
-            {
-                if (nullptr != jsonDoc)
-                {
-                    handleWebResponse(*jsonDoc);
-                }
-            }
-            else
-            {
-                LOG_WARNING("Connection error.");
-
-                /* If a request fails, show standard icon and a '?' */
-                m_view.setFormatText("{hc}?");
-
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-
-            if (nullptr != jsonDoc)
-            {
-                delete jsonDoc;
-                jsonDoc = nullptr;
-            }
-
-            m_isAllowedToSend = true;
         }
     }
     else
     {
+        /* If the connection is lost, stop periodically requesting information
+         * via REST API.
+         */
+        if (false == isConnected)
+        {
+            m_requestTimer.stop();
+        }
+        /* Network connection is available and next request may be necessary for
+         * information update.
+         */
+        else if (true == m_requestTimer.isTimeout())
+        {
+            /*Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
+            {
+                if (false == startHttpRequest())
+                {
+                    /* If a request fails, a '?' will be shown. */
+                    m_view.setFormatText("{hc}?");
+
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
+            }
+        }
+    }
+
+    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
+    {
+        if (true == isValidResponse)
+        {
+            if (nullptr != jsonDoc)
+            {
+                handleWebResponse(*jsonDoc);
+            }
+        }
+        else
+        {
+            LOG_WARNING("Connection error.");
+
+            /* If a request fails, show standard icon and a '?' */
+            m_view.setFormatText("{hc}?");
+
+            m_requestTimer.start(UPDATE_PERIOD_SHORT);
+        }
+
+        if (nullptr != jsonDoc)
+        {
+            delete jsonDoc;
+            jsonDoc = nullptr;
+        }
+
         m_isAllowedToSend = true;
     }
 }

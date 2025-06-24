@@ -168,13 +168,6 @@ public:
      */
     void addToRemovedPluginIds(void* restId);
 
-    /**
-     * Get current status of the RestService.
-     *
-     * @return If service is runnig, it will return true otherwise false.
-     */
-    bool getStatus();
-
 private:
 
     static const size_t CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
@@ -239,7 +232,7 @@ private:
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
     bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access. */
     std::vector<void*>     removedPluginIds;       /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
-    bool                   m_status;               /**< Signals the status of the service. True means it is running, false means it is stopped. */
+    bool                   m_isRunning;            /**< Signals the status of the service. True means it is running, false means it is stopped. */
 
     /**
      * Saves Callbacks of plugins
@@ -259,7 +252,7 @@ private:
         m_cmdQueue(),
         m_isWaitingForResponse(false),
         removedPluginIds(),
-        m_status(false)
+        m_isRunning(false)
     {
     }
 
@@ -276,7 +269,7 @@ private:
     RestService& operator=(const RestService& service);
 
     /**
-     * Handle asynchronous web response from the server. Filtering is delegated to Plugin-callbacks.
+     * Handles asynchronous web responses from the server. Filtering is delegated to Plugin-callbacks.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
      * @param[in] restId  Unique Id to identify plugin
@@ -285,12 +278,17 @@ private:
     void handleAsyncWebResponse(void* restId, const HttpResponse& rsp);
 
     /**
-     * Handle a failed web request.
+     * Handles failed web requests.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
      * @param[in] restId  Unique Id to identify plugin
      */
     void handleFailedWebRequest(void* restId);
+
+    /**
+     * Removes expired responses from taskproxy. A response is expired if a plugin is stopped after starting a request.
+     */
+    void removeExpiredResponses();
 };
 
 /******************************************************************************
