@@ -104,51 +104,39 @@ public:
     void process() final;
 
     /**
-     * Set a callback which shall be called when a successful response arrives. Only one at a time can be set per plugin.
-     *
-     * @param[in] restId       Unique Id to identify plugin
-     * @param[in] preProcessCallback  Plugin-callback used for preprocessing.
-     */
-    void setCallback(void* restId, PreProcessCallback preProcessCallback);
-
-    /**
-     * Delete Callback if one exists.
-     *
-     * @param[in] restId  Unqiue Id to identify plugin
-     */
-    void deleteCallback(void* restId);
-
-    /**
      * Send GET request to host.
      *
-     * @param[in] restId  Unique Id to identify plugin
-     * @param[in] url     URL
+     * @param[in] restId              Unique Id to identify plugin
+     * @param[in] url                 URL
+     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool get(void* restId, const String& url);
+    bool get(void* restId, const String& url, PreProcessCallback preProcessCallback);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] restId   Unique Id to identify plugin
-     * @param[in] url      URL
-     * @param[in] payload  Payload, which must be kept alive until response is available!
-     * @param[in] size     Payload size in byte
+     * @param[in] restId              Unique Id to identify plugin
+     * @param[in] url                 URL
+     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
+     * @param[in] payload             Payload, which must be kept alive until response is available!
+     * @param[in] size                Payload size in byte
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(void* restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool post(void* restId, const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
-     * @param[in] restId   Unique Id to identify plugin
-     * @param[in] url      URL
-     * @param[in] payload  Payload, which must be kept alive until response is available!
+     * @param[in] restId              Unique Id to identify plugin
+     * @param[in] url                 URL
+     * @param[in] payload             Payload, which must be kept alive until response is available!
+     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool post(void* restId, const String& url, const String& payload);
+    bool post(void* restId, const String& url, const String& payload, PreProcessCallback preProcessCallback);
 
     /**
      * Get Response to a previously started request.
@@ -163,7 +151,7 @@ public:
 
 private:
 
-    static const size_t   CMD_QUEUE_SIZE = 9U;   /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    static const size_t CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
 
     /**
      * A message for HTTP client/server handling.
@@ -198,9 +186,10 @@ private:
      */
     struct Cmd
     {
-        CmdId  id;     /**< The command id identifies the kind of request. */
-        void*  restId; /**< Used to identify plugin in RestService */
-        String url;    /**< URL */
+        CmdId              id;                 /**< The command id identifies the kind of request. */
+        void*              restId;             /**< Used to identify plugin in RestService */
+        PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives */
+        String             url;                /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -220,28 +209,24 @@ private:
         } u;
     };
 
-    AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
-    Queue<Cmd*>            m_cmdQueue;             /**< Command queue */
-    TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
-
-    /**
-     * Saves Callbacks of plugins
-     * key: RestId of plugin
-     * value: Callback
-     */
-    std::map<void*, std::function<bool(const char*, size_t, DynamicJsonDocument&)>> m_Callbacks;
+    AsyncHttpClient        m_client;                   /**< Asynchronous HTTP client. */
+    Queue<Cmd*>            m_cmdQueue;                 /**< Command queue */
+    TaskProxy<Msg, 9U, 0U> m_taskProxy;                /**< Task proxy used to decouple server responses, which happen in a different task context.*/
+    bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
+    PreProcessCallback     m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
+    void*                  m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
 
     /**
      * Constructs the service instance.
      */
     RestService() :
         IService(),
-        m_Callbacks(),
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
-        m_isWaitingForResponse(false)
+        m_isWaitingForResponse(false),
+        m_activePreProcessCallback(),
+        m_activeRestId(nullptr)
     {
     }
 
@@ -261,18 +246,15 @@ private:
      * Handle asynchronous web response from the server. Filtering is delegated to Plugin-callbacks.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
-     * @param[in] restId  Unique Id to identify plugin
      * @param[in] rsp     Web Response
      */
-    void handleAsyncWebResponse(void* restId, const HttpResponse& rsp);
+    void handleAsyncWebResponse(const HttpResponse& rsp);
 
     /**
      * Handle a failed web request.
      * This will be called in LwIP context! Don't modify any member here directly!
-     *
-     * @param[in] restId  Unique Id to identify plugin
      */
-    void handleFailedWebRequest(void* restId);
+    void handleFailedWebRequest();
 };
 
 /******************************************************************************
