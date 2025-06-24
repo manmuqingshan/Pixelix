@@ -265,9 +265,8 @@ void GrabViaRestPlugin::stop()
     PluginWithConfig::stop();
 
     m_isAllowedToSend = false;
-    RestService::getInstance().addToRemovedPluginIds(&m_restId);
-
     RestService::getInstance().deleteCallback(&m_restId);
+    RestService::getInstance().addToRemovedPluginIds(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -336,18 +335,18 @@ void GrabViaRestPlugin::process(bool isConnected)
             }
         }
 
-    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
-    {
-        if (true == isValidResponse)
+        if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
         {
-            if (nullptr != jsonDoc)
+            if (true == isValidResponse)
             {
-                handleWebResponse(*jsonDoc);
+                if (nullptr != jsonDoc)
+                {
+                    handleWebResponse(*jsonDoc);
+                }
             }
-        }
-        else
-        {
-            LOG_WARNING("Connection error.");
+            else
+            {
+                LOG_WARNING("Connection error.");
 
                 /* If a request fails, show standard icon and a '?' */
                 m_view.setFormatText("{hc}?");
@@ -355,11 +354,11 @@ void GrabViaRestPlugin::process(bool isConnected)
                 m_requestTimer.start(UPDATE_PERIOD_SHORT);
             }
 
-        if (nullptr != jsonDoc)
-        {
-            delete jsonDoc;
-            jsonDoc = nullptr;
-        }
+            if (nullptr != jsonDoc)
+            {
+                delete jsonDoc;
+                jsonDoc = nullptr;
+            }
 
             m_isAllowedToSend = true;
         }
