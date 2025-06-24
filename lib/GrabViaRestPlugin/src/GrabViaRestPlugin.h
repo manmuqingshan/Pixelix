@@ -100,7 +100,6 @@ public:
      */
     ~GrabViaRestPlugin()
     {
-        RestService::getInstance().deleteCallback(&m_restId);
         m_mutex.destroy();
     }
 
