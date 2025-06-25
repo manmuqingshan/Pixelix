@@ -185,7 +185,7 @@ void ConnectedState::exit(StateMachine& sm)
 
 void ConnectedState::initHttpClient()
 {
-    m_client.regOnResponse([](void* userData, const HttpResponse& rsp) {
+    m_client.regOnResponse([](uint32_t userData, const HttpResponse& rsp) {
         UTIL_NOT_USED(userData);
         uint16_t statusCode = rsp.getStatusCode();
 
@@ -195,7 +195,7 @@ void ConnectedState::initHttpClient()
         }
     });
 
-    m_client.regOnError([](void* userData) {
+    m_client.regOnError([](uint32_t userData) {
         UTIL_NOT_USED(userData);
 
         LOG_WARNING("Connection error happened.");
@@ -234,7 +234,7 @@ void ConnectedState::pushUrl(const String& pushUrl)
         {
             if (false == isGet)
             {
-                if (false == m_client.POST())
+                if (false == m_client.POST(0))
                 {
                     LOG_WARNING("POST %s failed.", url.c_str());
                 }
@@ -245,7 +245,7 @@ void ConnectedState::pushUrl(const String& pushUrl)
             }
             else
             {
-                if (false == m_client.GET())
+                if (false == m_client.GET(0))
                 {
                     LOG_WARNING("GET %s failed.", url.c_str());
                 }

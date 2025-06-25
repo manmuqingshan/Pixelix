@@ -227,7 +227,6 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
             return this->preProcessAsyncWebResponse(payload, size, doc);
         };
 
-    RestService::getInstance().setCallback(&m_restId, preProcessCallback);
     m_view.init(width, height);
     PluginWithConfig::start(width, height);
 
@@ -263,8 +262,6 @@ void GrabViaRestPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
-
-    RestService::getInstance().deleteCallback(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -331,7 +328,7 @@ void GrabViaRestPlugin::process(bool isConnected)
         }
     }
 
-    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
+    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
     {
         if (true == isValidResponse)
         {
@@ -493,7 +490,9 @@ bool GrabViaRestPlugin::startHttpRequest()
     {
         if (true == m_method.equalsIgnoreCase("GET"))
         {
-            if (false == RestService::getInstance().get(&m_restId, m_url))
+            m_dynamicRestId = RestService::getInstance().get(m_url);
+
+            if (m_dynamicRestId == RestService::INVALID_REST_ID)
             {
                 LOG_WARNING("GET %s failed.", m_url.c_str());
             }
@@ -504,7 +503,9 @@ bool GrabViaRestPlugin::startHttpRequest()
         }
         else if (true == m_method.equalsIgnoreCase("POST"))
         {
-            if (false == RestService::getInstance().post(&m_restId, m_url))
+            m_dynamicRestId = RestService::getInstance().post(m_url);
+
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {
                 LOG_WARNING("POST %s failed.", m_url.c_str());
             }

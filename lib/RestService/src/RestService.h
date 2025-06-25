@@ -74,6 +74,7 @@ public:
      */
     typedef std::function<bool(const char*, size_t, DynamicJsonDocument&)> PreProcessCallback;
 
+
     /**
      * Get the REST service instance.
      *
@@ -104,51 +105,34 @@ public:
     void process() final;
 
     /**
-     * Set a callback which shall be called when a successful response arrives. Only one at a time can be set per plugin.
-     *
-     * @param[in] restId       Unique Id to identify plugin
-     * @param[in] preProcessCallback  Plugin-callback used for preprocessing.
-     */
-    void setCallback(void* restId, PreProcessCallback preProcessCallback);
-
-    /**
-     * Delete Callback if one exists.
-     *
-     * @param[in] restId  Unqiue Id to identify plugin
-     */
-    void deleteCallback(void* restId);
-
-    /**
      * Send GET request to host.
      *
-     * @param[in] restId  Unique Id to identify plugin
      * @param[in] url     URL
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a restId to identify the request otherwise it will return INVALID_REST_ID.
      */
-    bool get(void* restId, const String& url);
+    uint32_t get(const String& url);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] restId   Unique Id to identify plugin
      * @param[in] url      URL
      * @param[in] payload  Payload, which must be kept alive until response is available!
      * @param[in] size     Payload size in byte
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a restId to identify the request otherwise it will return INVALID_REST_ID.
      */
-    bool post(void* restId, const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
+    uint32_t post(const String& url, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
-     * @param[in] restId   Unique Id to identify plugin
+     *
      * @param[in] url      URL
      * @param[in] payload  Payload, which must be kept alive until response is available!
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a restId to identify the request otherwise it will return INVALID_REST_ID.
      */
-    bool post(void* restId, const String& url, const String& payload);
+    uint32_t post(const String& url, const String& payload);
 
     /**
      * Get Response to a previously started request.
@@ -159,18 +143,26 @@ public:
      *
      * @return If a response is available, it will return true otherwise false
      */
-    bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload);
+    bool getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument*& payload);
+
+    /**
+     *  Used to indicate that HTTP request could not be started.
+     */
+    static constexpr uint32_t INVALID_REST_ID = 0U;
 
 private:
 
-    static const size_t   CMD_QUEUE_SIZE = 9U;   /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    /**
+     *  Max. number of commands which can be queued. Must be increased when new user of RestService is added.
+     */
+    static const size_t CMD_QUEUE_SIZE = 9U;
 
     /**
      * A message for HTTP client/server handling.
      */
     struct Msg
     {
-        void*                restId; /**< Used to identify plugin in RestService */
+        uint32_t             restId; /**< Used to identify plugin in RestService */
         bool                 isMsg;  /**< true: successful Response, false: request failed*/
         DynamicJsonDocument* rsp;    /**< Response, only valid if isMsg == true */
 
@@ -198,9 +190,9 @@ private:
      */
     struct Cmd
     {
-        CmdId  id;     /**< The command id identifies the kind of request. */
-        void*  restId; /**< Used to identify plugin in RestService */
-        String url;    /**< URL */
+        CmdId    id;     /**< The command id identifies the kind of request. */
+        uint32_t restId; /**< Used to identify plugin in RestService */
+        String   url;    /**< URL */
 
         /**
          * The union contains the event id specific parameters.
@@ -223,14 +215,16 @@ private:
     AsyncHttpClient        m_client;               /**< Asynchronous HTTP client. */
     Queue<Cmd*>            m_cmdQueue;             /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access */
+    bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access. */
+    uint32_t               m_restIdCounter;        /**< Used to generate restIds. */
 
     /**
      * Saves Callbacks of plugins
      * key: RestId of plugin
      * value: Callback
      */
-    std::map<void*, std::function<bool(const char*, size_t, DynamicJsonDocument&)>> m_Callbacks;
+    std::map<uint32_t, std::function<bool(const char*, size_t, DynamicJsonDocument&)>>
+        m_Callbacks;
 
     /**
      * Constructs the service instance.
@@ -241,7 +235,8 @@ private:
         m_client(),
         m_taskProxy(),
         m_cmdQueue(),
-        m_isWaitingForResponse(false)
+        m_isWaitingForResponse(false),
+        m_restIdCounter(0)
     {
     }
 
@@ -264,7 +259,7 @@ private:
      * @param[in] restId  Unique Id to identify plugin
      * @param[in] rsp     Web Response
      */
-    void handleAsyncWebResponse(void* restId, const HttpResponse& rsp);
+    void handleAsyncWebResponse(uint32_t restId, const HttpResponse& rsp);
 
     /**
      * Handle a failed web request.
@@ -272,7 +267,7 @@ private:
      *
      * @param[in] restId  Unique Id to identify plugin
      */
-    void handleFailedWebRequest(void* restId);
+    void handleFailedWebRequest(uint32_t restId);
 };
 
 /******************************************************************************

@@ -107,7 +107,7 @@ AsyncHttpClient::AsyncHttpClient() :
     m_chunkSize(0U),
     m_chunkIndex(0U),
     m_chunkBodyPart(CHUNK_SIZE),
-    m_pendingCmdUserData(nullptr)
+    m_pendingCmdUserData(0)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -443,7 +443,7 @@ void AsyncHttpClient::regOnError(const OnError& onError)
     m_onErrorCallback = onError;
 }
 
-bool AsyncHttpClient::GET(void* userData)
+bool AsyncHttpClient::GET(uint32_t userData)
 {
     Cmd cmd;
 
@@ -454,7 +454,7 @@ bool AsyncHttpClient::GET(void* userData)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(const uint8_t* payload, size_t size, void* userData)
+bool AsyncHttpClient::POST(uint32_t userData, const uint8_t* payload, size_t size)
 {
     Cmd cmd;
 
@@ -467,7 +467,7 @@ bool AsyncHttpClient::POST(const uint8_t* payload, size_t size, void* userData)
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(const String& payload, void* userData)
+bool AsyncHttpClient::POST(const String& payload, uint32_t userData)
 {
     Cmd cmd;
 
