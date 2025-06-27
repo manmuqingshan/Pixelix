@@ -284,7 +284,7 @@ void GrabViaRestPlugin::process(bool isConnected)
     {
         if (true == isConnected)
         {
-            /*Only one request can be sent at a time. */
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
@@ -316,7 +316,7 @@ void GrabViaRestPlugin::process(bool isConnected)
          */
         else if (true == m_requestTimer.isTimeout())
         {
-            /*Only one request can be sent at a time. */
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())

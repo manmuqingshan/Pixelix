@@ -105,8 +105,11 @@ void RestService::stop()
 
     while (true == m_taskProxy.receive(msg))
     {
-        delete msg.rsp;
-        msg.rsp = nullptr;
+        if (nullptr != msg.rsp)
+        {
+            delete msg.rsp;
+            msg.rsp = nullptr;
+        }
     }
 
     m_cmdQueue.destroy();
@@ -238,8 +241,11 @@ bool RestService::get(void* restId, const String& url)
 
             if (false == isSuccessful)
             {
-                delete cmd;
-                cmd = nullptr;
+                if (nullptr != cmd)
+                {
+                    delete cmd;
+                    cmd = nullptr;
+                }
             }
         }
     }
@@ -283,8 +289,11 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
 
             if (false == isSuccessful)
             {
-                delete cmd;
-                cmd = nullptr;
+                if (nullptr != cmd)
+                {
+                    delete cmd;
+                    cmd = nullptr;
+                }
             }
         }
     }
@@ -328,8 +337,11 @@ bool RestService::post(void* restId, const String& url, const String& payload)
 
             if (false == isSuccessful)
             {
-                delete cmd;
-                cmd = nullptr;
+                if (nullptr != cmd)
+                {
+                    delete cmd;
+                    cmd = nullptr;
+                }
             }
         }
     }
@@ -389,11 +401,11 @@ void RestService::removeExpiredResponses()
     bool                 isValidRsp = false;
     DynamicJsonDocument* jsonDoc    = nullptr;
 
-    for (size_t i = 0; i < (removedPluginIds.size()); i++)
+    for (size_t idIndex = 0; idIndex < removedPluginIds.size(); ++idIndex)
     {
-        if (true == getResponse(removedPluginIds[i], isValidRsp, jsonDoc))
+        if (true == getResponse(removedPluginIds[idIndex], isValidRsp, jsonDoc))
         {
-            removedPluginIds.erase(removedPluginIds.begin() + i);
+            removedPluginIds.erase(removedPluginIds.begin() + idIndex);
         }
 
         if (true == isValidRsp)
