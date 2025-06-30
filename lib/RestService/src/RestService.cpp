@@ -401,11 +401,15 @@ void RestService::removeExpiredResponses()
     bool                 isValidRsp = false;
     DynamicJsonDocument* jsonDoc    = nullptr;
 
-    for (size_t idIndex = 0; idIndex < removedPluginIds.size(); ++idIndex)
+    for (auto idIterator = removedPluginIds.begin(); idIterator != removedPluginIds.end();)
     {
-        if (true == getResponse(removedPluginIds[idIndex], isValidRsp, jsonDoc))
+        if (true == getResponse(*idIterator, isValidRsp, jsonDoc))
         {
-            removedPluginIds.erase(removedPluginIds.begin() + idIndex);
+            idIterator = removedPluginIds.erase(idIterator);
+        }
+        else
+        {
+            ++idIterator;
         }
 
         if (true == isValidRsp)
