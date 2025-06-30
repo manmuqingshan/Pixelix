@@ -173,16 +173,7 @@ uint32_t RestService::get(const String& url)
     uint32_t restId;
     Cmd*     cmd = new (std::nothrow) Cmd();
 
-    if (INVALID_REST_ID == m_restIdCounter)
-    {
-        /*skip the INVALID_REST_ID and use the next one*/
-        m_restIdCounter++;
-        restId = m_restIdCounter++;
-    }
-    else
-    {
-        restId = m_restIdCounter++;
-    }
+    getRestId(restId);
 
     if (nullptr == cmd)
     {
@@ -213,16 +204,7 @@ uint32_t RestService::post(const String& url, const uint8_t* payload, size_t siz
     uint32_t restId;
     Cmd*     cmd = new (std::nothrow) Cmd();
 
-    if (INVALID_REST_ID == m_restIdCounter)
-    {
-        /* skip the INVALID_REST_ID and use the next one*/
-        ++m_restIdCounter;
-        restId = ++m_restIdCounter;
-    }
-    else
-    {
-        restId = ++m_restIdCounter;
-    }
+    getRestId(restId);
 
     if (nullptr == cmd)
     {
@@ -255,16 +237,7 @@ uint32_t RestService::post(const String& url, const String& payload)
     uint32_t restId;
     Cmd*     cmd = new (std::nothrow) Cmd();
 
-    if (INVALID_REST_ID == m_restIdCounter)
-    {
-        /*skip the INVALID_REST_ID and use the next one*/
-        m_restIdCounter++;
-        restId = m_restIdCounter++;
-    }
-    else
-    {
-        restId = m_restIdCounter++;
-    }
+    getRestId(restId);
 
     if (nullptr == cmd)
     {
@@ -339,7 +312,7 @@ void RestService::handleAsyncWebResponse(uint32_t restId, const HttpResponse& rs
                 isError = true;
             }
 
-            /* If a filter is found, it shall be applied.*/
+            /* If a callback is found, it shall be called. */
             else if (m_Callbacks.find(restId) != m_Callbacks.end())
             {
                 if (true == m_Callbacks[restId](payload, payloadSize, *jsonDoc))
@@ -417,6 +390,22 @@ void RestService::handleFailedWebRequest(uint32_t restId)
     if (false == m_taskProxy.send(msg))
     {
         LOG_ERROR("Msg could not be sent to Msg-Queue");
+    }
+}
+
+void RestService::getRestId(uint32_t& restId)
+{
+    if (INVALID_REST_ID == m_restIdCounter)
+    {
+        /* Skip the INVALID_REST_ID and use the next one. */
+        ++m_restIdCounter;
+        restId = m_restIdCounter;
+        ++m_restIdCounter;
+    }
+    else
+    {
+        restId = m_restIdCounter;
+        ++m_restIdCounter;
     }
 }
 

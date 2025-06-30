@@ -268,6 +268,13 @@ private:
      * @param[in] restId  Unique Id to identify plugin
      */
     void handleFailedWebRequest(uint32_t restId);
+
+    /**
+     * Returns a valid restId.
+     *
+     * @param[out] restId Reference where the restId is stored.
+     */
+    void getRestId(uint32_t& restId);
 };
 
 /******************************************************************************
