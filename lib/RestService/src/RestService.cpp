@@ -339,8 +339,8 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
                 isError = true;
             }
 
-            /* If a filter is found, it shall be applied.*/
-            else if (m_activePreProcessCallback)
+            /* If a callback is found, it shall be applied.*/
+            else if (nullptr != m_activePreProcessCallback)
             {
                 if (true == m_activePreProcessCallback(payload, payloadSize, *jsonDoc))
                 {
