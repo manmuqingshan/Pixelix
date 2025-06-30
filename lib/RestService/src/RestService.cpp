@@ -215,13 +215,13 @@ uint32_t RestService::post(const String& url, const uint8_t* payload, size_t siz
 
     if (INVALID_REST_ID == m_restIdCounter)
     {
-        /*skip the INVALID_REST_ID and use the next one*/
-        m_restIdCounter++;
-        restId = m_restIdCounter++;
+        /* skip the INVALID_REST_ID and use the next one*/
+        ++m_restIdCounter;
+        restId = ++m_restIdCounter;
     }
     else
     {
-        restId = m_restIdCounter++;
+        restId = ++m_restIdCounter;
     }
 
     if (nullptr == cmd)

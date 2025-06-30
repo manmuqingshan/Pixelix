@@ -236,7 +236,7 @@ private:
         m_taskProxy(),
         m_cmdQueue(),
         m_isWaitingForResponse(false),
-        m_restIdCounter(0)
+        m_restIdCounter(INVALID_REST_ID)
     {
     }
 
