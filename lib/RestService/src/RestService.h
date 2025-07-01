@@ -149,9 +149,19 @@ public:
      */
     bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload);
 
+    /**
+     * Adds restId of a plugin to vector removedPluginIds.
+     *
+     * @param[in] restId Unique Id to identify plugin
+     */
+    void addToRemovedPluginIds(void* restId);
+
 private:
 
-    static const size_t CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    /** PluginId list */
+    typedef std::vector<void*> PluginIdList;
+
+    static const size_t        CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
 
     /**
      * A message for HTTP client/server handling.
@@ -213,6 +223,8 @@ private:
     Queue<Cmd*>            m_cmdQueue;                 /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;                /**< Task proxy used to decouple server responses, which happen in a different task context.*/
     bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
+    PluginIdList           removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
+    bool                   m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
     PreProcessCallback     m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
     void*                  m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
 
@@ -225,6 +237,8 @@ private:
         m_taskProxy(),
         m_cmdQueue(),
         m_isWaitingForResponse(false),
+        removedPluginIds(),
+        m_isRunning(false),
         m_activePreProcessCallback(),
         m_activeRestId(nullptr)
     {
@@ -243,7 +257,7 @@ private:
     RestService& operator=(const RestService& service);
 
     /**
-     * Handle asynchronous web response from the server. Filtering is delegated to Plugin-callbacks.
+     * Handles asynchronous web responses from the server. Filtering is delegated to Plugin-callbacks.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
      * @param[in] rsp     Web Response
@@ -251,10 +265,15 @@ private:
     void handleAsyncWebResponse(const HttpResponse& rsp);
 
     /**
-     * Handle a failed web request.
+     * Handles failed web requests.
      * This will be called in LwIP context! Don't modify any member here directly!
      */
     void handleFailedWebRequest();
+
+    /**
+     * Removes expired responses from taskproxy. A response is expired if a plugin is stopped after starting a request.
+     */
+    void removeExpiredResponses();
 };
 
 /******************************************************************************
