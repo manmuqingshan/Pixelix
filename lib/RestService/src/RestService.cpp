@@ -398,10 +398,11 @@ void RestService::addToRemovedPluginIds(void* restId)
 
 void RestService::removeExpiredResponses()
 {
-    bool                 isValidRsp = false;
-    DynamicJsonDocument* jsonDoc    = nullptr;
+    bool                   isValidRsp = false;
+    DynamicJsonDocument*   jsonDoc    = nullptr;
+    PluginIdList::iterator idIterator = removedPluginIds.begin();
 
-    for (auto idIterator = removedPluginIds.begin(); idIterator != removedPluginIds.end();)
+    while (idIterator != removedPluginIds.end())
     {
         if (true == getResponse(*idIterator, isValidRsp, jsonDoc))
         {

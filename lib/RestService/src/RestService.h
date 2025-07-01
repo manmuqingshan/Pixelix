@@ -170,7 +170,10 @@ public:
 
 private:
 
-    static const size_t CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    /** PluginId list */
+    typedef std::vector<void*> PluginIdList;
+
+    static const size_t        CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
 
     /**
      * A message for HTTP client/server handling.
@@ -231,7 +234,7 @@ private:
     Queue<Cmd*>            m_cmdQueue;             /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;            /**< Task proxy used to decouple server responses, which happen in a different task context.*/
     bool                   m_isWaitingForResponse; /**< Used to protect against concurrent access. */
-    std::vector<void*>     removedPluginIds;       /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
+    PluginIdList           removedPluginIds;       /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
     bool                   m_isRunning;            /**< Signals the status of the service. True means it is running, false means it is stopped. */
 
     /**
