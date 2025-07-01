@@ -264,7 +264,9 @@ void GrabViaRestPlugin::stop()
 
     PluginWithConfig::stop();
 
+    m_isAllowedToSend = false;
     RestService::getInstance().deleteCallback(&m_restId);
+    RestService::getInstance().addToRemovedPluginIds(&m_restId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -275,13 +277,14 @@ void GrabViaRestPlugin::process(bool isConnected)
 
     PluginWithConfig::process(isConnected);
 
-    /* Only if a network connection is established the required information
+    /* Only if a network connection is established, the required information
      * shall be periodically requested via REST API.
      */
     if (false == m_requestTimer.isTimerRunning())
     {
         if (true == isConnected)
         {
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
@@ -313,6 +316,7 @@ void GrabViaRestPlugin::process(bool isConnected)
          */
         else if (true == m_requestTimer.isTimeout())
         {
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
