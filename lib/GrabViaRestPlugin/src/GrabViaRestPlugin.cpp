@@ -221,13 +221,8 @@ bool GrabViaRestPlugin::hasTopicChanged(const String& topic)
 
 void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive>      guard(m_mutex);
-    RestService::PreProcessCallback preProcessCallback =
-        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
-            return this->preProcessAsyncWebResponse(payload, size, doc);
-        };
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
-    RestService::getInstance().setCallback(&m_restId, preProcessCallback);
     m_view.init(width, height);
     PluginWithConfig::start(width, height);
 
@@ -265,7 +260,6 @@ void GrabViaRestPlugin::stop()
     PluginWithConfig::stop();
 
     m_isAllowedToSend = false;
-    RestService::getInstance().deleteCallback(&m_restId);
     RestService::getInstance().addToRemovedPluginIds(&m_restId);
 }
 
@@ -491,13 +485,17 @@ bool GrabViaRestPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool GrabViaRestPlugin::startHttpRequest()
 {
-    bool status = false;
+    bool                            status = false;
+    RestService::PreProcessCallback preProcessCallback =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     if (false == m_url.isEmpty())
     {
         if (true == m_method.equalsIgnoreCase("GET"))
         {
-            if (false == RestService::getInstance().get(&m_restId, m_url))
+            if (false == RestService::getInstance().get(&m_restId, m_url, preProcessCallback))
             {
                 LOG_WARNING("GET %s failed.", m_url.c_str());
             }
@@ -508,7 +506,7 @@ bool GrabViaRestPlugin::startHttpRequest()
         }
         else if (true == m_method.equalsIgnoreCase("POST"))
         {
-            if (false == RestService::getInstance().post(&m_restId, m_url))
+            if (false == RestService::getInstance().post(&m_restId, m_url, preProcessCallback))
             {
                 LOG_WARNING("POST %s failed.", m_url.c_str());
             }

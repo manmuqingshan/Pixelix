@@ -61,11 +61,11 @@
 bool RestService::start()
 {
     bool                        isSuccessful = false;
-    AsyncHttpClient::OnResponse rspCallback  = [this](void* restId, const HttpResponse& rsp) {
-        handleAsyncWebResponse(restId, rsp);
+    AsyncHttpClient::OnResponse rspCallback  = [this](const HttpResponse& rsp) {
+        handleAsyncWebResponse(rsp);
     };
-    AsyncHttpClient::OnError errCallback = [this](void* restId) {
-        handleFailedWebRequest(restId);
+    AsyncHttpClient::OnError errCallback = [this]() {
+        handleFailedWebRequest();
     };
     AsyncHttpClient::OnClosed closedCallback = [this]() {
         m_isWaitingForResponse = false;
@@ -128,19 +128,22 @@ void RestService::process()
 
             if (nullptr != cmd)
             {
+                m_activeRestId             = cmd->restId;
+                m_activePreProcessCallback = cmd->preProcessCallback;
+
                 if (true == m_client.begin(String(cmd->url)))
                 {
                     switch (cmd->id)
                     {
                     case CMD_ID_GET:
-                        if (false == m_client.GET(cmd->restId))
+                        if (false == m_client.GET())
                         {
                             isError = true;
                         }
                         break;
 
                     case CMD_ID_POST:
-                        if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size, cmd->restId))
+                        if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size))
                         {
                             isError = true;
                         }
@@ -156,6 +159,10 @@ void RestService::process()
                     isError = true;
                 }
             }
+            else
+            {
+                isError = true;
+            }
 
             if (true == isError)
             {
@@ -170,7 +177,9 @@ void RestService::process()
                     LOG_ERROR("Msg could not be sent to Msg-Queue");
                 }
 
-                m_isWaitingForResponse = false;
+                m_activeRestId             = nullptr;
+                m_activePreProcessCallback = nullptr;
+                m_isWaitingForResponse     = false;
             }
         }
 
@@ -184,34 +193,7 @@ void RestService::process()
     }
 }
 
-void RestService::setCallback(void* restId, PreProcessCallback preProcessCallback)
-{
-    if (nullptr == restId)
-    {
-        LOG_ERROR("Callback cannot be set with nullptr as restId!");
-    }
-    else
-    {
-        if (m_Callbacks.find(restId) == m_Callbacks.end())
-        {
-            m_Callbacks[restId] = preProcessCallback;
-        }
-    }
-}
-
-void RestService::deleteCallback(void* restId)
-{
-    if (nullptr == restId)
-    {
-        LOG_ERROR("Cannot delete callback for restId: nullptr!");
-    }
-    else
-    {
-        m_Callbacks.erase(restId);
-    }
-}
-
-bool RestService::get(void* restId, const String& url)
+bool RestService::get(void* restId, const String& url, PreProcessCallback preProcessCallback)
 {
     bool isSuccessful = true;
 
@@ -233,10 +215,11 @@ bool RestService::get(void* restId, const String& url)
             }
             else
             {
-                cmd->id      = CMD_ID_GET;
-                cmd->restId  = restId;
-                cmd->url     = url;
-                isSuccessful = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+                cmd->id                 = CMD_ID_GET;
+                cmd->restId             = restId;
+                cmd->preProcessCallback = preProcessCallback;
+                cmd->url                = url;
+                isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
             }
 
             if (false == isSuccessful)
@@ -257,7 +240,7 @@ bool RestService::get(void* restId, const String& url)
     return isSuccessful;
 }
 
-bool RestService::post(void* restId, const String& url, const uint8_t* payload, size_t size)
+bool RestService::post(void* restId, const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
     bool isSuccessful = true;
 
@@ -279,12 +262,13 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
             }
             else
             {
-                cmd->id          = CMD_ID_POST;
-                cmd->restId      = restId;
-                cmd->url         = url;
-                cmd->u.data.data = payload;
-                cmd->u.data.size = size;
-                isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+                cmd->id                 = CMD_ID_POST;
+                cmd->restId             = restId;
+                cmd->preProcessCallback = preProcessCallback;
+                cmd->url                = url;
+                cmd->u.data.data        = payload;
+                cmd->u.data.size        = size;
+                isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
             }
 
             if (false == isSuccessful)
@@ -305,7 +289,7 @@ bool RestService::post(void* restId, const String& url, const uint8_t* payload, 
     return isSuccessful;
 }
 
-bool RestService::post(void* restId, const String& url, const String& payload)
+bool RestService::post(void* restId, const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
     bool isSuccessful = true;
 
@@ -327,12 +311,13 @@ bool RestService::post(void* restId, const String& url, const String& payload)
             }
             else
             {
-                cmd->id          = CMD_ID_POST;
-                cmd->restId      = restId;
-                cmd->url         = url;
-                cmd->u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
-                cmd->u.data.size = payload.length();
-                isSuccessful     = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+                cmd->id                 = CMD_ID_POST;
+                cmd->restId             = restId;
+                cmd->url                = url;
+                cmd->preProcessCallback = preProcessCallback;
+                cmd->u.data.data        = reinterpret_cast<const uint8_t*>(payload.c_str());
+                cmd->u.data.size        = payload.length();
+                isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
             }
 
             if (false == isSuccessful)
@@ -422,14 +407,14 @@ void RestService::removeExpiredResponses()
     }
 }
 
-void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
+void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
 {
     const size_t         JSON_DOC_SIZE = 4096U;
     DynamicJsonDocument* jsonDoc       = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
     bool                 isError       = false;
     Msg                  msg;
 
-    msg.restId = restId;
+    msg.restId = m_activeRestId;
 
     if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
     {
@@ -447,10 +432,10 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
                 isError = true;
             }
 
-            /* If a filter is found, it shall be applied.*/
-            else if (m_Callbacks.find(restId) != m_Callbacks.end())
+            /* If a callback is found, it shall be applied.*/
+            else if (nullptr != m_activePreProcessCallback)
             {
-                if (true == m_Callbacks[restId](payload, payloadSize, *jsonDoc))
+                if (true == m_activePreProcessCallback(payload, payloadSize, *jsonDoc))
                 {
                     msg.isMsg = true;
                     msg.rsp   = jsonDoc;
@@ -512,13 +497,16 @@ void RestService::handleAsyncWebResponse(void* restId, const HttpResponse& rsp)
             LOG_ERROR("Msg could not be sent to Msg-Queue");
         }
     }
+
+    m_activeRestId             = nullptr;
+    m_activePreProcessCallback = nullptr;
 }
 
-void RestService::handleFailedWebRequest(void* restId)
+void RestService::handleFailedWebRequest()
 {
     Msg msg;
 
-    msg.restId = restId;
+    msg.restId = m_activeRestId;
     msg.isMsg  = false;
     msg.rsp    = nullptr;
 
@@ -526,6 +514,9 @@ void RestService::handleFailedWebRequest(void* restId)
     {
         LOG_ERROR("Msg could not be sent to Msg-Queue");
     }
+
+    m_activeRestId             = nullptr;
+    m_activePreProcessCallback = nullptr;
 }
 
 /******************************************************************************
