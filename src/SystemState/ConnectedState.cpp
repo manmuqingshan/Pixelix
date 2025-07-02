@@ -231,7 +231,7 @@ void ConnectedState::pushUrl(const String& pushUrl)
         {
             if (false == isGet)
             {
-                if (false == m_client.POST(0))
+                if (false == m_client.POST())
                 {
                     LOG_WARNING("POST %s failed.", url.c_str());
                 }
@@ -242,7 +242,7 @@ void ConnectedState::pushUrl(const String& pushUrl)
             }
             else
             {
-                if (false == m_client.GET(0))
+                if (false == m_client.GET())
                 {
                     LOG_WARNING("GET %s failed.", url.c_str());
                 }
