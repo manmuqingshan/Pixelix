@@ -362,7 +362,14 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
 
 void RestService::addToRemovedPluginIds(uint32_t restId)
 {
-    removedPluginIds.push_back(restId);
+    if (INVALID_REST_ID == restId)
+    {
+        LOG_ERROR("Cannot add INVALID_REST_ID to removedPluginIds!");
+    }
+    else
+    {
+        removedPluginIds.push_back(restId);
+    }
 }
 
 void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
