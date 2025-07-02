@@ -87,8 +87,8 @@ bool RestService::start()
 
 void RestService::stop()
 {
-    Cmd* cmd = nullptr;
-    Msg  msg;
+    Cmd* cmd    = nullptr;
+    Msg* msg    = nullptr;
 
     m_isRunning = false;
     m_client.regOnResponse(nullptr);
@@ -108,10 +108,10 @@ void RestService::stop()
 
     while (true == m_taskProxy.receive(msg))
     {
-        if (nullptr != msg.rsp)
+        if (nullptr != msg)
         {
-            delete msg.rsp;
-            msg.rsp = nullptr;
+            delete msg;
+            msg = nullptr;
         }
     }
 
@@ -169,15 +169,21 @@ void RestService::process()
 
             if (true == isError)
             {
-                Msg msg;
+                Msg* msg = new (std::nothrow) Msg();
 
-                msg.restId = cmd->restId;
-                msg.isMsg  = false;
-                msg.rsp    = nullptr;
-
-                if (false == this->m_taskProxy.send(msg))
+                if (nullptr == msg)
                 {
-                    LOG_ERROR("Msg could not be sent to Msg-Queue");
+                    LOG_FATAL("Couldn't allocate enough memory for a msg.");
+                }
+                else
+                {
+                    msg->restId = cmd->restId;
+                    msg->isMsg  = false;
+
+                    if (false == this->m_taskProxy.send(msg))
+                    {
+                        LOG_ERROR("Msg could not be sent to Msg-Queue");
+                    }
                 }
 
                 m_activeRestId             = INVALID_REST_ID;
@@ -329,19 +335,19 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
     return restId;
 }
 
-bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument*& payload)
+bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload)
 {
     bool isSuccessful = false;
-    Msg  msg;
+    Msg* msg          = nullptr;
 
     if (true == m_isRunning)
     {
         if (true == m_taskProxy.peek(msg))
         {
-            if (restId == msg.restId)
+            if (restId == msg->restId)
             {
-                isValidRsp   = msg.isMsg;
-                payload      = msg.rsp;
+                isValidRsp   = msg->isMsg;
+                payload      = std::move(msg->rsp);
                 isSuccessful = true;
 
                 if (false == m_taskProxy.receive(msg))
@@ -354,7 +360,6 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
     else
     {
         isValidRsp = false;
-        payload    = nullptr;
     }
 
     return isSuccessful;
@@ -374,16 +379,14 @@ void RestService::addToRemovedPluginIds(uint32_t restId)
 
 void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
 {
-    const size_t         JSON_DOC_SIZE = 4096U;
-    DynamicJsonDocument* jsonDoc       = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
-    bool                 isError       = false;
-    Msg                  msg;
+    Msg* msg     = new (std::nothrow) Msg();
+    bool isError = false;
 
-    msg.restId = m_activeRestId;
-
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+    if (nullptr != msg)
     {
-        if (nullptr != jsonDoc)
+        msg->restId = m_activeRestId;
+
+        if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
         {
             bool        isSuccessful = false;
             size_t      payloadSize  = 0U;
@@ -400,10 +403,9 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
             /* If a callback is found, it shall be applied. */
             else if (nullptr != m_activePreProcessCallback)
             {
-                if (true == m_activePreProcessCallback(payload, payloadSize, *jsonDoc))
+                if (true == m_activePreProcessCallback(payload, payloadSize, msg->rsp))
                 {
-                    msg.isMsg = true;
-                    msg.rsp   = jsonDoc;
+                    msg->isMsg = true;
 
                     if (false == m_taskProxy.send(msg))
                     {
@@ -419,7 +421,7 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
             }
             else
             {
-                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize);
+                DeserializationError error = deserializeJson(msg->rsp, payload, payloadSize);
 
                 if (DeserializationError::Ok != error.code())
                 {
@@ -428,8 +430,7 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
                 }
                 else
                 {
-                    msg.isMsg = true;
-                    msg.rsp   = jsonDoc;
+                    msg->isMsg = true;
 
                     if (false == m_taskProxy.send(msg))
                     {
@@ -440,27 +441,24 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
         }
         else
         {
-            LOG_ERROR("Not enough memory available to store DynamicJsonDocument");
             isError = true;
+            LOG_ERROR("Http-Status not ok");
+        }
+
+        if (true == isError)
+        {
+            msg->isMsg = false;
+            msg->rsp.clear();
+
+            if (false == m_taskProxy.send(msg))
+            {
+                LOG_ERROR("Msg could not be sent to Msg-Queue");
+            }
         }
     }
     else
     {
-        isError = true;
-        LOG_ERROR("Http-Status not ok");
-    }
-
-    if (true == isError)
-    {
-        delete jsonDoc;
-        jsonDoc   = nullptr;
-        msg.isMsg = false;
-        msg.rsp   = nullptr;
-
-        if (false == m_taskProxy.send(msg))
-        {
-            LOG_ERROR("Msg could not be sent to Msg-Queue");
-        }
+        LOG_FATAL("Couldn't allocate enough memory for a msg.");
     }
 
     m_activeRestId             = INVALID_REST_ID;
@@ -469,15 +467,21 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
 
 void RestService::handleFailedWebRequest()
 {
-    Msg msg;
+    Msg* msg = new (std::nothrow) Msg();
 
-    msg.restId = m_activeRestId;
-    msg.isMsg  = false;
-    msg.rsp    = nullptr;
-
-    if (false == m_taskProxy.send(msg))
+    if (nullptr != msg)
     {
-        LOG_ERROR("Msg could not be sent to Msg-Queue");
+        msg->restId = m_activeRestId;
+        msg->isMsg  = false;
+
+        if (false == m_taskProxy.send(msg))
+        {
+            LOG_ERROR("Msg could not be sent to Msg-Queue");
+        }
+    }
+    else
+    {
+        LOG_FATAL("Couldn't allocate enough memory for a msg.");
     }
 
     m_activeRestId             = INVALID_REST_ID;
@@ -487,7 +491,7 @@ void RestService::handleFailedWebRequest()
 void RestService::removeExpiredResponses()
 {
     bool                   isValidRsp = false;
-    DynamicJsonDocument*   jsonDoc    = nullptr;
+    DynamicJsonDocument    jsonDoc(0U);
     PluginIdList::iterator idIterator = removedPluginIds.begin();
 
     while (idIterator != removedPluginIds.end())
@@ -499,13 +503,6 @@ void RestService::removeExpiredResponses()
         else
         {
             ++idIterator;
-        }
-
-        if (true == isValidRsp)
-        {
-            delete jsonDoc;
-            jsonDoc    = nullptr;
-            isValidRsp = false;
         }
     }
 }
