@@ -108,7 +108,7 @@ public:
      *
      * @param[in] restId              Unique Id to identify plugin
      * @param[in] url                 URL
-     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
+     * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
@@ -119,7 +119,7 @@ public:
      *
      * @param[in] restId              Unique Id to identify plugin
      * @param[in] url                 URL
-     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
+     * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      * @param[in] payload             Payload, which must be kept alive until response is available!
      * @param[in] size                Payload size in byte
      *
@@ -132,7 +132,7 @@ public:
      * @param[in] restId              Unique Id to identify plugin
      * @param[in] url                 URL
      * @param[in] payload             Payload, which must be kept alive until response is available!
-     * @param[in] preProcessCallback  PreProcessCallback which shall be called when response arrives.
+     * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
@@ -234,8 +234,8 @@ private:
     RestService() :
         IService(),
         m_client(),
-        m_taskProxy(),
         m_cmdQueue(),
+        m_taskProxy(),
         m_isWaitingForResponse(false),
         removedPluginIds(),
         m_isRunning(false),
