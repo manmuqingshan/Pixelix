@@ -260,7 +260,11 @@ void GrabViaRestPlugin::stop()
     PluginWithConfig::stop();
 
     m_isAllowedToSend = false;
-    RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+    }
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -354,6 +358,7 @@ void GrabViaRestPlugin::process(bool isConnected)
             jsonDoc = nullptr;
         }
 
+        m_dynamicRestId   = RestService::INVALID_REST_ID;
         m_isAllowedToSend = true;
     }
 }
