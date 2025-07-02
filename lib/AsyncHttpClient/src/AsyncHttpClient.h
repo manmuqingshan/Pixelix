@@ -71,10 +71,8 @@ public:
 
     /**
      * Prototype of HTTP response callback for a complete received response.
-     *
-     * @param[in] userData Used to pass user-data which can be used in callbacks.
      */
-    typedef std::function<void(uint32_t userData, const HttpResponse& rsp)> OnResponse;
+    typedef std::function<void(const HttpResponse& rsp)> OnResponse;
 
     /**
      * Prototype of HTTP response callback for a closed connection.
@@ -83,10 +81,8 @@ public:
 
     /**
      * Prototype of HTTP response callback in case a error happened.
-     *
-     * @param[in] userData Used to pass user-data which can be used in callbacks.
      */
-    typedef std::function<void(uint32_t userData)> OnError;
+    typedef std::function<void()> OnError;
 
     /**
      * Constructs a http client.
@@ -188,11 +184,9 @@ public:
     /**
      * Send GET request to host.
      *
-     * @param[in] userData Used to pass user-data which can be used in callbacks.
-     *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool GET(uint32_t userData);
+    bool GET();
 
     /**
      * Send POST request to host.
@@ -203,17 +197,16 @@ public:
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(uint32_t userData, const uint8_t* payload = nullptr, size_t size = 0U);
+    bool POST(const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
      *
      * @param[in] payload   Payload, which must be kept alive until response is available!
-     * @param[in] userData  Used to pass user-data which can be used in callbacks.
      *
      * @return If request is successful sent, it will return true otherwise false.
      */
-    bool POST(const String& payload, uint32_t userData);
+    bool POST(const String& payload);
 
 private:
 
@@ -253,8 +246,7 @@ private:
      */
     struct Cmd
     {
-        CmdId    id;       /**< The command id identifies the kind of request. */
-        uint32_t userData; /**< Points to a user's data. */
+        CmdId id; /**< The command id identifies the kind of request. */
 
         /**
          * The union contains the event id specific parameters.
@@ -383,16 +375,15 @@ private:
     const uint8_t* m_payload;             /**< Request payload */
     size_t         m_payloadSize;         /**< Request payload size in byte */
 
-    ResponsePart   m_rspPart;            /**< Current parsing part of the response */
-    HttpResponse   m_rsp;                /**< Response */
-    String         m_rspLine;            /**< Single line, used for response parsing */
-    TransferCoding m_transferCoding;     /**< Transfer coding */
-    size_t         m_contentLength;      /**< Content length in byte */
-    size_t         m_contentIndex;       /**< Content index */
-    size_t         m_chunkSize;          /**< Chunk size in byte */
-    size_t         m_chunkIndex;         /**< Chunk body index */
-    ChunkBodyPart  m_chunkBodyPart;      /**< Current part of chunked response */
-    uint32_t       m_pendingCmdUserData; /**< Used to identify plugin in RestService */
+    ResponsePart   m_rspPart;        /**< Current parsing part of the response */
+    HttpResponse   m_rsp;            /**< Response */
+    String         m_rspLine;        /**< Single line, used for response parsing */
+    TransferCoding m_transferCoding; /**< Transfer coding */
+    size_t         m_contentLength;  /**< Content length in byte */
+    size_t         m_contentIndex;   /**< Content index */
+    size_t         m_chunkSize;      /**< Chunk size in byte */
+    size_t         m_chunkIndex;     /**< Chunk body index */
+    ChunkBodyPart  m_chunkBodyPart;  /**< Current part of chunked response */
 
     AsyncHttpClient(const AsyncHttpClient& client);
     AsyncHttpClient& operator=(const AsyncHttpClient& client);

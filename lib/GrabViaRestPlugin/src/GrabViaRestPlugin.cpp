@@ -221,11 +221,7 @@ bool GrabViaRestPlugin::hasTopicChanged(const String& topic)
 
 void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive>      guard(m_mutex);
-    RestService::PreProcessCallback preProcessCallback =
-        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
-            return this->preProcessAsyncWebResponse(payload, size, doc);
-        };
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.init(width, height);
     PluginWithConfig::start(width, height);
@@ -262,6 +258,9 @@ void GrabViaRestPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+    RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -272,13 +271,14 @@ void GrabViaRestPlugin::process(bool isConnected)
 
     PluginWithConfig::process(isConnected);
 
-    /* Only if a network connection is established the required information
+    /* Only if a network connection is established, the required information
      * shall be periodically requested via REST API.
      */
     if (false == m_requestTimer.isTimerRunning())
     {
         if (true == isConnected)
         {
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
@@ -310,6 +310,7 @@ void GrabViaRestPlugin::process(bool isConnected)
          */
         else if (true == m_requestTimer.isTimeout())
         {
+            /* Only one request can be sent at a time. */
             if (true == m_isAllowedToSend)
             {
                 if (false == startHttpRequest())
@@ -484,15 +485,19 @@ bool GrabViaRestPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool GrabViaRestPlugin::startHttpRequest()
 {
-    bool status = false;
+    bool                            status = false;
+    RestService::PreProcessCallback preProcessCallback =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     if (false == m_url.isEmpty())
     {
         if (true == m_method.equalsIgnoreCase("GET"))
         {
-            m_dynamicRestId = RestService::getInstance().get(m_url);
+            m_dynamicRestId = RestService::getInstance().get(m_url, preProcessCallback);
 
-            if (m_dynamicRestId == RestService::INVALID_REST_ID)
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {
                 LOG_WARNING("GET %s failed.", m_url.c_str());
             }
@@ -503,7 +508,7 @@ bool GrabViaRestPlugin::startHttpRequest()
         }
         else if (true == m_method.equalsIgnoreCase("POST"))
         {
-            m_dynamicRestId = RestService::getInstance().post(m_url);
+            m_dynamicRestId = RestService::getInstance().post(m_url, preProcessCallback);
 
             if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {

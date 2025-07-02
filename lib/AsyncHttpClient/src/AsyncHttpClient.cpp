@@ -106,8 +106,7 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE),
-    m_pendingCmdUserData(0)
+    m_chunkBodyPart(CHUNK_SIZE)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -443,37 +442,34 @@ void AsyncHttpClient::regOnError(const OnError& onError)
     m_onErrorCallback = onError;
 }
 
-bool AsyncHttpClient::GET(uint32_t userData)
+bool AsyncHttpClient::GET()
 {
     Cmd cmd;
 
     memset(&cmd, 0, sizeof(cmd));
-    cmd.id       = CMD_ID_GET;
-    cmd.userData = userData;
+    cmd.id = CMD_ID_GET;
 
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(uint32_t userData, const uint8_t* payload, size_t size)
+bool AsyncHttpClient::POST(const uint8_t* payload, size_t size)
 {
     Cmd cmd;
 
     memset(&cmd, 0, sizeof(cmd));
     cmd.id          = CMD_ID_POST;
-    cmd.userData    = userData;
     cmd.u.data.data = payload;
     cmd.u.data.size = size;
 
     return m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
 }
 
-bool AsyncHttpClient::POST(const String& payload, uint32_t userData)
+bool AsyncHttpClient::POST(const String& payload)
 {
     Cmd cmd;
 
     memset(&cmd, 0, sizeof(cmd));
     cmd.id          = CMD_ID_POST;
-    cmd.userData    = userData;
     cmd.u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
     cmd.u.data.size = payload.length();
 
@@ -610,8 +606,6 @@ void AsyncHttpClient::processCmdQueue()
             switch (cmd.id)
             {
             case CMD_ID_GET:
-                m_pendingCmdUserData = cmd.userData;
-
                 if (false == getRequest())
                 {
                     giveGlobalMutex();
@@ -619,8 +613,6 @@ void AsyncHttpClient::processCmdQueue()
                 break;
 
             case CMD_ID_POST:
-                m_pendingCmdUserData = cmd.userData;
-
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
                     giveGlobalMutex();
@@ -1487,7 +1479,7 @@ void AsyncHttpClient::notifyResponse()
 {
     if (nullptr != m_onRspCallback)
     {
-        m_onRspCallback(m_pendingCmdUserData, m_rsp);
+        m_onRspCallback(m_rsp);
     }
 }
 
@@ -1503,7 +1495,7 @@ void AsyncHttpClient::notifyError()
 {
     if (nullptr != m_onErrorCallback)
     {
-        m_onErrorCallback(m_pendingCmdUserData);
+        m_onErrorCallback();
     }
 }
 
