@@ -74,7 +74,6 @@ public:
      */
     typedef std::function<bool(const char*, size_t, DynamicJsonDocument&)> PreProcessCallback;
 
-
     /**
      * Get the REST service instance.
      *
