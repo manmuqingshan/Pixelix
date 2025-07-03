@@ -206,11 +206,10 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 {
     bool     isSuccessful = true;
     uint32_t restId;
-    Cmd*     cmd = new (std::nothrow) Cmd();
 
     if (true == m_isRunning)
     {
-        getRestId(restId);
+        Cmd* cmd = new (std::nothrow) Cmd();
 
         if (nullptr == cmd)
         {
@@ -219,11 +218,18 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
         }
         else
         {
+            restId                  = getRestId();
             cmd->id                 = CMD_ID_GET;
             cmd->restId             = restId;
             cmd->preProcessCallback = preProcessCallback;
             cmd->url                = url;
-            isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+
+            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
+            {
+                delete cmd;
+                cmd          = nullptr;
+                isSuccessful = false;
+            }
         }
     }
     else
@@ -233,12 +239,6 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
     if (false == isSuccessful)
     {
-        if (nullptr != cmd)
-        {
-            delete cmd;
-            cmd = nullptr;
-        }
-
         restId = INVALID_REST_ID;
     }
 
@@ -249,11 +249,10 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 {
     bool     isSuccessful = true;
     uint32_t restId;
-    Cmd*     cmd = new (std::nothrow) Cmd();
 
     if (true == m_isRunning)
     {
-        getRestId(restId);
+        Cmd* cmd = new (std::nothrow) Cmd();
 
         if (nullptr == cmd)
         {
@@ -262,13 +261,20 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
         }
         else
         {
+            restId                  = getRestId();
             cmd->id                 = CMD_ID_POST;
             cmd->restId             = restId;
             cmd->preProcessCallback = preProcessCallback;
             cmd->url                = url;
             cmd->u.data.data        = payload;
             cmd->u.data.size        = size;
-            isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+
+            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
+            {
+                delete cmd;
+                cmd          = nullptr;
+                isSuccessful = false;
+            }
         }
     }
     else
@@ -278,12 +284,6 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
     if (false == isSuccessful)
     {
-        if (nullptr != cmd)
-        {
-            delete cmd;
-            cmd = nullptr;
-        }
-
         restId = INVALID_REST_ID;
     }
 
@@ -294,11 +294,10 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 {
     bool     isSuccessful = true;
     uint32_t restId;
-    Cmd*     cmd = new (std::nothrow) Cmd();
 
     if (true == m_isRunning)
     {
-        getRestId(restId);
+        Cmd* cmd = new (std::nothrow) Cmd();
 
         if (nullptr == cmd)
         {
@@ -307,13 +306,20 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
         }
         else
         {
+            restId                  = getRestId();
             cmd->id                 = CMD_ID_POST;
             cmd->restId             = restId;
             cmd->url                = url;
             cmd->preProcessCallback = preProcessCallback;
             cmd->u.data.data        = reinterpret_cast<const uint8_t*>(payload.c_str());
             cmd->u.data.size        = payload.length();
-            isSuccessful            = m_cmdQueue.sendToBack(cmd, portMAX_DELAY);
+
+            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
+            {
+                delete cmd;
+                cmd          = nullptr;
+                isSuccessful = false;
+            }
         }
     }
     else
@@ -323,12 +329,6 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 
     if (false == isSuccessful)
     {
-        if (nullptr != cmd)
-        {
-            delete cmd;
-            cmd = nullptr;
-        }
-
         restId = INVALID_REST_ID;
     }
 
@@ -359,7 +359,8 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
     }
     else
     {
-        isValidRsp = false;
+        isValidRsp   = false;
+        isSuccessful = true;
     }
 
     return isSuccessful;
@@ -490,9 +491,9 @@ void RestService::handleFailedWebRequest()
 
 void RestService::removeExpiredResponses()
 {
-    bool                   isValidRsp = false;
-    DynamicJsonDocument    jsonDoc(0U);
-    PluginIdList::iterator idIterator = removedPluginIds.begin();
+    bool                 isValidRsp = false;
+    DynamicJsonDocument  jsonDoc(0U);
+    RestIdList::iterator idIterator = removedPluginIds.begin();
 
     while (idIterator != removedPluginIds.end())
     {
@@ -507,8 +508,10 @@ void RestService::removeExpiredResponses()
     }
 }
 
-void RestService::getRestId(uint32_t& restId)
+uint32_t RestService::getRestId()
 {
+    uint32_t restId;
+
     if (INVALID_REST_ID == m_restIdCounter)
     {
         /* Skip the INVALID_REST_ID and use the next one. */
@@ -521,6 +524,8 @@ void RestService::getRestId(uint32_t& restId)
         restId = m_restIdCounter;
         ++m_restIdCounter;
     }
+
+    return restId;
 }
 
 /******************************************************************************

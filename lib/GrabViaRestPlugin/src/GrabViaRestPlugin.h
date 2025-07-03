@@ -89,8 +89,8 @@ public:
         m_mutex(),
         m_isConnectionError(false),
         m_hasTopicChanged(false),
-        m_isAllowedToSend(true),
-        m_dynamicRestId(RestService::INVALID_REST_ID)
+        m_dynamicRestId(RestService::INVALID_REST_ID),
+        m_isAllowedToSend(true)
     {
         (void)m_mutex.create();
     }
