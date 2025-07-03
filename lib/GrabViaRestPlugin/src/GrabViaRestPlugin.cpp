@@ -260,7 +260,12 @@ void GrabViaRestPlugin::stop()
     PluginWithConfig::stop();
 
     m_isAllowedToSend = false;
-    RestService::getInstance().addToRemovedPluginIds(&m_restId);
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
+    }
 }
 
 void GrabViaRestPlugin::process(bool isConnected)
@@ -329,7 +334,7 @@ void GrabViaRestPlugin::process(bool isConnected)
         }
     }
 
-    if (true == RestService::getInstance().getResponse(&m_restId, isValidResponse, jsonDoc))
+    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
     {
         if (true == isValidResponse)
         {
@@ -354,6 +359,7 @@ void GrabViaRestPlugin::process(bool isConnected)
             jsonDoc = nullptr;
         }
 
+        m_dynamicRestId   = RestService::INVALID_REST_ID;
         m_isAllowedToSend = true;
     }
 }
@@ -495,7 +501,9 @@ bool GrabViaRestPlugin::startHttpRequest()
     {
         if (true == m_method.equalsIgnoreCase("GET"))
         {
-            if (false == RestService::getInstance().get(&m_restId, m_url, preProcessCallback))
+            m_dynamicRestId = RestService::getInstance().get(m_url, preProcessCallback);
+
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {
                 LOG_WARNING("GET %s failed.", m_url.c_str());
             }
@@ -506,7 +514,9 @@ bool GrabViaRestPlugin::startHttpRequest()
         }
         else if (true == m_method.equalsIgnoreCase("POST"))
         {
-            if (false == RestService::getInstance().post(&m_restId, m_url, preProcessCallback))
+            m_dynamicRestId = RestService::getInstance().post(m_url, preProcessCallback);
+
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {
                 LOG_WARNING("POST %s failed.", m_url.c_str());
             }

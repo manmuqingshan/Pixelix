@@ -89,8 +89,8 @@ public:
         m_mutex(),
         m_isConnectionError(false),
         m_hasTopicChanged(false),
-        m_isAllowedToSend(true),
-        m_restId(0)
+        m_dynamicRestId(RestService::INVALID_REST_ID),
+        m_isAllowedToSend(true)
     {
         (void)m_mutex.create();
     }
@@ -304,7 +304,7 @@ private:
     mutable MutexRecursive   m_mutex;             /**< Mutex to protect against concurrent access. */
     bool                     m_isConnectionError; /**< Is connection error happened? */
     bool                     m_hasTopicChanged;   /**< Has the topic content changed? */
-    int8_t                   m_restId;            /**< Used to identify plugin when it interacts with RestService. */
+    uint32_t                 m_dynamicRestId;     /**< Used to identify plugin when interacting with RestService. Id changes with every request. */
     bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
 
     /**

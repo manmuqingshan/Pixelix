@@ -106,37 +106,35 @@ public:
     /**
      * Send GET request to host.
      *
-     * @param[in] restId              Unique Id to identify plugin
      * @param[in] url                 URL
      * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a valid restId otherwise it will return INVALID_REST_ID.
      */
-    bool get(void* restId, const String& url, PreProcessCallback preProcessCallback);
+    uint32_t get(const String& url, PreProcessCallback preProcessCallback);
 
     /**
      * Send POST request to host.
      *
-     * @param[in] restId              Unique Id to identify plugin
      * @param[in] url                 URL
      * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      * @param[in] payload             Payload, which must be kept alive until response is available!
      * @param[in] size                Payload size in byte
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a valid restId otherwise it will return INVALID_REST_ID.
      */
-    bool post(void* restId, const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload = nullptr, size_t size = 0U);
+    uint32_t post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload = nullptr, size_t size = 0U);
 
     /**
      * Send POST request to host.
-     * @param[in] restId              Unique Id to identify plugin
+     *
      * @param[in] url                 URL
      * @param[in] payload             Payload, which must be kept alive until response is available!
      * @param[in] preProcessCallback  PreProcessCallback which will be called by the RestService to filter the received date.
      *
-     * @return If request is successful sent, it will return true otherwise false.
+     * @return If request is successful sent, it will return a valid restId otherwise it will return INVALID_REST_ID.
      */
-    bool post(void* restId, const String& url, const String& payload, PreProcessCallback preProcessCallback);
+    uint32_t post(const String& url, const String& payload, PreProcessCallback preProcessCallback);
 
     /**
      * Get Response to a previously started request.
@@ -147,28 +145,36 @@ public:
      *
      * @return If a response is available, it will return true otherwise false
      */
-    bool getResponse(void* restId, bool& isValidRsp, DynamicJsonDocument*& payload);
+    bool getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument*& payload);
 
     /**
      * Adds restId of a plugin to vector removedPluginIds.
      *
      * @param[in] restId Unique Id to identify plugin
      */
-    void addToRemovedPluginIds(void* restId);
+    void addToRemovedPluginIds(uint32_t restId);
+
+    /**
+     *  Used to indicate that HTTP request could not be started.
+     */
+    static constexpr uint32_t INVALID_REST_ID = 0U;
 
 private:
 
-    /** PluginId list */
-    typedef std::vector<void*> PluginIdList;
+    /** RestId list */
+    typedef std::vector<uint32_t> RestIdList;
 
-    static const size_t        CMD_QUEUE_SIZE = 9U; /**< Max. number of commands which can be queued. Must be increased when new user of RestService is added. */
+    /**
+     *  Max. number of commands which can be queued. Must be increased when new user of RestService is added.
+     */
+    static const size_t CMD_QUEUE_SIZE = 9U;
 
     /**
      * A message for HTTP client/server handling.
      */
     struct Msg
     {
-        void*                restId; /**< Used to identify plugin in RestService */
+        uint32_t             restId; /**< Used to identify plugin in RestService */
         bool                 isMsg;  /**< true: successful Response, false: request failed*/
         DynamicJsonDocument* rsp;    /**< Response, only valid if isMsg == true */
 
@@ -197,7 +203,7 @@ private:
     struct Cmd
     {
         CmdId              id;                 /**< The command id identifies the kind of request. */
-        void*              restId;             /**< Used to identify plugin in RestService */
+        uint32_t           restId;             /**< Used to identify plugin in RestService */
         PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives */
         String             url;                /**< URL */
 
@@ -222,11 +228,12 @@ private:
     AsyncHttpClient        m_client;                   /**< Asynchronous HTTP client. */
     Queue<Cmd*>            m_cmdQueue;                 /**< Command queue */
     TaskProxy<Msg, 9U, 0U> m_taskProxy;                /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
-    PluginIdList           removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
     bool                   m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
+    uint32_t               m_restIdCounter;            /**< Used to generate restIds. */
+    bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
+    uint32_t               m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
     PreProcessCallback     m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
-    void*                  m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
+    RestIdList             removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
 
     /**
      * Constructs the service instance.
@@ -236,11 +243,12 @@ private:
         m_client(),
         m_cmdQueue(),
         m_taskProxy(),
-        m_isWaitingForResponse(false),
-        removedPluginIds(),
         m_isRunning(false),
+        m_restIdCounter(INVALID_REST_ID),
+        m_isWaitingForResponse(false),
+        m_activeRestId(INVALID_REST_ID),
         m_activePreProcessCallback(),
-        m_activeRestId(nullptr)
+        removedPluginIds()
     {
     }
 
@@ -274,6 +282,13 @@ private:
      * Removes expired responses from taskproxy. A response is expired if a plugin is stopped after starting a request.
      */
     void removeExpiredResponses();
+
+    /**
+     * Generates a valid restId.
+     *
+     * @return A valid restId.
+     */
+    uint32_t getRestId();
 };
 
 /******************************************************************************
