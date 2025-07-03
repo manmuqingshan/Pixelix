@@ -191,7 +191,6 @@ public:
     /**
      * Send POST request to host.
      *
-     * @param[in] userData  Used to pass user-data which can be used in callbacks.
      * @param[in] payload   Payload, which must be kept alive until response is available!
      * @param[in] size      Payload size in byte
      *

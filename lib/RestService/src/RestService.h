@@ -161,8 +161,8 @@ public:
 
 private:
 
-    /** PluginId list */
-    typedef std::vector<uint32_t> PluginIdList;
+    /** RestId list */
+    typedef std::vector<uint32_t> RestIdList;
 
     /**
      *  Max. number of commands which can be queued. Must be increased when new user of RestService is added.
@@ -233,7 +233,7 @@ private:
     bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
     uint32_t               m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
     PreProcessCallback     m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
-    PluginIdList           removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
+    RestIdList             removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
 
     /**
      * Constructs the service instance.
@@ -284,11 +284,11 @@ private:
     void removeExpiredResponses();
 
     /**
-     * Returns a valid restId.
+     * Generates a valid restId.
      *
-     * @param[out] restId Reference where the restId is stored.
+     * @return A valid restId.
      */
-    void getRestId(uint32_t& restId);
+    uint32_t getRestId();
 };
 
 /******************************************************************************

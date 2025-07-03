@@ -264,6 +264,7 @@ void GrabViaRestPlugin::stop()
     if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
         RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
     }
 }
 
