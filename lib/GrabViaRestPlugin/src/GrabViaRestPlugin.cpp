@@ -271,7 +271,7 @@ void GrabViaRestPlugin::stop()
 void GrabViaRestPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    DynamicJsonDocument*       jsonDoc = nullptr;
+    DynamicJsonDocument        jsonDoc(0U);
     bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
@@ -338,9 +338,12 @@ void GrabViaRestPlugin::process(bool isConnected)
     {
         if (true == isValidResponse)
         {
-            if (nullptr != jsonDoc)
+            JsonObject root = jsonDoc.as<JsonObject>();
+
+            /* Call handleWebResponse() only if jsonDoc is valid and has content. */
+            if ((false == root.isNull()) && (0U != root.size()))
             {
-                handleWebResponse(*jsonDoc);
+                handleWebResponse(jsonDoc);
             }
         }
         else
@@ -351,12 +354,6 @@ void GrabViaRestPlugin::process(bool isConnected)
             m_view.setFormatText("{hc}?");
 
             m_requestTimer.start(UPDATE_PERIOD_SHORT);
-        }
-
-        if (nullptr != jsonDoc)
-        {
-            delete jsonDoc;
-            jsonDoc = nullptr;
         }
 
         m_dynamicRestId   = RestService::INVALID_REST_ID;
