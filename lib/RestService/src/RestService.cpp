@@ -182,6 +182,8 @@ void RestService::process()
 
                     if (false == this->m_taskProxy.send(msg))
                     {
+                        delete msg;
+                        msg = nullptr;
                         LOG_ERROR("Msg could not be sent to Msg-Queue");
                     }
                 }
@@ -356,6 +358,12 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
                 }
             }
         }
+
+        if (nullptr != msg)
+        {
+            delete msg;
+            msg = nullptr;
+        }
     }
     else
     {
@@ -453,6 +461,8 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
 
             if (false == m_taskProxy.send(msg))
             {
+                delete msg;
+                msg = nullptr;
                 LOG_ERROR("Msg could not be sent to Msg-Queue");
             }
         }
@@ -477,6 +487,8 @@ void RestService::handleFailedWebRequest()
 
         if (false == m_taskProxy.send(msg))
         {
+            delete msg;
+            msg = nullptr;
             LOG_ERROR("Msg could not be sent to Msg-Queue");
         }
     }
