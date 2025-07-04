@@ -341,11 +341,7 @@ void GrabViaRestPlugin::process(bool isConnected)
             JsonObject root = jsonDoc.as<JsonObject>();
 
             /* Call handleWebResponse() only if jsonDoc is valid and has content. */
-            if ((true == root.isNull()) && (0U == root.size()))
-            {
-                ;
-            }
-            else
+            if ((false == root.isNull()) && (0U != root.size()))
             {
                 handleWebResponse(jsonDoc);
             }
