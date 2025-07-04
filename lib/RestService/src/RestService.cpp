@@ -356,13 +356,13 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
                 {
                     LOG_FATAL("Two clients with the same restId exist!");
                 }
-            }
-        }
 
-        if (nullptr != msg)
-        {
-            delete msg;
-            msg = nullptr;
+                if (nullptr != msg)
+                {
+                    delete msg;
+                    msg = nullptr;
+                }
+            }
         }
     }
     else
