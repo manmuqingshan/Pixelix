@@ -87,7 +87,6 @@ public:
         m_offset(0.0f),
         m_requestTimer(),
         m_mutex(),
-        m_isConnectionError(false),
         m_hasTopicChanged(false),
         m_dynamicRestId(RestService::INVALID_REST_ID),
         m_isAllowedToSend(true)
@@ -291,21 +290,20 @@ private:
      */
     static const uint32_t    UPDATE_PERIOD_SHORT = SIMPLE_TIMER_SECONDS(10U);
 
-    _GrabViaRestPlugin::View m_view;              /**< View with all widgets. */
-    String                   m_method;            /**< HTTP method. */
-    String                   m_url;               /**< REST URL. */
-    DynamicJsonDocument      m_filter;            /**< Filter used for the response in JSON format. */
-    FileMgrService::FileId   m_iconFileId;        /**< Icon file id. */
-    String                   m_format;            /**< Format used to embed the retrieved filtered value. */
-    String                   m_delimiter;         /**< Delimiter is used in case several values shall be shown, because of an JSON array. */
-    float                    m_multiplier;        /**< If grabbed value is a number, it will be multiplied with the multiplier. */
-    float                    m_offset;            /**< If grabbed value is a number, the offset will be added after the multiplication with the multiplier. */
-    SimpleTimer              m_requestTimer;      /**< Timer used for cyclic request of new data. */
-    mutable MutexRecursive   m_mutex;             /**< Mutex to protect against concurrent access. */
-    bool                     m_isConnectionError; /**< Is connection error happened? */
-    bool                     m_hasTopicChanged;   /**< Has the topic content changed? */
-    uint32_t                 m_dynamicRestId;     /**< Used to identify plugin when interacting with RestService. Id changes with every request. */
-    bool                     m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
+    _GrabViaRestPlugin::View m_view;            /**< View with all widgets. */
+    String                   m_method;          /**< HTTP method. */
+    String                   m_url;             /**< REST URL. */
+    DynamicJsonDocument      m_filter;          /**< Filter used for the response in JSON format. */
+    FileMgrService::FileId   m_iconFileId;      /**< Icon file id. */
+    String                   m_format;          /**< Format used to embed the retrieved filtered value. */
+    String                   m_delimiter;       /**< Delimiter is used in case several values shall be shown, because of an JSON array. */
+    float                    m_multiplier;      /**< If grabbed value is a number, it will be multiplied with the multiplier. */
+    float                    m_offset;          /**< If grabbed value is a number, the offset will be added after the multiplication with the multiplier. */
+    SimpleTimer              m_requestTimer;    /**< Timer used for cyclic request of new data. */
+    mutable MutexRecursive   m_mutex;           /**< Mutex to protect against concurrent access. */
+    bool                     m_hasTopicChanged; /**< Has the topic content changed? */
+    uint32_t                 m_dynamicRestId;   /**< Used to identify plugin when interacting with RestService. Id changes with every request. */
+    bool                     m_isAllowedToSend; /**< Is allowed to send REST-Api request? */
 
     /**
      * Get configuration in JSON.

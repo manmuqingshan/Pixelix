@@ -533,12 +533,11 @@ bool GrabViaRestPlugin::startHttpRequest()
 
 bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    bool isSuccessful = true;
+    bool isSuccessful = false;
 
     if (true == m_filter.overflowed())
     {
         LOG_ERROR("Less memory for filter available.");
-        isSuccessful = false;
     }
     else
     {
@@ -547,7 +546,10 @@ bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t p
         if (DeserializationError::Ok != error.code())
         {
             LOG_WARNING("JSON parse error: %s", error.c_str());
-            isSuccessful = false;
+        }
+        else
+        {
+            isSuccessful = true;
         }
     }
 

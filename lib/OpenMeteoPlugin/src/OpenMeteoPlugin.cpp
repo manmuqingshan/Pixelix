@@ -199,8 +199,6 @@ void OpenMeteoPlugin::start(uint16_t width, uint16_t height)
     setViewUnits();
 
     PluginWithConfig::start(width, height);
-
-    initHttpClient();
 }
 
 void OpenMeteoPlugin::stop()
@@ -210,6 +208,14 @@ void OpenMeteoPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
+    }
 }
 
 void OpenMeteoPlugin::active(YAGfx& gfx)
@@ -225,9 +231,10 @@ void OpenMeteoPlugin::inactive()
 
 void OpenMeteoPlugin::process(bool isConnected)
 {
-    Msg                        msg;
     MutexGuard<MutexRecursive> guard(m_mutex);
     bool                       isRestRequestRequired = false;
+    DynamicJsonDocument        jsonDoc(0U);
+    bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
 
@@ -262,13 +269,17 @@ void OpenMeteoPlugin::process(bool isConnected)
     /* Request of new weather information via REST API required? */
     if (true == isRestRequestRequired)
     {
-        if (false == startHttpRequest())
+        /* Only one request can be sent at a time. */
+        if (true == m_isAllowedToSend)
         {
-            m_requestTimer.start(UPDATE_PERIOD_SHORT);
-        }
-        else
-        {
-            m_requestTimer.start(m_updatePeriod);
+            if (false == startHttpRequest())
+            {
+                m_requestTimer.start(UPDATE_PERIOD_SHORT);
+            }
+            else
+            {
+                m_requestTimer.start(m_updatePeriod);
+            }
         }
     }
 
@@ -277,42 +288,26 @@ void OpenMeteoPlugin::process(bool isConnected)
         m_view.setViewDuration(m_slotInterf->getDuration());
     }
 
-    if (true == m_taskProxy.receive(msg))
+    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
     {
-        switch (msg.type)
+        if (true == isValidResponse)
         {
-        case MSG_TYPE_INVALID:
-            /* Should never happen. */
-            break;
+            JsonObject root = jsonDoc.as<JsonObject>();
 
-        case MSG_TYPE_RSP:
-            if (nullptr != msg.rsp)
+            /* Call handleWebResponse() only if jsonDoc is valid and has content. */
+            if ((false == root.isNull()) && (0U != root.size()))
             {
-                handleWebResponse(*msg.rsp);
-                delete msg.rsp;
-                msg.rsp = nullptr;
+                handleWebResponse(jsonDoc);
             }
-            break;
-
-        case MSG_TYPE_CONN_CLOSED:
-            LOG_INFO("Connection closed.");
-
-            if (true == m_isConnectionError)
-            {
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            m_isConnectionError = false;
-            break;
-
-        case MSG_TYPE_CONN_ERROR:
-            LOG_WARNING("Connection error.");
-            m_isConnectionError = true;
-            break;
-
-        default:
-            /* Should never happen. */
-            break;
         }
+        else
+        {
+            LOG_WARNING("Connection error.");
+            m_requestTimer.start(UPDATE_PERIOD_SHORT);
+        }
+
+        m_dynamicRestId   = RestService::INVALID_REST_ID;
+        m_isAllowedToSend = true;
     }
 }
 
@@ -417,231 +412,167 @@ bool OpenMeteoPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool OpenMeteoPlugin::startHttpRequest()
 {
-    bool status = false;
+    bool                            status = false;
+    RestService::PreProcessCallback preProcessCallback =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     if ((false == m_latitude.isEmpty()) &&
         (false == m_longitude.isEmpty()) &&
         (false == m_temperatureUnit.isEmpty()) &&
         (false == m_windUnit.isEmpty()))
     {
-        String url  = OPEN_METEO_BASE_URI;
+        String url       = OPEN_METEO_BASE_URI;
 
         /* Documentation:
          * https://open-meteo.com/en/docs#current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&hourly=&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max
          */
-        url        += "/v1/forecast?latitude=";
-        url        += m_latitude;
-        url        += "&longitude=";
-        url        += m_longitude;
-        url        += "&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m,uv_index";
-        url        += "&daily=weather_code,temperature_2m_max,temperature_2m_min";
-        url        += "&timezone=auto";
-        url        += "&temperature_unit=";
-        url        += m_temperatureUnit;
-        url        += "&wind_speed_unit=";
-        url        += m_windUnit;
+        url             += "/v1/forecast?latitude=";
+        url             += m_latitude;
+        url             += "&longitude=";
+        url             += m_longitude;
+        url             += "&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m,uv_index";
+        url             += "&daily=weather_code,temperature_2m_max,temperature_2m_min";
+        url             += "&timezone=auto";
+        url             += "&temperature_unit=";
+        url             += m_temperatureUnit;
+        url             += "&wind_speed_unit=";
+        url             += m_windUnit;
 
-        if (true == m_client.begin(url))
+        m_dynamicRestId  = RestService::getInstance().get(url, preProcessCallback);
+
+        if (RestService::INVALID_REST_ID == m_dynamicRestId)
         {
-            if (false == m_client.GET())
-            {
-                LOG_WARNING("GET %s failed.", url.c_str());
-            }
-            else
-            {
-                status = true;
-            }
+            LOG_WARNING("GET %s failed.", url.c_str());
+        }
+        else
+        {
+            status = true;
         }
     }
 
     return status;
 }
 
-void OpenMeteoPlugin::initHttpClient()
+bool OpenMeteoPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    /* Note: All registered callbacks are running in a different task context!
-     *       Therefore it is not allowed to access a member here directly.
-     *       The processing must be deferred via task proxy.
-     */
-    m_client.regOnResponse(
-        [this](const HttpResponse& rsp) {
-            handleAsyncWebResponse(rsp);
-        });
+    bool                isSuccessful = false;
+    const size_t        FILTER_SIZE  = 640U;
+    DynamicJsonDocument jsonFilterDoc(FILTER_SIZE);
 
-    m_client.regOnClosed(
-        [this]() {
-            Msg msg;
-
-            msg.type = MSG_TYPE_CONN_CLOSED;
-
-            (void)this->m_taskProxy.send(msg);
-        });
-
-    m_client.regOnError(
-        [this]() {
-            Msg msg;
-
-            msg.type = MSG_TYPE_CONN_ERROR;
-
-            (void)this->m_taskProxy.send(msg);
-        });
-}
-
-void OpenMeteoPlugin::handleAsyncWebResponse(const HttpResponse& rsp)
-{
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
-    {
-        bool                 isSuccessful  = false;
-        const size_t         JSON_DOC_SIZE = 2048U;
-        DynamicJsonDocument* jsonDoc       = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
-
-        if (nullptr != jsonDoc)
+    /* Example:
         {
-            size_t              payloadSize = 0U;
-            const void*         vPayload    = rsp.getPayload(payloadSize);
-            const char*         payload     = static_cast<const char*>(vPayload);
-            const size_t        FILTER_SIZE = 640U;
-            DynamicJsonDocument jsonFilterDoc(FILTER_SIZE);
-
-            /* Example:
-                {
-                    "latitude": 52.52,
-                    "longitude": 13.419998,
-                    "generationtime_ms": 0.1684427261352539,
-                    "utc_offset_seconds": 0,
-                    "timezone": "GMT",
-                    "timezone_abbreviation": "GMT",
-                    "elevation": 38.0,
-                    "current_units": {
-                        "time": "iso8601",
-                        "interval": "seconds",
-                        "temperature_2m": "°C",
-                        "relative_humidity_2m": "%",
-                        "is_day": "",
-                        "weather_code": "wmo code",
-                        "wind_speed_10m": "m/s",
-                        "uv_index": ""
-                    },
-                    "current": {
-                        "time": "2025-02-01T17:15",
-                        "interval": 900,
-                        "temperature_2m": 3.1,
-                        "relative_humidity_2m": 87,
-                        "is_day": 0,
-                        "weather_code": 2,
-                        "wind_speed_10m": 1.36,
-                        "uv_index": 0.00
-                    },
-                    "daily_units": {
-                        "time": "iso8601",
-                        "weather_code": "wmo code",
-                        "temperature_2m_max": "°C",
-                        "temperature_2m_min": "°C"
-                    },
-                    "daily": {
-                        "time": [
-                            "2025-02-01",
-                            "2025-02-02",
-                            "2025-02-03",
-                            "2025-02-04",
-                            "2025-02-05",
-                            "2025-02-06",
-                            "2025-02-07"
-                        ],
-                        "weather_code": [
-                            45,
-                            45,
-                            45,
-                            3,
-                            3,
-                            3,
-                            3
-                        ],
-                        "temperature_2m_max": [
-                            4.6,
-                            1.8,
-                            2.3,
-                            3.5,
-                            2.4,
-                            5.4,
-                            2.4
-                        ],
-                        "temperature_2m_min": [
-                            0.5,
-                            -1.0,
-                            -2.7,
-                            -1.4,
-                            -1.6,
-                            0.6,
-                            -0.5
-                        ]
-                    }
-                }
-
-            */
-
-            jsonFilterDoc["current"]["temperature_2m"]       = true;
-            jsonFilterDoc["current"]["relative_humidity_2m"] = true;
-            jsonFilterDoc["current"]["is_day"]               = true;
-            jsonFilterDoc["current"]["weather_code"]         = true;
-            jsonFilterDoc["current"]["wind_speed_10m"]       = true;
-            jsonFilterDoc["current"]["uv_index"]             = true;
-
-            jsonFilterDoc["daily"]["weather_code"]           = true;
-            jsonFilterDoc["daily"]["temperature_2m_max"]     = true;
-            jsonFilterDoc["daily"]["temperature_2m_min"]     = true;
-
-            if (true == jsonFilterDoc.overflowed())
-            {
-                LOG_ERROR("Less memory for filter available.");
-            }
-            else if ((nullptr == payload) ||
-                     (0U == payloadSize))
-            {
-                LOG_ERROR("No payload.");
-            }
-            else
-            {
-                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
-
-                if (DeserializationError::Ok != error.code())
-                {
-                    LOG_WARNING("JSON parse error: %s", error.c_str());
-                }
-                else
-                {
-                    Msg msg;
-
-                    msg.type     = MSG_TYPE_RSP;
-                    msg.rsp      = jsonDoc;
-
-                    isSuccessful = this->m_taskProxy.send(msg);
-                }
-            }
-
-            if (false == isSuccessful)
-            {
-                delete jsonDoc;
-                jsonDoc = nullptr;
+            "latitude": 52.52,
+            "longitude": 13.419998,
+            "generationtime_ms": 0.1684427261352539,
+            "utc_offset_seconds": 0,
+            "timezone": "GMT",
+            "timezone_abbreviation": "GMT",
+            "elevation": 38.0,
+            "current_units": {
+                "time": "iso8601",
+                "interval": "seconds",
+                "temperature_2m": "°C",
+                "relative_humidity_2m": "%",
+                "is_day": "",
+                "weather_code": "wmo code",
+                "wind_speed_10m": "m/s",
+                "uv_index": ""
+            },
+            "current": {
+                "time": "2025-02-01T17:15",
+                "interval": 900,
+                "temperature_2m": 3.1,
+                "relative_humidity_2m": 87,
+                "is_day": 0,
+                "weather_code": 2,
+                "wind_speed_10m": 1.36,
+                "uv_index": 0.00
+            },
+            "daily_units": {
+                "time": "iso8601",
+                "weather_code": "wmo code",
+                "temperature_2m_max": "°C",
+                "temperature_2m_min": "°C"
+            },
+            "daily": {
+                "time": [
+                    "2025-02-01",
+                    "2025-02-02",
+                    "2025-02-03",
+                    "2025-02-04",
+                    "2025-02-05",
+                    "2025-02-06",
+                    "2025-02-07"
+                ],
+                "weather_code": [
+                    45,
+                    45,
+                    45,
+                    3,
+                    3,
+                    3,
+                    3
+                ],
+                "temperature_2m_max": [
+                    4.6,
+                    1.8,
+                    2.3,
+                    3.5,
+                    2.4,
+                    5.4,
+                    2.4
+                ],
+                "temperature_2m_min": [
+                    0.5,
+                    -1.0,
+                    -2.7,
+                    -1.4,
+                    -1.6,
+                    0.6,
+                    -0.5
+                ]
             }
         }
 
-        /* If something went wrong, send a response with empty payload to
-         * trigger state change in weather request status and not stuck.
-         */
-        if (false == isSuccessful)
+    */
+
+    jsonFilterDoc["current"]["temperature_2m"]       = true;
+    jsonFilterDoc["current"]["relative_humidity_2m"] = true;
+    jsonFilterDoc["current"]["is_day"]               = true;
+    jsonFilterDoc["current"]["weather_code"]         = true;
+    jsonFilterDoc["current"]["wind_speed_10m"]       = true;
+    jsonFilterDoc["current"]["uv_index"]             = true;
+
+    jsonFilterDoc["daily"]["weather_code"]           = true;
+    jsonFilterDoc["daily"]["temperature_2m_max"]     = true;
+    jsonFilterDoc["daily"]["temperature_2m_min"]     = true;
+
+    if (true == jsonFilterDoc.overflowed())
+    {
+        LOG_ERROR("Less memory for filter available.");
+    }
+    else if ((nullptr == payload) ||
+             (0U == payloadSize))
+    {
+        LOG_ERROR("No payload.");
+    }
+    else
+    {
+        DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
+
+        if (DeserializationError::Ok != error.code())
         {
-            Msg msg;
-
-            msg.type = MSG_TYPE_RSP;
-            msg.rsp  = nullptr;
-
-            if (false == this->m_taskProxy.send(msg))
-            {
-                LOG_FATAL("Internal error.");
-            }
+            LOG_WARNING("JSON parse error: %s", error.c_str());
+        }
+        else
+        {
+            isSuccessful = true;
         }
     }
+
+    return isSuccessful;
 }
 
 void OpenMeteoPlugin::setViewUnits()
@@ -837,20 +768,6 @@ void OpenMeteoPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
 
                 m_view.setWeatherInfoForecast(day, weatherInfo);
             }
-        }
-    }
-}
-
-void OpenMeteoPlugin::clearQueue()
-{
-    Msg msg;
-
-    while (true == m_taskProxy.receive(msg))
-    {
-        if (MSG_TYPE_RSP == msg.type)
-        {
-            delete msg.rsp;
-            msg.rsp = nullptr;
         }
     }
 }
