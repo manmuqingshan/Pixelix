@@ -59,10 +59,10 @@
  *****************************************************************************/
 
 /* Initialize plugin topic. */
-const char*     SignalDetectorPlugin::TOPIC_CONFIG      = "signalDetector";
+const char* SignalDetectorPlugin::TOPIC_CONFIG = "signalDetector";
 
 /* Initialize the default text which will be shown if signal is detected. */
-const char*     SignalDetectorPlugin::DEFAULT_TEXT      = "{hc}Signal!";
+const char* SignalDetectorPlugin::DEFAULT_TEXT = "{hc}Signal!";
 
 /******************************************************************************
  * Public Methods
@@ -108,12 +108,12 @@ bool SignalDetectorPlugin::setTopic(const String& topic, const JsonObjectConst& 
 
     if (true == topic.equals(TOPIC_CONFIG))
     {
-        const size_t        JSON_DOC_SIZE           = 512U;
+        const size_t        JSON_DOC_SIZE = 512U;
         DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-        JsonObject          jsonCfg                 = jsonDoc.to<JsonObject>();
-        JsonArrayConst      jsonTones               = value["tones"];
-        JsonVariantConst    jsonText                = value["text"];
-        JsonVariantConst    jsonPushUrl             = value["pushUrl"];
+        JsonObject          jsonCfg     = jsonDoc.to<JsonObject>();
+        JsonArrayConst      jsonTones   = value["tones"];
+        JsonVariantConst    jsonText    = value["text"];
+        JsonVariantConst    jsonPushUrl = value["pushUrl"];
 
         /* The received configuration may not contain all single key/value pair.
          * Therefore read first the complete internal configuration and
@@ -129,20 +129,20 @@ bool SignalDetectorPlugin::setTopic(const String& topic, const JsonObjectConst& 
         if (false == jsonText.isNull())
         {
             jsonCfg["text"] = jsonText;
-            isSuccessful = true;
+            isSuccessful    = true;
         }
 
         if (false == jsonPushUrl.isNull())
         {
             jsonCfg["pushUrl"] = jsonPushUrl;
-            isSuccessful = true;
+            isSuccessful       = true;
         }
 
         if (false == jsonTones.isNull())
         {
             uint8_t toneIdx = 0U;
 
-            for(JsonVariantConst tone : jsonTones)
+            for (JsonVariantConst tone : jsonTones)
             {
                 if (AudioService::MAX_TONE_DETECTORS <= toneIdx)
                 {
@@ -150,26 +150,26 @@ bool SignalDetectorPlugin::setTopic(const String& topic, const JsonObjectConst& 
                 }
                 else
                 {
-                    JsonVariantConst jsonTargetFreq     = tone["frequency"];
-                    JsonVariantConst jsonMinDuration    = tone["minDuration"];
-                    JsonVariantConst jsonThreshold      = tone["threshold"];
+                    JsonVariantConst jsonTargetFreq  = tone["frequency"];
+                    JsonVariantConst jsonMinDuration = tone["minDuration"];
+                    JsonVariantConst jsonThreshold   = tone["threshold"];
 
                     if (false == jsonTargetFreq.isNull())
                     {
                         jsonCfg["tones"][toneIdx]["frequency"] = jsonTargetFreq.as<float>();
-                        isSuccessful = true;
+                        isSuccessful                           = true;
                     }
 
                     if (false == jsonMinDuration.isNull())
                     {
                         jsonCfg["tones"][toneIdx]["minDuration"] = jsonMinDuration.as<uint32_t>();
-                        isSuccessful = true;
+                        isSuccessful                             = true;
                     }
 
                     if (false == jsonThreshold.isNull())
                     {
                         jsonCfg["tones"][toneIdx]["threshold"] = jsonThreshold.as<float>();
-                        isSuccessful = true;
+                        isSuccessful                           = true;
                     }
                 }
 
@@ -181,7 +181,7 @@ bool SignalDetectorPlugin::setTopic(const String& topic, const JsonObjectConst& 
         {
             JsonObjectConst jsonCfgConst = jsonCfg;
 
-            isSuccessful = setConfiguration(jsonCfgConst);
+            isSuccessful                 = setConfiguration(jsonCfgConst);
 
             if (true == isSuccessful)
             {
@@ -195,8 +195,8 @@ bool SignalDetectorPlugin::setTopic(const String& topic, const JsonObjectConst& 
 
 bool SignalDetectorPlugin::hasTopicChanged(const String& topic)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
-    bool                        hasTopicChanged = m_hasTopicChanged;
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    bool                       hasTopicChanged = m_hasTopicChanged;
 
     /* Only a single topic, therefore its not necessary to check. */
     PLUGIN_NOT_USED(topic);
@@ -213,7 +213,7 @@ void SignalDetectorPlugin::setSlot(const ISlotPlugin* slotInterf)
 
 void SignalDetectorPlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.init(width, height);
     m_view.setFormatText(DEFAULT_TEXT);
@@ -228,7 +228,7 @@ void SignalDetectorPlugin::start(uint16_t width, uint16_t height)
 
 void SignalDetectorPlugin::stop()
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     PluginWithConfig::stop();
 }
@@ -251,12 +251,12 @@ void SignalDetectorPlugin::inactive()
 
 void SignalDetectorPlugin::process(bool isConnected)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     /* Call isSignalDetected() every time although it was already detected in the
      * previous call. This clears the detection flag in the audio service.
      */
-    bool                        isDetected = isSignalDetected();
+    bool isDetected = isSignalDetected();
 
     if (true == isDetected)
     {
@@ -268,15 +268,18 @@ void SignalDetectorPlugin::process(bool isConnected)
     {
         m_isDetected = isDetected;
 
-        /* Observe active phase. */
-        if (nullptr != m_slotInterf)
+        if (true == m_isDetected)
         {
-            /* Start with 10% greater slot duration. */
-            m_timer.start(m_slotInterf->getDuration() * 110U / 100U);
-        }
+            /* Observe active phase. */
+            if (nullptr != m_slotInterf)
+            {
+                /* Start with 10% greater slot duration. */
+                m_timer.start(m_slotInterf->getDuration() * 110U / 100U);
+            }
 
-        /* Send notification */
-        (void)startHttpRequest();
+            /* Send notification */
+            (void)startHttpRequest();
+        }
     }
     else
     {
@@ -296,7 +299,7 @@ void SignalDetectorPlugin::process(bool isConnected)
 
 void SignalDetectorPlugin::update(YAGfx& gfx)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.update(gfx);
 }
@@ -311,17 +314,17 @@ void SignalDetectorPlugin::update(YAGfx& gfx)
 
 void SignalDetectorPlugin::getConfiguration(JsonObject& jsonCfg) const
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
-    uint8_t                     idx             = 0U;
-    JsonArray                   jsonTones       = jsonCfg.createNestedArray("tones");
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    uint8_t                    idx       = 0U;
+    JsonArray                  jsonTones = jsonCfg.createNestedArray("tones");
 
-    while(AudioService::MAX_TONE_DETECTORS > idx)
+    while (AudioService::MAX_TONE_DETECTORS > idx)
     {
-        AudioToneDetector*  audioToneDetector   = AudioService::getInstance().getAudioToneDetector(idx);
+        AudioToneDetector* audioToneDetector = AudioService::getInstance().getAudioToneDetector(idx);
 
         if (nullptr != audioToneDetector)
         {
-            JsonObject jsonTone = jsonTones.createNestedObject();
+            JsonObject jsonTone     = jsonTones.createNestedObject();
 
             jsonTone["frequency"]   = audioToneDetector->getTargetFreq();
             jsonTone["minDuration"] = audioToneDetector->getMinDuration();
@@ -331,16 +334,16 @@ void SignalDetectorPlugin::getConfiguration(JsonObject& jsonCfg) const
         ++idx;
     }
 
-    jsonCfg["text"]     = m_view.getFormatText();
-    jsonCfg["pushUrl"]  = m_pushUrl;
+    jsonCfg["text"]    = m_view.getFormatText();
+    jsonCfg["pushUrl"] = m_pushUrl;
 }
 
 bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 {
-    bool                status      = false;
-    JsonArrayConst      jsonTones   = jsonCfg["tones"];
-    JsonVariantConst    jsonText    = jsonCfg["text"];
-    JsonVariantConst    jsonPushUrl = jsonCfg["pushUrl"];
+    bool             status      = false;
+    JsonArrayConst   jsonTones   = jsonCfg["tones"];
+    JsonVariantConst jsonText    = jsonCfg["text"];
+    JsonVariantConst jsonPushUrl = jsonCfg["pushUrl"];
 
     if (true == jsonTones.isNull())
     {
@@ -356,12 +359,12 @@ bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     }
     else
     {
-        MutexGuard<MutexRecursive>  guard(m_mutex);
-        uint8_t                     idx = 0U;
+        MutexGuard<MutexRecursive> guard(m_mutex);
+        uint8_t                    idx = 0U;
 
-        status = true;
+        status                         = true;
 
-        for(JsonVariantConst tone : jsonTones)
+        for (JsonVariantConst tone : jsonTones)
         {
             AudioToneDetector* audioToneDetector = AudioService::getInstance().getAudioToneDetector(idx);
 
@@ -372,9 +375,9 @@ bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
             }
             else
             {
-                JsonVariantConst jsonTargetFreq     = tone["frequency"];
-                JsonVariantConst jsonMinDuration    = tone["minDuration"];
-                JsonVariantConst jsonThreshold      = tone["threshold"];
+                JsonVariantConst jsonTargetFreq  = tone["frequency"];
+                JsonVariantConst jsonMinDuration = tone["minDuration"];
+                JsonVariantConst jsonThreshold   = tone["threshold"];
 
                 if (false == jsonTargetFreq.is<float>())
                 {
@@ -408,7 +411,7 @@ bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         }
 
         m_view.setFormatText(jsonText.as<String>());
-        m_pushUrl = jsonPushUrl.as<String>();
+        m_pushUrl         = jsonPushUrl.as<String>();
 
         m_hasTopicChanged = true;
     }
@@ -422,21 +425,21 @@ bool SignalDetectorPlugin::startHttpRequest()
 
     if (false == m_pushUrl.isEmpty())
     {
-        String      url         = m_pushUrl;
-        const char* GET_CMD     = "get ";
-        const char* POST_CMD    = "post ";
-        bool        isGet       = true;
+        String      url      = m_pushUrl;
+        const char* GET_CMD  = "get ";
+        const char* POST_CMD = "post ";
+        bool        isGet    = true;
 
         /* URL prefix might indicate the kind of request. */
         url.toLowerCase();
         if (true == url.startsWith(GET_CMD))
         {
-            url = url.substring(strlen(GET_CMD));
+            url   = url.substring(strlen(GET_CMD));
             isGet = true;
         }
         else if (true == url.startsWith(POST_CMD))
         {
-            url = url.substring(strlen(POST_CMD));
+            url   = url.substring(strlen(POST_CMD));
             isGet = false;
         }
         else
@@ -484,25 +487,24 @@ void SignalDetectorPlugin::initHttpClient()
         {
             LOG_INFO("Signal detection reported.");
         }
-
     });
 
     m_client.regOnError([]() {
         LOG_WARNING("Connection error happened.");
-   });
+    });
 }
 
 bool SignalDetectorPlugin::isSignalDetected()
 {
-    uint8_t idx                         = 0U;
-    bool    isDetected                  = false;
-    uint8_t countDetectedTones          = 0U;
-    uint8_t countEnabledToneDetectors   = 0U;
+    uint8_t idx                       = 0U;
+    bool    isDetected                = false;
+    uint8_t countDetectedTones        = 0U;
+    uint8_t countEnabledToneDetectors = 0U;
 
     /* Every enabled tone detector must be considered.
      * A target frequency of 0 Hz means, the tone detector is disabled.
      */
-    while(AudioService::MAX_TONE_DETECTORS > idx)
+    while (AudioService::MAX_TONE_DETECTORS > idx)
     {
         AudioToneDetector* audioToneDetector = AudioService::getInstance().getAudioToneDetector(idx);
 
