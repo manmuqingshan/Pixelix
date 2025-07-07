@@ -124,7 +124,7 @@ void RestService::process()
                     break;
 
                 case CMD_ID_POST:
-                    if (false == m_client.POST(cmd.u.data.data, cmd.u.data.size))
+                    if (false == m_client.POST(cmd.data.data, cmd.data.size))
                     {
                         isError = true;
                     }
@@ -196,8 +196,8 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
         cmd.restId             = restId;
         cmd.preProcessCallback = preProcessCallback;
         cmd.url                = url;
-        cmd.u.data.data        = payload;
-        cmd.u.data.size        = size;
+        cmd.data.data          = payload;
+        cmd.data.size          = size;
 
         m_cmdQueue.push_back(std::move(cmd));
     }
@@ -224,8 +224,8 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
         cmd.restId             = restId;
         cmd.url                = url;
         cmd.preProcessCallback = preProcessCallback;
-        cmd.u.data.data        = reinterpret_cast<const uint8_t*>(payload.c_str());
-        cmd.u.data.size        = payload.length();
+        cmd.data.data          = reinterpret_cast<const uint8_t*>(payload.c_str());
+        cmd.data.size          = payload.length();
 
         m_cmdQueue.push_back(std::move(cmd));
     }

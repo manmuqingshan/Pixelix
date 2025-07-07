@@ -206,21 +206,13 @@ private:
         String             url;                /**< URL */
 
         /**
-         * The union contains the event id specific parameters.
-         * Note not every command id must have parameters.
+         * Data parameters, only valid for CMD_ID_POST.
          */
-        union
+        struct
         {
-            /**
-             * Data parameters, only valid for CMD_ID_POST.
-             */
-            struct
-            {
-                const uint8_t* data; /**< Command specific data. */
-                size_t         size; /**< Command specific data size in byte. */
-            } data;
-
-        } u;
+            const uint8_t* data; /**< Command specific data. */
+            size_t         size; /**< Command specific data size in byte. */
+        } data;
     };
 
     /** Cmd Queue*/
