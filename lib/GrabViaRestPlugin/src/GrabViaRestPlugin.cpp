@@ -263,7 +263,7 @@ void GrabViaRestPlugin::stop()
 
     if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        RestService::getInstance().removeExpiredResponse(m_dynamicRestId);
+        RestService::getInstance().abortRequest(m_dynamicRestId);
         m_dynamicRestId = RestService::INVALID_REST_ID;
     }
 }

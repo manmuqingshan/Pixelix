@@ -91,6 +91,8 @@ void RestService::stop()
     m_requestQueue.clear();
     m_client.end();
     m_responseQueue.clear();
+    m_activeRestId             = INVALID_REST_ID;
+    m_activePreProcessCallback = nullptr;
 }
 
 void RestService::process()
@@ -294,7 +296,9 @@ void RestService::abortRequest(uint32_t restId)
     if (m_activeRestId == restId)
     {
         m_client.end();
-        wasFound = true;
+        m_activeRestId             = INVALID_REST_ID;
+        m_activePreProcessCallback = nullptr;
+        wasFound                   = true;
     }
 
     while ((false == wasFound) && (rspIterator != m_responseQueue.end()))
