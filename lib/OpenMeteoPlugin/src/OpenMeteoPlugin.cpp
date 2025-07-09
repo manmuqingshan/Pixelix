@@ -279,6 +279,7 @@ void OpenMeteoPlugin::process(bool isConnected)
             else
             {
                 m_requestTimer.start(m_updatePeriod);
+                m_isAllowedToSend = true;
             }
         }
     }
