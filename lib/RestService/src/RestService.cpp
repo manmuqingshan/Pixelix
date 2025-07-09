@@ -276,16 +276,16 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
 void RestService::abortRequest(uint32_t restId)
 {
     MutexGuard<Mutex>       guard(m_mutex);
-    bool                    wasFound    = false;
-    RequestQueue::iterator  reqIterator = m_requestQueue.begin();
-    ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+    bool                    isRequestFound = false;
+    RequestQueue::iterator  reqIterator    = m_requestQueue.begin();
+    ResponseQueue::iterator rspIterator    = m_responseQueue.begin();
 
-    while ((false == wasFound) && (reqIterator != m_requestQueue.end()))
+    while ((false == isRequestFound) && (reqIterator != m_requestQueue.end()))
     {
         if (restId == reqIterator->restId)
         {
-            reqIterator = m_requestQueue.erase(reqIterator);
-            wasFound    = true;
+            reqIterator    = m_requestQueue.erase(reqIterator);
+            isRequestFound = true;
         }
         else
         {
@@ -298,15 +298,15 @@ void RestService::abortRequest(uint32_t restId)
         m_client.end();
         m_activeRestId             = INVALID_REST_ID;
         m_activePreProcessCallback = nullptr;
-        wasFound                   = true;
+        isRequestFound             = true;
     }
 
-    while ((false == wasFound) && (rspIterator != m_responseQueue.end()))
+    while ((false == isRequestFound) && (rspIterator != m_responseQueue.end()))
     {
         if (restId == rspIterator->restId)
         {
-            rspIterator = m_responseQueue.erase(rspIterator);
-            wasFound    = true;
+            rspIterator    = m_responseQueue.erase(rspIterator);
+            isRequestFound = true;
         }
         else
         {
