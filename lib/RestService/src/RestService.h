@@ -166,22 +166,27 @@ private:
      */
     struct Response
     {
-        uint32_t            restId; /**< Used to identify plugin in RestService. */
-        bool                isRsp;  /**< true: successful response, false: request failed */
-        DynamicJsonDocument data;   /**< Content of the response. Only valid if isRsp == true. */
+        uint32_t            restId;      /**< Used to identify plugin in RestService. */
+        bool                isRsp;       /**< true: successful response, false: request failed */
+        DynamicJsonDocument jsonDocData; /**< Content of the response. Only valid if isRsp == true. */
 
         /**
          * Constructs a response.
          */
         Response() :
             isRsp(false),
-            data(4096U)
+            jsonDocData(4096U)
         {
         }
 
+        /**
+         * Constructs a response.
+         *
+         * @param[in] dataSize Size of the DynamicJsonDocument which holds the data.
+         */
         explicit Response(size_t dataSize) :
             isRsp(false),
-            data(dataSize)
+            jsonDocData(dataSize)
         {
         }
     };
@@ -201,9 +206,9 @@ private:
     struct Request
     {
         RequestId          id;                 /**< The request id identifies the kind of request. */
-        uint32_t           restId;             /**< Used to identify plugin in RestService */
-        PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives */
-        String             url;                /**< URL */
+        uint32_t           restId;             /**< Used to identify plugin in RestService. */
+        PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives. */
+        String             url;                /**< URL to be called. */
 
         /**
          * Data parameters, only valid for REQUEST_ID_POST.
@@ -214,6 +219,9 @@ private:
             size_t         size; /**< Request specific data size in byte. */
         } data;
 
+        /**
+         * Constructs a request.
+         */
         Request() :
             id(),
             restId(INVALID_REST_ID),
@@ -223,10 +231,27 @@ private:
         {
         }
 
-        Request(const Request&) = default;
+        /**
+         * Constructs a request by copying an existing one.
+         *
+         * @param[in] other The response which to copy.
+         */
+        Request(const Request& other)            = default;
 
-        Request& operator=(const Request&) = default;
+        /**
+         * Assgin a request.
+         *
+         * @param[in] other Request, which to assign.
+         *
+         * @return The request.
+         */
+        Request& operator=(const Request& other) = default;
 
+        /**
+         * Constructs a request by moving from an existing one.
+         *
+         * @param[in] other The request to move from.
+         */
         Request(Request&& other) noexcept
             :
             id(other.id),
@@ -236,9 +261,16 @@ private:
             data{ other.data.data, other.data.size }
         {
             other.data.data = nullptr;
-            other.data.size = 0;
+            other.data.size = 0U;
         }
 
+        /**
+         * Move a request.
+         *
+         * @param[in] other The request to move.
+         *
+         * @return The request.
+         */
         Request& operator=(Request&& other) noexcept
         {
             if (this != &other)
@@ -250,7 +282,7 @@ private:
                 data               = other.data;
 
                 other.data.data    = nullptr;
-                other.data.size    = 0;
+                other.data.size    = 0U;
             }
             return *this;
         }
@@ -263,11 +295,11 @@ private:
     typedef std::vector<Response> ResponseQueue;
 
     AsyncHttpClient               m_client;                   /**< Asynchronous HTTP client. */
-    RequestQueue                  m_requestQueue;             /**< Request queue */
-    ResponseQueue                 m_responseQueue;            /**< Response queue */
+    RequestQueue                  m_requestQueue;             /**< Stores requests for sequential execution. */
+    ResponseQueue                 m_responseQueue;            /**< Saves responses to outgoing requests. */
     bool                          m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
     uint32_t                      m_restIdCounter;            /**< Used to generate restIds. */
-    bool                          m_isWaitingForResponse;     /**< Used to protect against concurrent access */
+    bool                          m_isWaitingForResponse;     /**< Used for serialization of incoming requests. */
     uint32_t                      m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
     PreProcessCallback            m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
     Mutex                         m_mutex;                    /**< Mutex to protect against concurrent access. */

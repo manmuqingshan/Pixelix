@@ -253,7 +253,7 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
             if (restId == rspIterator->restId)
             {
                 isValidRsp   = rspIterator->isRsp;
-                payload      = std::move(rspIterator->data);
+                payload      = std::move(rspIterator->jsonDocData);
                 rspIterator  = m_responseQueue.erase(rspIterator);
                 isSuccessful = true;
                 break;
@@ -340,7 +340,7 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
         /* If a callback is found, it shall be applied. */
         else if (nullptr != m_activePreProcessCallback)
         {
-            if (true == m_activePreProcessCallback(payload, payloadSize, rsp.data))
+            if (true == m_activePreProcessCallback(payload, payloadSize, rsp.jsonDocData))
             {
                 rsp.isRsp = true;
                 m_responseQueue.push_back(std::move(rsp));
@@ -353,7 +353,7 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
         }
         else
         {
-            DeserializationError error = deserializeJson(rsp.data, payload, payloadSize);
+            DeserializationError error = deserializeJson(rsp.jsonDocData, payload, payloadSize);
 
             if (DeserializationError::Ok != error.code())
             {
@@ -376,7 +376,7 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
     if (true == isError)
     {
         rsp.isRsp = false;
-        rsp.data.clear();
+        rsp.jsonDocData.clear();
         m_responseQueue.push_back(std::move(rsp));
     }
 
