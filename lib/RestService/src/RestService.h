@@ -299,7 +299,7 @@ private:
     ResponseQueue                 m_responseQueue;            /**< Saves responses to outgoing requests. */
     bool                          m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
     uint32_t                      m_restIdCounter;            /**< Used to generate restIds. */
-    bool                          m_isWaitingForResponse;     /**< Used for serialization of incoming requests. */
+    bool                          m_isWaitingForResponse;     /**< Is RestService still waiiting for a response to a request? */
     uint32_t                      m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
     PreProcessCallback            m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
     Mutex                         m_mutex;                    /**< Mutex to protect against concurrent access. */
