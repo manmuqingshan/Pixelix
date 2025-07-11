@@ -234,7 +234,7 @@ void SignalDetectorPlugin::stop()
 
     if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+        RestService::getInstance().abortRequest(m_dynamicRestId);
         m_dynamicRestId = RestService::INVALID_REST_ID;
     }
 }
@@ -257,7 +257,7 @@ void SignalDetectorPlugin::inactive()
 void SignalDetectorPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    DynamicJsonDocument*       jsonDoc = nullptr;
+    DynamicJsonDocument        jsonDoc(0U);
     bool                       isValidResponse;
 
     /* Call isSignalDetected() every time although it was already detected in the
@@ -307,12 +307,6 @@ void SignalDetectorPlugin::process(bool isConnected)
 
     if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
     {
-        if (nullptr != jsonDoc)
-        {
-            delete jsonDoc;
-            jsonDoc = nullptr;
-        }
-
         m_dynamicRestId   = RestService::INVALID_REST_ID;
         m_isAllowedToSend = true;
     }
