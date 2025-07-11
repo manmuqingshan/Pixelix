@@ -46,11 +46,9 @@
  *****************************************************************************/
 #include "./internal/View.h"
 
-#include <AsyncHttpClient.h>
 #include <PluginWithConfig.hpp>
 #include <stdint.h>
 #include <SimpleTimer.hpp>
-#include <TaskProxy.hpp>
 #include <Mutex.hpp>
 #include <FileSystem.h>
 #include <RestService.h>
