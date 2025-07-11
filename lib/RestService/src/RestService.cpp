@@ -60,8 +60,9 @@
 
 bool RestService::start()
 {
-    bool                        isSuccessful = false;
-    AsyncHttpClient::OnResponse rspCallback  = [this](const HttpResponse& rsp) {
+    MutexGuard<Mutex>           guard(m_mutex);
+
+    AsyncHttpClient::OnResponse rspCallback = [this](const HttpResponse& rsp) {
         handleAsyncWebResponse(rsp);
     };
     AsyncHttpClient::OnError errCallback = [this]() {
@@ -71,175 +72,110 @@ bool RestService::start()
         m_isWaitingForResponse = false;
     };
 
-    isSuccessful = m_cmdQueue.create(CMD_QUEUE_SIZE);
-
-    if (true == isSuccessful)
-    {
-        m_client.regOnResponse(rspCallback);
-        m_client.regOnError(errCallback);
-        m_client.regOnClosed(closedCallback);
-    }
-
+    m_client.regOnResponse(rspCallback);
+    m_client.regOnError(errCallback);
+    m_client.regOnClosed(closedCallback);
     m_isRunning = true;
 
-    return isSuccessful;
+    return true;
 }
 
 void RestService::stop()
 {
-    Cmd* cmd    = nullptr;
-    Msg* msg    = nullptr;
+    MutexGuard<Mutex> guard(m_mutex);
 
     m_isRunning = false;
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
-
-    while (true == m_cmdQueue.receive(&cmd, 0U))
-    {
-        if (nullptr != cmd)
-        {
-            delete cmd;
-            cmd = nullptr;
-        }
-    }
-
+    m_requestQueue.clear();
     m_client.end();
-
-    while (true == m_taskProxy.receive(msg))
-    {
-        if (nullptr != msg)
-        {
-            delete msg;
-            msg = nullptr;
-        }
-    }
-
-    m_cmdQueue.destroy();
+    m_responseQueue.clear();
+    m_activeRestId             = INVALID_REST_ID;
+    m_activePreProcessCallback = nullptr;
 }
 
 void RestService::process()
 {
+    MutexGuard<Mutex> guard(m_mutex);
+
     if (false == m_isWaitingForResponse)
     {
-        bool isError = false;
-        Cmd* cmd     = nullptr;
+        bool    isError = false;
+        Request req;
 
-        if (true == m_cmdQueue.receive(&cmd, 0U))
+        if (false == m_requestQueue.empty())
         {
             m_isWaitingForResponse = true;
 
-            if (nullptr != cmd)
+            /* Take first request from queue. */
+            req                    = std::move(m_requestQueue.front());
+            m_requestQueue.erase(m_requestQueue.begin());
+            m_activeRestId             = req.restId;
+            m_activePreProcessCallback = req.preProcessCallback;
+
+            if (true == m_client.begin(String(req.url)))
             {
-                m_activeRestId             = cmd->restId;
-                m_activePreProcessCallback = cmd->preProcessCallback;
-
-                if (true == m_client.begin(String(cmd->url)))
+                switch (req.id)
                 {
-                    switch (cmd->id)
+                case REQUEST_ID_GET:
+                    if (false == m_client.GET())
                     {
-                    case CMD_ID_GET:
-                        if (false == m_client.GET())
-                        {
-                            isError = true;
-                        }
-                        break;
+                        isError = true;
+                    }
+                    break;
 
-                    case CMD_ID_POST:
-                        if (false == m_client.POST(cmd->u.data.data, cmd->u.data.size))
-                        {
-                            isError = true;
-                        }
-                        break;
+                case REQUEST_ID_POST:
+                    if (false == m_client.POST(req.data.data, req.data.size))
+                    {
+                        isError = true;
+                    }
+                    break;
 
-                    default:
-                        break;
-                    };
-                }
-                else
-                {
-                    LOG_ERROR("URL could not be parsed");
-                    isError = true;
-                }
+                default:
+                    break;
+                };
             }
             else
             {
+                LOG_ERROR("URL could not be parsed");
                 isError = true;
             }
-
-            if (true == isError)
-            {
-                Msg* msg = new (std::nothrow) Msg();
-
-                if (nullptr == msg)
-                {
-                    LOG_FATAL("Couldn't allocate enough memory for a msg.");
-                }
-                else
-                {
-                    msg->restId = cmd->restId;
-                    msg->isMsg  = false;
-
-                    if (false == this->m_taskProxy.send(msg))
-                    {
-                        delete msg;
-                        msg = nullptr;
-                        LOG_ERROR("Msg could not be sent to Msg-Queue");
-                    }
-                }
-
-                m_activeRestId             = INVALID_REST_ID;
-                m_activePreProcessCallback = nullptr;
-                m_isWaitingForResponse     = false;
-            }
         }
 
-        if (nullptr != cmd)
+        if (true == isError)
         {
-            delete cmd;
-            cmd = nullptr;
-        }
+            Response rsp(0U);
 
-        removeExpiredResponses();
+            rsp.restId = req.restId;
+            rsp.isRsp  = false;
+            m_responseQueue.push_back(std::move(rsp));
+            m_activeRestId             = INVALID_REST_ID;
+            m_activePreProcessCallback = nullptr;
+            m_isWaitingForResponse     = false;
+        }
     }
 }
 
 uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallback)
 {
-    bool     isSuccessful = true;
-    uint32_t restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
-        Cmd* cmd = new (std::nothrow) Cmd();
+        Request req;
 
-        if (nullptr == cmd)
-        {
-            LOG_ERROR("Couldn't allocate enough memory.");
-            isSuccessful = false;
-        }
-        else
-        {
-            restId                  = getRestId();
-            cmd->id                 = CMD_ID_GET;
-            cmd->restId             = restId;
-            cmd->preProcessCallback = preProcessCallback;
-            cmd->url                = url;
+        restId                 = getRestId();
+        req.id                 = REQUEST_ID_GET;
+        req.restId             = restId;
+        req.preProcessCallback = preProcessCallback;
+        req.url                = url;
 
-            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
-            {
-                delete cmd;
-                cmd          = nullptr;
-                isSuccessful = false;
-            }
-        }
+        m_requestQueue.push_back(std::move(req));
     }
     else
-    {
-        isSuccessful = false;
-    }
-
-    if (false == isSuccessful)
     {
         restId = INVALID_REST_ID;
     }
@@ -249,42 +185,25 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
 uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
-    bool     isSuccessful = true;
-    uint32_t restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
-        Cmd* cmd = new (std::nothrow) Cmd();
+        Request req;
 
-        if (nullptr == cmd)
-        {
-            LOG_ERROR("Couldn't allocate enough memory.");
-            isSuccessful = false;
-        }
-        else
-        {
-            restId                  = getRestId();
-            cmd->id                 = CMD_ID_POST;
-            cmd->restId             = restId;
-            cmd->preProcessCallback = preProcessCallback;
-            cmd->url                = url;
-            cmd->u.data.data        = payload;
-            cmd->u.data.size        = size;
+        restId                 = getRestId();
+        req.id                 = REQUEST_ID_POST;
+        req.restId             = restId;
+        req.preProcessCallback = preProcessCallback;
+        req.url                = url;
+        req.data.data          = payload;
+        req.data.size          = size;
 
-            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
-            {
-                delete cmd;
-                cmd          = nullptr;
-                isSuccessful = false;
-            }
-        }
+        m_requestQueue.push_back(std::move(req));
     }
     else
-    {
-        isSuccessful = false;
-    }
-
-    if (false == isSuccessful)
     {
         restId = INVALID_REST_ID;
     }
@@ -294,42 +213,25 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
 uint32_t RestService::post(const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
-    bool     isSuccessful = true;
-    uint32_t restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
-        Cmd* cmd = new (std::nothrow) Cmd();
+        Request req;
 
-        if (nullptr == cmd)
-        {
-            LOG_ERROR("Couldn't allocate enough memory.");
-            isSuccessful = false;
-        }
-        else
-        {
-            restId                  = getRestId();
-            cmd->id                 = CMD_ID_POST;
-            cmd->restId             = restId;
-            cmd->url                = url;
-            cmd->preProcessCallback = preProcessCallback;
-            cmd->u.data.data        = reinterpret_cast<const uint8_t*>(payload.c_str());
-            cmd->u.data.size        = payload.length();
+        restId                 = getRestId();
+        req.id                 = REQUEST_ID_POST;
+        req.restId             = restId;
+        req.url                = url;
+        req.preProcessCallback = preProcessCallback;
+        req.data.data          = reinterpret_cast<const uint8_t*>(payload.c_str());
+        req.data.size          = payload.length();
 
-            if (false == m_cmdQueue.sendToBack(cmd, portMAX_DELAY))
-            {
-                delete cmd;
-                cmd          = nullptr;
-                isSuccessful = false;
-            }
-        }
+        m_requestQueue.push_back(std::move(req));
     }
     else
-    {
-        isSuccessful = false;
-    }
-
-    if (false == isSuccessful)
     {
         restId = INVALID_REST_ID;
     }
@@ -339,29 +241,26 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 
 bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload)
 {
-    bool isSuccessful = false;
-    Msg* msg          = nullptr;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = false;
 
     if (true == m_isRunning)
     {
-        if (true == m_taskProxy.peek(msg))
+        ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+
+        while (rspIterator != m_responseQueue.end())
         {
-            if (restId == msg->restId)
+            if (restId == rspIterator->restId)
             {
-                isValidRsp   = msg->isMsg;
-                payload      = std::move(msg->rsp);
+                isValidRsp   = rspIterator->isRsp;
+                payload      = std::move(rspIterator->jsonDocData);
+                rspIterator  = m_responseQueue.erase(rspIterator);
                 isSuccessful = true;
-
-                if (false == m_taskProxy.receive(msg))
-                {
-                    LOG_FATAL("Two clients with the same restId exist!");
-                }
-
-                if (nullptr != msg)
-                {
-                    delete msg;
-                    msg = nullptr;
-                }
+                break;
+            }
+            else
+            {
+                ++rspIterator;
             }
         }
     }
@@ -374,102 +273,111 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
     return isSuccessful;
 }
 
-void RestService::addToRemovedPluginIds(uint32_t restId)
+void RestService::abortRequest(uint32_t restId)
 {
-    if (INVALID_REST_ID == restId)
+    MutexGuard<Mutex>       guard(m_mutex);
+    bool                    isRequestFound = false;
+    RequestQueue::iterator  reqIterator    = m_requestQueue.begin();
+    ResponseQueue::iterator rspIterator    = m_responseQueue.begin();
+
+    while ((false == isRequestFound) && (reqIterator != m_requestQueue.end()))
     {
-        LOG_ERROR("Cannot add INVALID_REST_ID to removedPluginIds!");
+        if (restId == reqIterator->restId)
+        {
+            reqIterator    = m_requestQueue.erase(reqIterator);
+            isRequestFound = true;
+        }
+        else
+        {
+            ++reqIterator;
+        }
     }
-    else
+
+    if (m_activeRestId == restId)
     {
-        removedPluginIds.push_back(restId);
+        m_client.end();
+        m_activeRestId             = INVALID_REST_ID;
+        m_activePreProcessCallback = nullptr;
+        isRequestFound             = true;
+    }
+
+    while ((false == isRequestFound) && (rspIterator != m_responseQueue.end()))
+    {
+        if (restId == rspIterator->restId)
+        {
+            rspIterator    = m_responseQueue.erase(rspIterator);
+            isRequestFound = true;
+        }
+        else
+        {
+            ++rspIterator;
+        }
     }
 }
 
-void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
+void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 {
-    Msg* msg     = new (std::nothrow) Msg();
-    bool isError = false;
+    MutexGuard<Mutex> guard(m_mutex);
+    Response          rsp;
+    bool              isError = false;
 
-    if (nullptr != msg)
+    rsp.restId                = m_activeRestId;
+
+    if (HttpStatus::STATUS_CODE_OK == httpRsp.getStatusCode())
     {
-        msg->restId = m_activeRestId;
+        bool        isSuccessful = false;
+        size_t      payloadSize  = 0U;
+        const void* vPayload     = httpRsp.getPayload(payloadSize);
+        const char* payload      = static_cast<const char*>(vPayload);
 
-        if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+        if ((nullptr == payload) ||
+            (0U == payloadSize))
         {
-            bool        isSuccessful = false;
-            size_t      payloadSize  = 0U;
-            const void* vPayload     = rsp.getPayload(payloadSize);
-            const char* payload      = static_cast<const char*>(vPayload);
+            LOG_ERROR("No payload.");
+            isError = true;
+        }
 
-            if ((nullptr == payload) ||
-                (0U == payloadSize))
+        /* If a callback is found, it shall be applied. */
+        else if (nullptr != m_activePreProcessCallback)
+        {
+            if (true == m_activePreProcessCallback(payload, payloadSize, rsp.jsonDocData))
             {
-                LOG_ERROR("No payload.");
-                isError = true;
-            }
-
-            /* If a callback is found, it shall be applied. */
-            else if (nullptr != m_activePreProcessCallback)
-            {
-                if (true == m_activePreProcessCallback(payload, payloadSize, msg->rsp))
-                {
-                    msg->isMsg = true;
-
-                    if (false == m_taskProxy.send(msg))
-                    {
-                        isError = true;
-                        LOG_ERROR("Could not send msg with rsp");
-                    }
-                }
-                else
-                {
-                    isError = true;
-                    LOG_ERROR("Error while preprocessing!");
-                }
+                rsp.isRsp = true;
+                m_responseQueue.push_back(std::move(rsp));
             }
             else
             {
-                DeserializationError error = deserializeJson(msg->rsp, payload, payloadSize);
-
-                if (DeserializationError::Ok != error.code())
-                {
-                    LOG_WARNING("JSON parse error: %s", error.c_str());
-                    isError = true;
-                }
-                else
-                {
-                    msg->isMsg = true;
-
-                    if (false == m_taskProxy.send(msg))
-                    {
-                        isError = true;
-                    }
-                }
+                isError = true;
+                LOG_ERROR("Error while preprocessing!");
             }
         }
         else
         {
-            isError = true;
-            LOG_ERROR("Http-Status not ok");
-        }
+            DeserializationError error = deserializeJson(rsp.jsonDocData, payload, payloadSize);
 
-        if (true == isError)
-        {
-            msg->isMsg = false;
-            msg->rsp.clear();
-
-            if (false == m_taskProxy.send(msg))
+            if (DeserializationError::Ok != error.code())
             {
-                delete msg;
-                msg = nullptr;
-                LOG_ERROR("Msg could not be sent to Msg-Queue");
+                LOG_WARNING("JSON parse error: %s", error.c_str());
+                isError = true;
+            }
+            else
+            {
+                rsp.isRsp = true;
+                m_responseQueue.push_back(std::move(rsp));
             }
         }
     }
     else
     {
-        LOG_FATAL("Couldn't allocate enough memory for a msg.");
+        isError = true;
+        LOG_ERROR("Http-Status not ok");
+    }
+
+    if (true == isError)
+    {
+        rsp.isRsp = false;
+        rsp.jsonDocData.clear();
+        m_responseQueue.push_back(std::move(rsp));
     }
 
     m_activeRestId             = INVALID_REST_ID;
@@ -478,46 +386,15 @@ void RestService::handleAsyncWebResponse(const HttpResponse& rsp)
 
 void RestService::handleFailedWebRequest()
 {
-    Msg* msg = new (std::nothrow) Msg();
+    MutexGuard<Mutex> guard(m_mutex);
+    Response          rsp(0U);
 
-    if (nullptr != msg)
-    {
-        msg->restId = m_activeRestId;
-        msg->isMsg  = false;
-
-        if (false == m_taskProxy.send(msg))
-        {
-            delete msg;
-            msg = nullptr;
-            LOG_ERROR("Msg could not be sent to Msg-Queue");
-        }
-    }
-    else
-    {
-        LOG_FATAL("Couldn't allocate enough memory for a msg.");
-    }
+    rsp.restId = m_activeRestId;
+    rsp.isRsp  = false;
+    m_responseQueue.push_back(std::move(rsp));
 
     m_activeRestId             = INVALID_REST_ID;
     m_activePreProcessCallback = nullptr;
-}
-
-void RestService::removeExpiredResponses()
-{
-    bool                 isValidRsp = false;
-    DynamicJsonDocument  jsonDoc(0U);
-    RestIdList::iterator idIterator = removedPluginIds.begin();
-
-    while (idIterator != removedPluginIds.end())
-    {
-        if (true == getResponse(*idIterator, isValidRsp, jsonDoc))
-        {
-            idIterator = removedPluginIds.erase(idIterator);
-        }
-        else
-        {
-            ++idIterator;
-        }
-    }
 }
 
 uint32_t RestService::getRestId()

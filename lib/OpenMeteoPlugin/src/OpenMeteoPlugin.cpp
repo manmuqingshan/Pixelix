@@ -213,7 +213,7 @@ void OpenMeteoPlugin::stop()
 
     if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        RestService::getInstance().addToRemovedPluginIds(m_dynamicRestId);
+        RestService::getInstance().abortRequest(m_dynamicRestId);
         m_dynamicRestId = RestService::INVALID_REST_ID;
     }
 }
@@ -279,6 +279,7 @@ void OpenMeteoPlugin::process(bool isConnected)
             else
             {
                 m_requestTimer.start(m_updatePeriod);
+                m_isAllowedToSend = false;
             }
         }
     }
