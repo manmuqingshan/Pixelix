@@ -286,7 +286,10 @@ void SignalDetectorPlugin::process(bool isConnected)
         if (true == m_isAllowedToSend)
         {
             /* Send notification */
-            (void)startHttpRequest();
+            if (true == startHttpRequest())
+            {
+                m_isAllowedToSend = false;
+            }
         }
     }
     else
