@@ -61,15 +61,15 @@
  *****************************************************************************/
 
 /* Initialize plugin topic. */
-const char* SunrisePlugin::TOPIC_CONFIG         = "location";
+const char* SunrisePlugin::TOPIC_CONFIG        = "location";
 
 /* Initialize time format. */
-const char* SunrisePlugin::TIME_FORMAT_DEFAULT  = "%I:%M %p";
+const char* SunrisePlugin::TIME_FORMAT_DEFAULT = "%I:%M %p";
 
 /* Initialize sunset and sunrise times API base URI.
  * Use http:// instead of https:// for less required heap memory for SSL connection.
  */
-const char* SunrisePlugin::BASE_URI             = "http://api.sunrise-sunset.org";
+const char* SunrisePlugin::BASE_URI            = "http://api.sunrise-sunset.org";
 
 /******************************************************************************
  * Public Methods
@@ -99,12 +99,12 @@ bool SunrisePlugin::setTopic(const String& topic, const JsonObjectConst& value)
 
     if (true == topic.equals(TOPIC_CONFIG))
     {
-        const size_t        JSON_DOC_SIZE           = 512U;
+        const size_t        JSON_DOC_SIZE = 512U;
         DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-        JsonObject          jsonCfg                 = jsonDoc.to<JsonObject>();
-        JsonVariantConst    jsonLongitude           = value["longitude"];
-        JsonVariantConst    jsonLatitude            = value["latitude"];
-        JsonVariantConst    jsonTimeFormat          = value["timeFormat"];
+        JsonObject          jsonCfg        = jsonDoc.to<JsonObject>();
+        JsonVariantConst    jsonLongitude  = value["longitude"];
+        JsonVariantConst    jsonLatitude   = value["latitude"];
+        JsonVariantConst    jsonTimeFormat = value["timeFormat"];
 
         /* The received configuration may not contain all single key/value pair.
          * Therefore read first the complete internal configuration and
@@ -120,26 +120,26 @@ bool SunrisePlugin::setTopic(const String& topic, const JsonObjectConst& value)
         if (false == jsonLongitude.isNull())
         {
             jsonCfg["longitude"] = jsonLongitude.as<String>();
-            isSuccessful = true;
+            isSuccessful         = true;
         }
 
         if (false == jsonLatitude.isNull())
         {
             jsonCfg["latitude"] = jsonLatitude.as<String>();
-            isSuccessful = true;
+            isSuccessful        = true;
         }
 
         if (false == jsonTimeFormat.isNull())
         {
             jsonCfg["timeFormat"] = jsonTimeFormat.as<String>();
-            isSuccessful = true;
+            isSuccessful          = true;
         }
 
         if (true == isSuccessful)
         {
             JsonObjectConst jsonCfgConst = jsonCfg;
 
-            isSuccessful = setConfiguration(jsonCfgConst);
+            isSuccessful                 = setConfiguration(jsonCfgConst);
 
             if (true == isSuccessful)
             {
@@ -153,8 +153,8 @@ bool SunrisePlugin::setTopic(const String& topic, const JsonObjectConst& value)
 
 bool SunrisePlugin::hasTopicChanged(const String& topic)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
-    bool                        hasTopicChanged = m_hasTopicChanged;
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    bool                       hasTopicChanged = m_hasTopicChanged;
 
     /* Only a single topic, therefore its not necessary to check. */
     PLUGIN_NOT_USED(topic);
@@ -166,28 +166,36 @@ bool SunrisePlugin::hasTopicChanged(const String& topic)
 
 void SunrisePlugin::start(uint16_t width, uint16_t height)
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.init(width, height);
 
     PluginWithConfig::start(width, height);
-
-    initHttpClient();
 }
 
 void SunrisePlugin::stop()
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().abortRequest(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
+    }
 }
 
 void SunrisePlugin::process(bool isConnected)
 {
-    Msg                         msg;
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    bool                       isRestRequestRequired = false;
+    DynamicJsonDocument        jsonDoc(0U);
+    bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
 
@@ -198,13 +206,18 @@ void SunrisePlugin::process(bool isConnected)
     {
         if (true == isConnected)
         {
-            if (false == startHttpRequest())
+            /* Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
             {
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            else
-            {
-                m_requestTimer.start(UPDATE_PERIOD);
+                if (false == startHttpRequest())
+                {
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
             }
         }
     }
@@ -222,38 +235,42 @@ void SunrisePlugin::process(bool isConnected)
          */
         else if (true == m_requestTimer.isTimeout())
         {
-            if (false == startHttpRequest())
+            /* Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
             {
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            else
-            {
-                m_requestTimer.start(UPDATE_PERIOD);
+                if (false == startHttpRequest())
+                {
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    m_requestTimer.start(UPDATE_PERIOD);
+                    m_isAllowedToSend = false;
+                }
             }
         }
     }
 
-    if (true == m_taskProxy.receive(msg))
+    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
     {
-        switch(msg.type)
+        if (true == isValidResponse)
         {
-        case MSG_TYPE_INVALID:
-            /* Should never happen. */
-            break;
+            JsonObject root = jsonDoc.as<JsonObject>();
 
-        case MSG_TYPE_RSP:
-            if (nullptr != msg.rsp)
+            /* Call handleWebResponse() only if jsonDoc is valid and has content. */
+            if ((false == root.isNull()) && (0U != root.size()))
             {
-                handleWebResponse(*msg.rsp);
-                delete msg.rsp;
-                msg.rsp = nullptr;
+                handleWebResponse(jsonDoc);
             }
-            break;
-
-        default:
-            /* Should never happen. */
-            break;
         }
+        else
+        {
+            LOG_WARNING("Connection error.");
+            m_requestTimer.start(UPDATE_PERIOD_SHORT);
+        }
+
+        m_dynamicRestId   = RestService::INVALID_REST_ID;
+        m_isAllowedToSend = true;
     }
 }
 
@@ -276,17 +293,17 @@ void SunrisePlugin::getConfiguration(JsonObject& jsonCfg) const
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
 
-    jsonCfg["longitude"]    = m_longitude;
-    jsonCfg["latitude"]     = m_latitude;
-    jsonCfg["timeFormat"]   = m_timeFormat;
+    jsonCfg["longitude"]  = m_longitude;
+    jsonCfg["latitude"]   = m_latitude;
+    jsonCfg["timeFormat"] = m_timeFormat;
 }
 
 bool SunrisePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 {
-    bool                status          = false;
-    JsonVariantConst    jsonLon         = jsonCfg["longitude"];
-    JsonVariantConst    jsonLat         = jsonCfg["latitude"];
-    JsonVariantConst    jsonTimeFormat  = jsonCfg["timeFormat"];
+    bool             status         = false;
+    JsonVariantConst jsonLon        = jsonCfg["longitude"];
+    JsonVariantConst jsonLat        = jsonCfg["latitude"];
+    JsonVariantConst jsonTimeFormat = jsonCfg["timeFormat"];
 
     if (false == jsonLon.is<String>())
     {
@@ -304,16 +321,16 @@ bool SunrisePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
 
-        m_longitude     = jsonLon.as<String>();
-        m_latitude      = jsonLat.as<String>();
-        m_timeFormat    = jsonTimeFormat.as<String>();
+        m_longitude  = jsonLon.as<String>();
+        m_latitude   = jsonLat.as<String>();
+        m_timeFormat = jsonTimeFormat.as<String>();
 
         /* Force update on display */
         m_requestTimer.start(UPDATE_PERIOD_SHORT);
 
         m_hasTopicChanged = true;
 
-        status = true;
+        status            = true;
     }
 
     return status;
@@ -321,116 +338,78 @@ bool SunrisePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool SunrisePlugin::startHttpRequest()
 {
-    bool status = false;
+    bool                            status = false;
+    RestService::PreProcessCallback preProcessCallback =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     if ((false == m_latitude.isEmpty()) &&
         (false == m_longitude.isEmpty()))
     {
-        String url = String(BASE_URI) + "/json?lat=" + m_latitude + "&lng=" + m_longitude + "&formatted=0";
+        String url      = String(BASE_URI) + "/json?lat=" + m_latitude + "&lng=" + m_longitude + "&formatted=0";
+        m_dynamicRestId = RestService::getInstance().get(url, preProcessCallback);
 
-        if (true == m_client.begin(url))
+        if (RestService::INVALID_REST_ID == m_dynamicRestId)
         {
-            if (false == m_client.GET())
-            {
-                LOG_WARNING("GET %s failed.", url.c_str());
-            }
-            else
-            {
-                status = true;
-            }
+            LOG_WARNING("GET %s failed.", url.c_str());
+        }
+        else
+        {
+            status = true;
         }
     }
 
     return status;
 }
 
-void SunrisePlugin::initHttpClient()
+bool SunrisePlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    /* Note: All registered callbacks are running in a different task context!
-     *       Therefore it is not allowed to access a member here directly.
-     *       The processing must be deferred via task proxy.
+    bool                            isSuccessful = false;
+    const size_t                    FILTER_SIZE  = 128U;
+    StaticJsonDocument<FILTER_SIZE> jsonFilterDoc;
+
+    /* Example:
+     * {
+     *   "results":
+     *   {
+     *     "sunrise":"2015-05-21T05:05:35+00:00",
+     *     "sunset":"2015-05-21T19:22:59+00:00",
+     *     "solar_noon":"2015-05-21T12:14:17+00:00",
+     *     "day_length":51444,
+     *     "civil_twilight_begin":"2015-05-21T04:36:17+00:00",
+     *     "civil_twilight_end":"2015-05-21T19:52:17+00:00",
+     *     "nautical_twilight_begin":"2015-05-21T04:00:13+00:00",
+     *     "nautical_twilight_end":"2015-05-21T20:28:21+00:00",
+     *     "astronomical_twilight_begin":"2015-05-21T03:20:49+00:00",
+     *     "astronomical_twilight_end":"2015-05-21T21:07:45+00:00"
+     *   },
+     *    "status":"OK"
+     * }
      */
-    m_client.regOnResponse(
-        [this](const HttpResponse& rsp)
-        {
-            handleAsyncWebResponse(rsp);
-        }
-    );
-}
 
-void SunrisePlugin::handleAsyncWebResponse(const HttpResponse& rsp)
-{
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+    jsonFilterDoc["results"]["sunrise"] = true;
+    jsonFilterDoc["results"]["sunset"]  = true;
+
+    if (true == jsonFilterDoc.overflowed())
     {
-        const size_t            JSON_DOC_SIZE   = 512U;
-        DynamicJsonDocument*    jsonDoc         = new(std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
+        LOG_ERROR("Less memory for filter available.");
+    }
+    else
+    {
+        DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
 
-        if (nullptr != jsonDoc)
+        if (DeserializationError::Ok != error.code())
         {
-            bool                            isSuccessful    = false;
-            size_t                          payloadSize     = 0U;
-            const void*                     vPayload        = rsp.getPayload(payloadSize);
-            const char*                     payload         = static_cast<const char*>(vPayload);
-            const size_t                    FILTER_SIZE     = 128U;
-            StaticJsonDocument<FILTER_SIZE> jsonFilterDoc;
-
-            /* Example:
-            * {
-            *   "results":
-            *   {
-            *     "sunrise":"2015-05-21T05:05:35+00:00",
-            *     "sunset":"2015-05-21T19:22:59+00:00",
-            *     "solar_noon":"2015-05-21T12:14:17+00:00",
-            *     "day_length":51444,
-            *     "civil_twilight_begin":"2015-05-21T04:36:17+00:00",
-            *     "civil_twilight_end":"2015-05-21T19:52:17+00:00",
-            *     "nautical_twilight_begin":"2015-05-21T04:00:13+00:00",
-            *     "nautical_twilight_end":"2015-05-21T20:28:21+00:00",
-            *     "astronomical_twilight_begin":"2015-05-21T03:20:49+00:00",
-            *     "astronomical_twilight_end":"2015-05-21T21:07:45+00:00"
-            *   },
-            *    "status":"OK"
-            * }
-            */
-
-            jsonFilterDoc["results"]["sunrise"] = true;
-            jsonFilterDoc["results"]["sunset"]  = true;
-
-            if (true == jsonFilterDoc.overflowed())
-            {
-                LOG_ERROR("Less memory for filter available.");
-            }
-            else if ((nullptr == payload) ||
-                     (0U == payloadSize))
-            {
-                LOG_ERROR("No payload.");
-            }
-            else
-            {
-                DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
-
-                if (DeserializationError::Ok != error.code())
-                {
-                    LOG_ERROR("Invalid JSON message received: %s", error.c_str());
-                }
-                else
-                {
-                    Msg msg;
-
-                    msg.type    = MSG_TYPE_RSP;
-                    msg.rsp     = jsonDoc;
-
-                    isSuccessful = this->m_taskProxy.send(msg);
-                }
-            }
-
-            if (false == isSuccessful)
-            {
-                delete jsonDoc;
-                jsonDoc = nullptr;
-            }
+            LOG_ERROR("Invalid JSON message received: %s", error.c_str());
+        }
+        else
+        {
+            isSuccessful = true;
         }
     }
+
+    return isSuccessful;
 }
 
 void SunrisePlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
@@ -449,11 +428,11 @@ void SunrisePlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     }
     else
     {
-        String sunrise  = jsonSunrise.as<String>();
-        String sunset   = jsonSunset.as<String>();
-        
-        sunrise = addCurrentTimezoneValues(sunrise);
-        sunset  = addCurrentTimezoneValues(sunset);
+        String sunrise         = jsonSunrise.as<String>();
+        String sunset          = jsonSunset.as<String>();
+
+        sunrise                = addCurrentTimezoneValues(sunrise);
+        sunset                 = addCurrentTimezoneValues(sunset);
 
         m_relevantResponsePart = sunrise + " / " + sunset;
         m_view.setFormatText(m_relevantResponsePart);
@@ -462,10 +441,10 @@ void SunrisePlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
 
 String SunrisePlugin::addCurrentTimezoneValues(const String& dateTimeString) const
 {
-    tm          gmTimeInfo;
-    const tm*   lcTimeInfo      = nullptr;
-    time_t      gmTime;
-    char        timeBuffer[17]  = { 0 };
+    tm        gmTimeInfo;
+    const tm* lcTimeInfo = nullptr;
+    time_t    gmTime;
+    char      timeBuffer[17] = { 0 };
 
     /* Example: "2015-05-21T05:05:35+00:00" */
 
@@ -473,27 +452,13 @@ String SunrisePlugin::addCurrentTimezoneValues(const String& dateTimeString) con
     (void)strptime(dateTimeString.c_str(), "%Y-%m-%dT%H:%M:%S", &gmTimeInfo);
 
     /* Convert to local time */
-    gmTime = mktime(&gmTimeInfo);
+    gmTime     = mktime(&gmTimeInfo);
     lcTimeInfo = localtime(&gmTime);
 
     /* Convert time information to user friendly string. */
     (void)strftime(timeBuffer, sizeof(timeBuffer), m_timeFormat.c_str(), lcTimeInfo);
 
     return timeBuffer;
-}
-
-void SunrisePlugin::clearQueue()
-{
-    Msg msg;
-
-    while(true == m_taskProxy.receive(msg))
-    {
-        if (MSG_TYPE_RSP == msg.type)
-        {
-            delete msg.rsp;
-            msg.rsp = nullptr;
-        }
-    }
 }
 
 /******************************************************************************
