@@ -256,7 +256,7 @@ private:
             :
             id(other.id),
             restId(other.restId),
-            preProcessCallback(std::move(other.preProcessCallback)),
+            preProcessCallback(other.preProcessCallback),
             url(std::move(other.url)),
             data{ other.data.data, other.data.size }
         {
