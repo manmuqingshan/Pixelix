@@ -141,18 +141,18 @@ public:
      *
      * @param[in]  restId      Unique Id to identify plugin
      * @param[out] isValidRsp  Does Response have a payload
-     * @param[out] payload     Content of the Response
+     * @param[out] payload     Content of the Response. The output variable is move-assigned.
      *
      * @return If a response is available, it will return true otherwise false
      */
-    bool getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument*& payload);
+    bool getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload);
 
     /**
-     * Adds restId of a plugin to vector removedPluginIds.
+     * Aborts a pending request. If there is already a response in the response queue it will be deleted as well.
      *
      * @param[in] restId Unique Id to identify plugin
      */
-    void addToRemovedPluginIds(uint32_t restId);
+    void abortRequest(uint32_t restId);
 
     /**
      *  Used to indicate that HTTP request could not be started.
@@ -161,79 +161,148 @@ public:
 
 private:
 
-    /** RestId list */
-    typedef std::vector<uint32_t> RestIdList;
-
     /**
-     *  Max. number of commands which can be queued. Must be increased when new user of RestService is added.
+     * Response that will be queued in m_responseQueue. Contains validity and data of a response.
      */
-    static const size_t CMD_QUEUE_SIZE = 9U;
-
-    /**
-     * A message for HTTP client/server handling.
-     */
-    struct Msg
+    struct Response
     {
-        uint32_t             restId; /**< Used to identify plugin in RestService */
-        bool                 isMsg;  /**< true: successful Response, false: request failed*/
-        DynamicJsonDocument* rsp;    /**< Response, only valid if isMsg == true */
+        uint32_t            restId;      /**< Used to identify plugin in RestService. */
+        bool                isRsp;       /**< true: successful response, false: request failed */
+        DynamicJsonDocument jsonDocData; /**< Content of the response. Only valid if isRsp == true. */
 
         /**
-         * Constructs a message.
+         * Constructs a response.
          */
-        Msg() :
-            isMsg(false),
-            rsp(nullptr)
+        Response() :
+            isRsp(false),
+            jsonDocData(4096U)
+        {
+        }
+
+        /**
+         * Constructs a response.
+         *
+         * @param[in] dataSize Size of the DynamicJsonDocument which holds the data.
+         */
+        explicit Response(size_t dataSize) :
+            isRsp(false),
+            jsonDocData(dataSize)
         {
         }
     };
 
     /**
-     * Command ids are used to identify what the user requests.
+     * Request ids are used to identify what the user requests.
      */
-    enum CmdId
+    enum RequestId
     {
-        CMD_ID_GET = 0, /**< GET request */
-        CMD_ID_POST     /**< POST request */
+        REQUEST_ID_GET = 0, /**< GET request */
+        REQUEST_ID_POST     /**< POST request */
     };
 
     /**
-     * A command is a combination of request and its corresponding data.
+     * A combination of a request and its corresponding data.
      */
-    struct Cmd
+    struct Request
     {
-        CmdId              id;                 /**< The command id identifies the kind of request. */
-        uint32_t           restId;             /**< Used to identify plugin in RestService */
-        PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives */
-        String             url;                /**< URL */
+        RequestId          id;                 /**< The request id identifies the kind of request. */
+        uint32_t           restId;             /**< Used to identify plugin in RestService. */
+        PreProcessCallback preProcessCallback; /**< Individual callback called when response arrives. */
+        String             url;                /**< URL to be called. */
 
         /**
-         * The union contains the event id specific parameters.
-         * Note not every command id must have parameters.
+         * Data parameters, only valid for REQUEST_ID_POST.
          */
-        union
+        struct
         {
-            /**
-             * Data parameters, only valid for CMD_ID_POST.
-             */
-            struct
-            {
-                const uint8_t* data; /**< Command specific data. */
-                size_t         size; /**< Command specific data size in byte. */
-            } data;
+            const uint8_t* data; /**< Request specific data. Struct does not have ownership! */
+            size_t         size; /**< Request specific data size in byte. */
+        } data;
 
-        } u;
+        /**
+         * Constructs a request.
+         */
+        Request() :
+            id(),
+            restId(INVALID_REST_ID),
+            preProcessCallback(nullptr),
+            url(),
+            data{ nullptr, 0U }
+        {
+        }
+
+        /**
+         * Constructs a request by copying an existing one.
+         *
+         * @param[in] other The response which to copy.
+         */
+        Request(const Request& other)            = default;
+
+        /**
+         * Assgin a request.
+         *
+         * @param[in] other Request, which to assign.
+         *
+         * @return The request.
+         */
+        Request& operator=(const Request& other) = default;
+
+        /**
+         * Constructs a request by moving from an existing one.
+         *
+         * @param[in] other The request to move from.
+         */
+        Request(Request&& other) noexcept
+            :
+            id(other.id),
+            restId(other.restId),
+            preProcessCallback(other.preProcessCallback),
+            url(std::move(other.url)),
+            data{ other.data.data, other.data.size }
+        {
+            other.data.data = nullptr;
+            other.data.size = 0U;
+        }
+
+        /**
+         * Move a request.
+         *
+         * @param[in] other The request to move.
+         *
+         * @return The request.
+         */
+        Request& operator=(Request&& other) noexcept
+        {
+            if (this != &other)
+            {
+                id                 = other.id;
+                restId             = other.restId;
+                preProcessCallback = std::move(other.preProcessCallback);
+                url                = std::move(other.url);
+                data               = other.data;
+
+                other.data.data    = nullptr;
+                other.data.size    = 0U;
+            }
+            return *this;
+        }
     };
 
-    AsyncHttpClient        m_client;                   /**< Asynchronous HTTP client. */
-    Queue<Cmd*>            m_cmdQueue;                 /**< Command queue */
-    TaskProxy<Msg, 9U, 0U> m_taskProxy;                /**< Task proxy used to decouple server responses, which happen in a different task context.*/
-    bool                   m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
-    uint32_t               m_restIdCounter;            /**< Used to generate restIds. */
-    bool                   m_isWaitingForResponse;     /**< Used to protect against concurrent access */
-    uint32_t               m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
-    PreProcessCallback     m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
-    RestIdList             removedPluginIds;           /**< Saves Ids of removed plugins whose messages shall be deleted from the taskproxy. */
+    /** Request Queue */
+    typedef std::vector<Request> RequestQueue;
+
+    /** Response Queue */
+    typedef std::vector<Response> ResponseQueue;
+
+    AsyncHttpClient               m_client;                   /**< Asynchronous HTTP client. */
+    RequestQueue                  m_requestQueue;             /**< Stores requests for sequential execution. */
+    ResponseQueue                 m_responseQueue;            /**< Saves responses to outgoing requests. */
+    bool                          m_isRunning;                /**< Signals the status of the service. True means it is running, false means it is stopped. */
+    uint32_t                      m_restIdCounter;            /**< Used to generate restIds. */
+    bool                          m_isWaitingForResponse;     /**< Is RestService still waiiting for a response to a request? */
+    uint32_t                      m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
+    PreProcessCallback            m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
+    Mutex                         m_mutex;                    /**< Mutex to protect against concurrent access. */
 
     /**
      * Constructs the service instance.
@@ -241,15 +310,16 @@ private:
     RestService() :
         IService(),
         m_client(),
-        m_cmdQueue(),
-        m_taskProxy(),
+        m_requestQueue(),
+        m_responseQueue(),
         m_isRunning(false),
         m_restIdCounter(INVALID_REST_ID),
         m_isWaitingForResponse(false),
         m_activeRestId(INVALID_REST_ID),
         m_activePreProcessCallback(),
-        removedPluginIds()
+        m_mutex()
     {
+        (void)m_mutex.create();
     }
 
     /**
@@ -258,6 +328,7 @@ private:
     ~RestService()
     {
         /* Never called. */
+        m_mutex.destroy();
     }
 
     /* An instance shall not be copied. */
@@ -265,7 +336,7 @@ private:
     RestService& operator=(const RestService& service);
 
     /**
-     * Handles asynchronous web responses from the server. Filtering is delegated to Plugin-callbacks.
+     * Handles asynchronous web responses from the server. Filtering is delegated to plugin-callbacks.
      * This will be called in LwIP context! Don't modify any member here directly!
      *
      * @param[in] rsp     Web Response
@@ -277,11 +348,6 @@ private:
      * This will be called in LwIP context! Don't modify any member here directly!
      */
     void handleFailedWebRequest();
-
-    /**
-     * Removes expired responses from taskproxy. A response is expired if a plugin is stopped after starting a request.
-     */
-    void removeExpiredResponses();
 
     /**
      * Generates a valid restId.
