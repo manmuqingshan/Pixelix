@@ -47,7 +47,6 @@
 
 #include <stdint.h>
 #include <PluginWithConfig.hpp>
-#include <AsyncHttpClient.h>
 #include <SimpleTimer.hpp>
 #include <Mutex.hpp>
 #include <FileSystem.h>
