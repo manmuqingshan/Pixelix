@@ -47,8 +47,6 @@
 
 #include <stdint.h>
 #include <PluginWithConfig.hpp>
-#include <AsyncHttpClient.h>
-#include <TaskProxy.hpp>
 #include <Mutex.hpp>
 #include <FileSystem.h>
 #include <RestService.h>
