@@ -297,15 +297,13 @@ private:
      */
     static const uint32_t  UPDATE_PERIOD_SHORT = SIMPLE_TIMER_SECONDS(10U);
 
-    _GruenbeckPlugin::View m_view;              /**< View with all widgets. */
-    String                 m_ipAddress;         /**< IP-address of the Gruenbeck server. */
-    AsyncHttpClient        m_client;            /**< Asynchronous HTTP client. */
-    SimpleTimer            m_requestTimer;      /**< Timer, used for cyclic request of new data. */
-    mutable MutexRecursive m_mutex;             /**< Mutex to protect against concurrent access. */
-    bool                   m_isConnectionError; /**< Is connection error happened? */
-    bool                   m_hasTopicChanged;   /**< Has the topic content changed? */
-    uint32_t               m_dynamicRestId;     /**< Used to identify plugin when interacting with RestService. Id changes with every request. */
-    bool                   m_isAllowedToSend;   /**< Is allowed to send REST-Api request? */
+    _GruenbeckPlugin::View m_view;            /**< View with all widgets. */
+    String                 m_ipAddress;       /**< IP-address of the Gruenbeck server. */
+    SimpleTimer            m_requestTimer;    /**< Timer, used for cyclic request of new data. */
+    mutable MutexRecursive m_mutex;           /**< Mutex to protect against concurrent access. */
+    bool                   m_hasTopicChanged; /**< Has the topic content changed? */
+    uint32_t               m_dynamicRestId;   /**< Used to identify plugin when interacting with RestService. Id changes with every request. */
+    bool                   m_isAllowedToSend; /**< Is allowed to send REST-Api request? */
 
     /**
      * Get configuration in JSON.
