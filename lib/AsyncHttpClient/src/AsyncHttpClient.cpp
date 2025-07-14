@@ -608,6 +608,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_GET:
                 if (false == getRequest())
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -615,6 +617,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_POST:
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
