@@ -323,7 +323,7 @@ void OpenWeatherPlugin::process(bool isConnected)
             }
             else
             {
-                /* Reset weather request status to avoid to be stucked. */
+                /* Reset weather request status to avoid to be stuck. */
                 m_weatherReqStatus = WEATHER_REQUEST_STATUS_IDLE;
             }
         }
