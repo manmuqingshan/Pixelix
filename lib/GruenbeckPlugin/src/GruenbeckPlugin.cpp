@@ -330,21 +330,17 @@ bool GruenbeckPlugin::startHttpRequest()
 
     if (false == m_ipAddress.isEmpty())
     {
-        String url = String("http://") + m_ipAddress + "/mux_http";
+        String url      = String("http://") + m_ipAddress + "/mux_http?id=42&show=D_Y_10_1~";
 
-        if (true == m_client.begin(url))
+        m_dynamicRestId = RestService::getInstance().get(url, preProcessCallback);
+
+        if (RestService::INVALID_REST_ID == m_dynamicRestId)
         {
-            m_client.addPar("id", "42");
-            m_client.addPar("show", "D_Y_10_1~");
-
-            if (false == m_client.POST())
-            {
-                LOG_WARNING("POST %s failed.", url.c_str());
-            }
-            else
-            {
-                status = true;
-            }
+            LOG_WARNING("GET %s failed.", url.c_str());
+        }
+        else
+        {
+            status = true;
         }
     }
 
