@@ -348,6 +348,7 @@ bool SunrisePlugin::startHttpRequest()
         (false == m_longitude.isEmpty()))
     {
         String url      = String(BASE_URI) + "/json?lat=" + m_latitude + "&lng=" + m_longitude + "&formatted=0";
+
         m_dynamicRestId = RestService::getInstance().get(url, preProcessCallback);
 
         if (RestService::INVALID_REST_ID == m_dynamicRestId)
