@@ -363,7 +363,6 @@ void AsyncHttpClient::end()
     clearCmdQueue();
     clearEvtQueue();
     clear();
-    giveGlobalMutex();
 }
 
 bool AsyncHttpClient::isConnected()
@@ -589,6 +588,8 @@ void AsyncHttpClient::processTask(void* parameters)
         /* Ensure that any pending request/connection is aborted. */
         tthis->abort();
 
+        tthis->giveGlobalMutex();
+
         (void)xSemaphoreGive(tthis->m_processTaskSemaphore);
     }
 
@@ -608,6 +609,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_GET:
                 if (false == getRequest())
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -615,6 +618,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_POST:
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -699,6 +704,8 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
+    bool wasConnectionEstablished = false;
+
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
     LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
 
@@ -706,7 +713,13 @@ void AsyncHttpClient::onDisconnect()
     {
         MutexGuard<Mutex> guard(m_mutex);
 
-        m_isConnected = false;
+        wasConnectionEstablished = m_isConnected;
+        m_isConnected            = false;
+    }
+
+    if (false == wasConnectionEstablished)
+    {
+        onError(ERR_CONN);
     }
 
     clear();
