@@ -639,6 +639,8 @@ private:
 
     /**
      * Take global mutex to serialize all AsyncHttpClient's.
+     * Attention, the task which takes the global mutex must give it back as well.
+     * Its not allowed that one task takes the global mutex and another task gives it back.
      * 
      * @return If taken, it will return true otherwise false. If already taken, it will return false.
      */
