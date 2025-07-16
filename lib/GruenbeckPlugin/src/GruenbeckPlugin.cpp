@@ -372,7 +372,7 @@ bool GruenbeckPlugin::preProcessAsyncWebResponse(const char* payload, size_t pay
     {
         memcpy(restCapacity, &payload[START_INDEX_OF_RELEVANT_DATA], RELEVANT_DATA_LENGTH);
         restCapacity[RELEVANT_DATA_LENGTH] = '\0';
-        (jsonDoc)["restCapacity"]          = restCapacity;
+        jsonDoc["restCapacity"]            = restCapacity;
         isSuccessful                       = true;
     }
 
