@@ -299,6 +299,7 @@ void RestService::abortRequest(uint32_t restId)
         m_activeRestId             = INVALID_REST_ID;
         m_activePreProcessCallback = nullptr;
         isRequestFound             = true;
+        m_isWaitingForResponse     = false;
     }
 
     while ((false == isRequestFound) && (rspIterator != m_responseQueue.end()))
