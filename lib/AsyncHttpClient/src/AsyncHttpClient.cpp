@@ -363,7 +363,6 @@ void AsyncHttpClient::end()
     clearCmdQueue();
     clearEvtQueue();
     clear();
-    giveGlobalMutex();
 }
 
 bool AsyncHttpClient::isConnected()
@@ -588,6 +587,8 @@ void AsyncHttpClient::processTask(void* parameters)
 
         /* Ensure that any pending request/connection is aborted. */
         tthis->abort();
+
+        tthis->giveGlobalMutex();
 
         (void)xSemaphoreGive(tthis->m_processTaskSemaphore);
     }
