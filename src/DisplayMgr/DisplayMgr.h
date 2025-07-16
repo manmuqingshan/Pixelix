@@ -261,9 +261,9 @@ public:
     void activateNextFadeEffect(FadeEffectController::FadeEffect fadeEffect);
 
     /**
-     * Get fade effect.
+     * Get selected fade effect.
      *
-     * @return The currently active fade effect.
+     * @return The currently selected fade effect.
      */
     FadeEffectController::FadeEffect getFadeEffect();
 
@@ -473,7 +473,6 @@ private:
 
     DoubleFrameBuffer                m_doubleFrameBuffer;    /**< Double framebuffer. */
     FadeEffectController             m_fadeEffectController; /**< Fade effect controller. */
-    FadeEffectController::FadeEffect m_nextFadeEffect;       /**< Next fade effect to be activated. */
     bool                             m_isNetworkConnected;   /**< Is a network connection established? */
     IndicatorViewBase                m_indicatorView;        /**< Indicator view shown as overlay to indicate user defined states. */
 

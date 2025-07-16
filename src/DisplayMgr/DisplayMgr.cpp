@@ -130,7 +130,6 @@ bool DisplayMgr::begin()
 
     /* Set fade effect */
     m_fadeEffectController.selectFadeEffect(static_cast<FadeEffectController::FadeEffect>(fadeEffect));
-    m_nextFadeEffect = m_fadeEffectController.getFadeEffect();
 
     /* Allocate some stuff. */
     if (false == m_slotList.create(maxSlots))
@@ -555,9 +554,10 @@ void DisplayMgr::activatePreviousSlot()
 
 void DisplayMgr::activateNextFadeEffect(FadeEffectController::FadeEffect fadeEffect)
 {
-    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard1(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard2(m_mutexUpdate);
 
-    m_nextFadeEffect = fadeEffect;
+    m_fadeEffectController.selectFadeEffect(fadeEffect);
 }
 
 FadeEffectController::FadeEffect DisplayMgr::getFadeEffect()
@@ -794,7 +794,6 @@ DisplayMgr::DisplayMgr() :
     m_slotTimer(),
     m_doubleFrameBuffer(),
     m_fadeEffectController(m_doubleFrameBuffer),
-    m_nextFadeEffect(FadeEffectController::FADE_EFFECT_NONE),
     m_isNetworkConnected(false),
     m_indicatorView()
 {
@@ -1088,13 +1087,6 @@ void DisplayMgr::process()
             selectedFrameBuffer.fillScreen(ColorDef::BLACK);
             display.clear();
         }
-    }
-
-    /* If no fade effect is running, select next fade effect. */
-    if ((m_nextFadeEffect != m_fadeEffectController.getFadeEffect()) &&
-        (false == m_fadeEffectController.isRunning()))
-    {
-        m_fadeEffectController.selectFadeEffect(m_nextFadeEffect);
     }
 
     /* Process all installed plugins. */

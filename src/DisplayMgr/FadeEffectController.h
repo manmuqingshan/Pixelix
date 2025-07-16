@@ -89,7 +89,8 @@ public:
         m_fadeLinearEffect(),
         m_fadeMoveXEffect(),
         m_fadeMoveYEffect(),
-        m_fadeEffectIndex(FADE_EFFECT_NONE)
+        m_fadeEffectIndex(FADE_EFFECT_NONE),
+        m_nextFadeEffectIndex(m_fadeEffectIndex)
     {
         /* Nothing to do */
     }
@@ -103,18 +104,20 @@ public:
     }
 
     /**
-     * Get the current fade effect.
+     * Get the selected fade effect.
+     * It might be not the currently running fade effect. But the one which is selected
+     * to be used next.
      *
-     * @return Current fade effect
+     * @return Current fade effect which is selected.
      */
     FadeEffect getFadeEffect() const
     {
-        return m_fadeEffectIndex;
+        return m_nextFadeEffectIndex;
     }
 
     /**
      * Select the fade effect.
-     * 
+     *
      * If the fade effect is FADE_EFFECT_COUNT, it will select the next
      * fade effect.
      *
@@ -130,7 +133,7 @@ public:
 
     /**
      * Update the display.
-     * 
+     *
      * @param[in] gfx  Graphics interface to draw on the display.
      */
     void update(YAGfx& gfx);
@@ -160,13 +163,14 @@ private:
         FADE_OUT       /**< Fade out */
     };
 
-    DoubleFrameBuffer& m_doubleFrameBuffer; /**< Double framebuffer for double buffering. */
-    FadeState          m_state;             /**< Current fade state. */
-    IFadeEffect*       m_fadeEffect;        /**< The current selected fade effect. */
-    FadeLinear         m_fadeLinearEffect;  /**< Linear fade effect. */
-    FadeMoveX          m_fadeMoveXEffect;   /**< Moving along x-axis fade effect. */
-    FadeMoveY          m_fadeMoveYEffect;   /**< Moving along y-axis fade effect. */
-    FadeEffect         m_fadeEffectIndex;   /**< Fade effect index to determine the next fade effect. */
+    DoubleFrameBuffer& m_doubleFrameBuffer;   /**< Double framebuffer for double buffering. */
+    FadeState          m_state;               /**< Current fade state. */
+    IFadeEffect*       m_fadeEffect;          /**< The current selected fade effect. */
+    FadeLinear         m_fadeLinearEffect;    /**< Linear fade effect. */
+    FadeMoveX          m_fadeMoveXEffect;     /**< Moving along x-axis fade effect. */
+    FadeMoveY          m_fadeMoveYEffect;     /**< Moving along y-axis fade effect. */
+    FadeEffect         m_fadeEffectIndex;     /**< Current fade effect index, used to determine the next fade effect. */
+    FadeEffect         m_nextFadeEffectIndex; /**< Next fade effect index, selected by the user. */
 
     /**
      * Default constructor is not allowed.
@@ -188,6 +192,12 @@ private:
      * @return Reference to this instance
      */
     FadeEffectController& operator=(const FadeEffectController& other) = delete;
+
+    /**
+     * Change fade effect on demand.
+     * If the user has selected a new fade effect, it will change the current fade effect.
+     */
+    void changeFadeEffectOnDemand();
 };
 
 /******************************************************************************

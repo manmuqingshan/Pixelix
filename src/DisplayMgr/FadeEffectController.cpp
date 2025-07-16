@@ -66,16 +66,16 @@ void FadeEffectController::selectFadeEffect(FadeEffect effect)
     }
     else
     {
-        m_fadeEffectIndex = effect;
+        m_nextFadeEffectIndex = effect;
     }
 }
 
 void FadeEffectController::selectNextFadeEffect()
 {
-    uint8_t fadeEffectIndex = static_cast<uint8_t>(m_fadeEffectIndex);
+    uint8_t fadeEffectIndex = static_cast<uint8_t>(m_nextFadeEffectIndex);
 
     fadeEffectIndex         = (fadeEffectIndex + 1U) % FADE_EFFECT_COUNT;
-    m_fadeEffectIndex       = static_cast<FadeEffect>(fadeEffectIndex);
+    m_nextFadeEffectIndex   = static_cast<FadeEffect>(fadeEffectIndex);
 }
 
 void FadeEffectController::update(YAGfx& gfx)
@@ -121,6 +121,12 @@ void FadeEffectController::update(YAGfx& gfx)
             break;
         }
     }
+
+    if (FADE_IDLE == m_state)
+    {
+        /* Change fade effect on demand. */
+        changeFadeEffectOnDemand();
+    }
 }
 
 void FadeEffectController::start()
@@ -145,6 +151,37 @@ void FadeEffectController::start()
 /******************************************************************************
  * Private Methods
  *****************************************************************************/
+
+void FadeEffectController::changeFadeEffectOnDemand()
+{
+    if (m_fadeEffectIndex != m_nextFadeEffectIndex)
+    {
+        /* Select the next fade effect */
+        m_fadeEffectIndex = m_nextFadeEffectIndex;
+
+        switch (m_fadeEffectIndex)
+        {
+        case FADE_EFFECT_NONE:
+            m_fadeEffect = nullptr;
+            break;
+
+        case FADE_EFFECT_LINEAR:
+            m_fadeEffect = &m_fadeLinearEffect;
+            break;
+
+        case FADE_EFFECT_MOVE_X:
+            m_fadeEffect = &m_fadeMoveXEffect;
+            break;
+
+        case FADE_EFFECT_MOVE_Y:
+            m_fadeEffect = &m_fadeMoveYEffect;
+            break;
+
+        default:
+            break;
+        }
+    }
+}
 
 /******************************************************************************
  * External Functions
