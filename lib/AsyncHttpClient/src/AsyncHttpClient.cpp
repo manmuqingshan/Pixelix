@@ -680,7 +680,7 @@ void AsyncHttpClient::onConnect()
     bool isReqOpen = false;
 
     LOG_INFO("Connected to %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     /* Protect against concurrent access. */
     {
@@ -706,7 +706,7 @@ void AsyncHttpClient::onDisconnect()
     bool isConnected;
 
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     /* Protect against concurrent access. */
     {
@@ -875,7 +875,7 @@ void AsyncHttpClient::onTimeout(uint32_t timeout)
 bool AsyncHttpClient::connect()
 {
     LOG_INFO("Connecting to %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     return m_tcpClient.connect(m_hostname.c_str(), m_port, m_isSecure);
 }
