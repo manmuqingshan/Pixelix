@@ -704,8 +704,6 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
-    bool wasConnectionEstablished = false;
-
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
     LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
 
@@ -713,13 +711,7 @@ void AsyncHttpClient::onDisconnect()
     {
         MutexGuard<Mutex> guard(m_mutex);
 
-        wasConnectionEstablished = m_isConnected;
         m_isConnected            = false;
-    }
-
-    if (false == wasConnectionEstablished)
-    {
-        onError(ERR_CONN);
     }
 
     clear();
