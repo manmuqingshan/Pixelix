@@ -355,7 +355,6 @@ private:
     /* Protected data */
     bool m_isConnected; /**< Is a connection established? */
     bool m_isReqOpen;   /**< Is a request open? */
-    bool m_isError;     /**< Has an error happened? */
 
     /* Non-protected data */
     OnResponse     m_onRspCallback;       /**< Callback which to call for a complete response. */
@@ -384,6 +383,7 @@ private:
     size_t         m_chunkSize;      /**< Chunk size in byte */
     size_t         m_chunkIndex;     /**< Chunk body index */
     ChunkBodyPart  m_chunkBodyPart;  /**< Current part of chunked response */
+    bool           m_isError;        /**< Has an error happened? */
 
     AsyncHttpClient(const AsyncHttpClient& client);
     AsyncHttpClient& operator=(const AsyncHttpClient& client);

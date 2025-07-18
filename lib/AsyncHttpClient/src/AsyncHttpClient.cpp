@@ -705,8 +705,7 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
-    bool wasConnectionEstablished = false;
-    bool isError                  = false;
+    bool isConnected;
 
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
     LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
@@ -715,23 +714,16 @@ void AsyncHttpClient::onDisconnect()
     {
         MutexGuard<Mutex> guard(m_mutex);
 
-        wasConnectionEstablished = m_isConnected;
-        isError                  = m_isError;
-        m_isConnected            = false;
+        isConnected   = m_isConnected;
+        m_isConnected = false;
     }
 
-    if (false == wasConnectionEstablished && false == isError)
+    if ((false == isConnected) && (false == m_isError))
     {
         onError(ERR_CONN);
     }
 
-    /* Protect against concurrent access. */
-    {
-        MutexGuard<Mutex> guard(m_mutex);
-
-        m_isError = false;
-    }
-
+    m_isError = false;
     clear();
     notifyClosed();
 
@@ -758,13 +750,7 @@ void AsyncHttpClient::onError(int8_t error)
         }
     }
 
-    /* Protect against concurrent access. */
-    {
-        MutexGuard<Mutex> guard(m_mutex);
-
-        m_isError = true;
-    }
-
+    m_isError = true;
     notifyError();
     disconnect();
 }
