@@ -106,7 +106,8 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE)
+    m_chunkBodyPart(CHUNK_SIZE),
+    m_isError(false)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -704,6 +705,9 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
+    bool wasConnectionEstablished = false;
+    bool isError                  = false;
+
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
     LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
 
@@ -711,7 +715,21 @@ void AsyncHttpClient::onDisconnect()
     {
         MutexGuard<Mutex> guard(m_mutex);
 
+        wasConnectionEstablished = m_isConnected;
+        isError                  = m_isError;
         m_isConnected            = false;
+    }
+
+    if (false == wasConnectionEstablished && false == isError)
+    {
+        onError(ERR_CONN);
+    }
+
+    /* Protect against concurrent access. */
+    {
+        MutexGuard<Mutex> guard(m_mutex);
+
+        m_isError = false;
     }
 
     clear();
@@ -738,6 +756,13 @@ void AsyncHttpClient::onError(int8_t error)
         {
             LOG_WARNING("Host is unreachable.");
         }
+    }
+
+    /* Protect against concurrent access. */
+    {
+        MutexGuard<Mutex> guard(m_mutex);
+
+        m_isError = true;
     }
 
     notifyError();

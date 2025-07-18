@@ -302,8 +302,7 @@ private:
     bool                          m_isWaitingForResponse;     /**< Is RestService still waiiting for a response to a request? */
     uint32_t                      m_activeRestId;             /**< Saves the  restId of a request until the callback triggered by the corresponding response is finished. */
     PreProcessCallback            m_activePreProcessCallback; /**< Saves the callback sent by a request until it is called when the response arrives. */
-    mutable MutexRecursive        m_mutex;                    /**< Mutex to protect against concurrent access. */
-    bool                          m_wasOnResponseCalled;      /**< Signals if the onResponse callback was called. */
+    Mutex                         m_mutex;                    /**< Mutex to protect against concurrent access. */
 
     /**
      * Constructs the service instance.
@@ -318,8 +317,7 @@ private:
         m_isWaitingForResponse(false),
         m_activeRestId(INVALID_REST_ID),
         m_activePreProcessCallback(),
-        m_mutex(),
-        m_wasOnResponseCalled(false)
+        m_mutex()
     {
         (void)m_mutex.create();
     }

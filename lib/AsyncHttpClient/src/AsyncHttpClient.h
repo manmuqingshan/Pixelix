@@ -355,6 +355,7 @@ private:
     /* Protected data */
     bool m_isConnected; /**< Is a connection established? */
     bool m_isReqOpen;   /**< Is a request open? */
+    bool m_isError;     /**< Has an error happened? */
 
     /* Non-protected data */
     OnResponse     m_onRspCallback;       /**< Callback which to call for a complete response. */

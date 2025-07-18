@@ -60,27 +60,20 @@
 
 bool RestService::start()
 {
-    MutexGuard<MutexRecursive>  guard(m_mutex);
+    MutexGuard<Mutex>           guard(m_mutex);
 
     AsyncHttpClient::OnResponse rspCallback = [this](const HttpResponse& rsp) {
         handleAsyncWebResponse(rsp);
     };
+    AsyncHttpClient::OnError errCallback = [this]() {
+        handleFailedWebRequest();
+    };
     AsyncHttpClient::OnClosed closedCallback = [this]() {
-        MutexGuard<MutexRecursive> guard(m_mutex);
-
-        if (false == m_wasOnResponseCalled)
-        {
-            handleFailedWebRequest();
-        }
-        else
-        {
-            m_wasOnResponseCalled = false;
-        }
-
         m_isWaitingForResponse = false;
     };
 
     m_client.regOnResponse(rspCallback);
+    m_client.regOnError(errCallback);
     m_client.regOnClosed(closedCallback);
     m_isRunning = true;
 
@@ -89,10 +82,11 @@ bool RestService::start()
 
 void RestService::stop()
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
+    MutexGuard<Mutex> guard(m_mutex);
 
     m_isRunning = false;
     m_client.regOnResponse(nullptr);
+    m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
     m_requestQueue.clear();
     m_client.end();
@@ -103,7 +97,7 @@ void RestService::stop()
 
 void RestService::process()
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
+    MutexGuard<Mutex> guard(m_mutex);
 
     if (false == m_isWaitingForResponse)
     {
@@ -165,9 +159,9 @@ void RestService::process()
 
 uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallback)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isSuccessful = true;
-    uint32_t                   restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
@@ -191,9 +185,9 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
 uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isSuccessful = true;
-    uint32_t                   restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
@@ -219,9 +213,9 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
 uint32_t RestService::post(const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isSuccessful = true;
-    uint32_t                   restId;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = true;
+    uint32_t          restId;
 
     if (true == m_isRunning)
     {
@@ -247,8 +241,8 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 
 bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isSuccessful = false;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isSuccessful = false;
 
     if (true == m_isRunning)
     {
@@ -281,10 +275,10 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
 
 void RestService::abortRequest(uint32_t restId)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isRequestFound = false;
-    RequestQueue::iterator     reqIterator    = m_requestQueue.begin();
-    ResponseQueue::iterator    rspIterator    = m_responseQueue.begin();
+    MutexGuard<Mutex>       guard(m_mutex);
+    bool                    isRequestFound = false;
+    RequestQueue::iterator  reqIterator    = m_requestQueue.begin();
+    ResponseQueue::iterator rspIterator    = m_responseQueue.begin();
 
     while ((false == isRequestFound) && (reqIterator != m_requestQueue.end()))
     {
@@ -322,13 +316,21 @@ void RestService::abortRequest(uint32_t restId)
     }
 }
 
+/******************************************************************************
+ * Protected Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * Private Methods
+ *****************************************************************************/
+
 void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    Response                   rsp;
-    bool                       isError = false;
+    MutexGuard<Mutex> guard(m_mutex);
+    Response          rsp;
+    bool              isError = false;
 
-    rsp.restId                         = m_activeRestId;
+    rsp.restId                = m_activeRestId;
 
     if (HttpStatus::STATUS_CODE_OK == httpRsp.getStatusCode())
     {
@@ -389,13 +391,12 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 
     m_activeRestId             = INVALID_REST_ID;
     m_activePreProcessCallback = nullptr;
-    m_wasOnResponseCalled      = true;
 }
 
 void RestService::handleFailedWebRequest()
 {
-    MutexGuard<MutexRecursive> guard(m_mutex);
-    Response                   rsp(0U);
+    MutexGuard<Mutex> guard(m_mutex);
+    Response          rsp(0U);
 
     rsp.restId = m_activeRestId;
     rsp.isRsp  = false;
@@ -424,14 +425,6 @@ uint32_t RestService::getRestId()
 
     return restId;
 }
-
-/******************************************************************************
- * Protected Methods
- *****************************************************************************/
-
-/******************************************************************************
- * Private Methods
- *****************************************************************************/
 
 /******************************************************************************
  * External Functions
