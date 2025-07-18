@@ -106,7 +106,8 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE)
+    m_chunkBodyPart(CHUNK_SIZE),
+    m_isError(false)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -704,7 +705,7 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
-    bool wasConnectionEstablished = false;
+    bool isConnected;
 
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
     LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
@@ -713,15 +714,16 @@ void AsyncHttpClient::onDisconnect()
     {
         MutexGuard<Mutex> guard(m_mutex);
 
-        wasConnectionEstablished = m_isConnected;
-        m_isConnected            = false;
+        isConnected   = m_isConnected;
+        m_isConnected = false;
     }
 
-    if (false == wasConnectionEstablished)
+    if ((false == isConnected) && (false == m_isError))
     {
         onError(ERR_CONN);
     }
 
+    m_isError = false;
     clear();
     notifyClosed();
 
@@ -748,6 +750,7 @@ void AsyncHttpClient::onError(int8_t error)
         }
     }
 
+    m_isError = true;
     notifyError();
     disconnect();
 }

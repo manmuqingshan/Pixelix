@@ -383,6 +383,7 @@ private:
     size_t         m_chunkSize;      /**< Chunk size in byte */
     size_t         m_chunkIndex;     /**< Chunk body index */
     ChunkBodyPart  m_chunkBodyPart;  /**< Current part of chunked response */
+    bool           m_isError;        /**< Has an error happened? */
 
     AsyncHttpClient(const AsyncHttpClient& client);
     AsyncHttpClient& operator=(const AsyncHttpClient& client);
