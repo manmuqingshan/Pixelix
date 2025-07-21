@@ -92,18 +92,8 @@ public:
     void show(const String& msg, uint32_t duration = 0U, uint32_t max = 0U);
 
     /**
-     * Enable signal in the corners as additional user information.
-     */
-    void enableSignal();
-
-    /**
-     * Disable signal in the corners as additional user information.
-     */
-    void disableSignal();
-
-    /**
      * Is a system message shown in this moment?
-     * 
+     *
      * @return If a system message is shown, it will return true otherwise false.
      */
     bool isActive() const;
@@ -115,7 +105,7 @@ public:
 
 private:
 
-    SysMsgPlugin*   m_plugin;   /**< Plugin, used to show system messages */
+    SysMsgPlugin* m_plugin; /**< Plugin, used to show system messages */
 
     /**
      * Constructs the system message handler.
@@ -135,13 +125,12 @@ private:
 
     SysMsg(const SysMsg& sysMsg);
     SysMsg& operator=(const SysMsg& sysMsg);
-
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* SYSMSG_HPP */
+#endif /* SYSMSG_HPP */
 
 /** @} */

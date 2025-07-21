@@ -237,6 +237,30 @@ pixelix.rest.Client.prototype.restart = function() {
     });
 };
 
+pixelix.rest.Client.prototype.fileMgrUploadFile = function(file, fileSize) {
+    var promise = null;
+
+    if ("object" !== typeof file) {
+        promise = Promise.reject();
+    } else if ("number" !== typeof fileSize) {
+        promise = Promise.reject();
+    } else {
+        promise = utils.makeRequest({
+            method: "POST",
+            url: this._hostname + this._baseUri + "/fileMgrService/upload",
+            isJsonResponse: true,
+            parameter: {
+                file: file
+            },
+            headers: {
+                "X-File-Size": fileSize
+            }
+        });
+    }
+
+    return promise;
+};
+
 pixelix.rest.Client.prototype.fileMgrRemoveFile = function(fileId) {
     var promise = null;
 
@@ -245,7 +269,7 @@ pixelix.rest.Client.prototype.fileMgrRemoveFile = function(fileId) {
     } else {
         promise = utils.makeRequest({
             method: "POST",
-            url: this._hostname + this._baseUri + "/files/remove",
+            url: this._hostname + this._baseUri + "/fileMgrService/remove",
             isJsonResponse: true,
             parameter: {
                 fileId: fileId

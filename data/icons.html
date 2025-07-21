@@ -125,17 +125,7 @@
                 }
 
                 return promise.then(function() {
-                    return utils.makeRequest({
-                        method: "POST",
-                        url: "/rest/api/v1/files/upload",
-                        isJsonResponse: true,
-                        parameter: {
-                            file: files[0]
-                        },
-                        headers: {
-                            "X-File-Size": files[0].size
-                        }
-                    });
+                    return restClient.fileMgrUploadFile(files[0], files[0].size);
                 }).then(function(rsp) {
                     return dialog.showInfo("<p>Ok.</p>");
                 }).then(function(rsp) {

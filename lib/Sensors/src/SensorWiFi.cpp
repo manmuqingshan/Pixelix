@@ -25,18 +25,14 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  WiFi sensor driver
  * @author Andreas Merkle <web@blue-andi.de>
  */
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include "SysMsg.h"
-#include "DisplayMgr.h"
-#include "PluginMgr.h"
-
-#include <Logging.h>
+#include "SensorWiFi.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -62,61 +58,16 @@
  * Public Methods
  *****************************************************************************/
 
-bool SysMsg::init()
+ISensorChannel* SensorWiFi::getChannel(uint8_t index)
 {
-    bool status = false;
+    ISensorChannel* channel = nullptr;
 
-    m_plugin = static_cast<SysMsgPlugin*>(PluginMgr::getInstance().install("SysMsgPlugin"));
-
-    if (nullptr != m_plugin)
+    if (0U == index)
     {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Set infinite slot duration, because the system message plugin will enable/disable
-         * itself.
-         */
-        DisplayMgr::getInstance().setSlotDuration(slotId, 0U, false);
-        DisplayMgr::getInstance().lockSlot(slotId);
-        status = true;
+        channel = &m_signalStrengthChannel;
     }
 
-    return status;
-}
-
-void SysMsg::show(const String& msg, uint32_t duration, uint32_t max)
-{
-    if (nullptr != m_plugin)
-    {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Important: Call first show() to enable plugin. Otherwise the slot activation request will fail. */
-        m_plugin->show(msg, duration, max);
-
-        if (false == DisplayMgr::getInstance().activateSlot(slotId))
-        {
-            LOG_WARNING("System message suppressed.");
-        }
-    }
-}
-
-bool SysMsg::isActive() const
-{
-    bool isActive = false;
-
-    if (nullptr != m_plugin)
-    {
-        isActive = m_plugin->isEnabled();
-    }
-
-    return isActive;
-}
-
-void SysMsg::next()
-{
-    if (nullptr != m_plugin)
-    {
-        m_plugin->next();
-    }
+    return channel;
 }
 
 /******************************************************************************

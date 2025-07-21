@@ -66,7 +66,7 @@
 /* Initialize constant values. */
 const char* TimerService::FILE_NAME = "/configuration/timerService.json";
 const char* TimerService::TOPIC     = "timer";
-const char* TimerService::ENTITY    = "timerService";
+const char* TimerService::ENTITY_ID = "timerService";
 
 /******************************************************************************
  * Public Methods
@@ -74,9 +74,10 @@ const char* TimerService::ENTITY    = "timerService";
 
 bool TimerService::start()
 {
-    bool                        isSuccessful = true;
-    SettingsService&            settings     = SettingsService::getInstance();
-    JsonObjectConst             jsonExtra;
+    bool                        isSuccessful        = true;
+    SettingsService&            settings            = SettingsService::getInstance();
+    TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
+    JsonObjectConst             jsonExtra; /* Empty */
     ITopicHandler::GetTopicFunc getTopicFunc =
         [this](const String& topic, JsonObject& jsonValue) -> bool {
         return this->getTopic(topic, jsonValue);
@@ -106,7 +107,7 @@ bool TimerService::start()
         saveSettings();
     }
 
-    TopicHandlerService::getInstance().registerTopic(m_deviceId, ENTITY, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
+    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
 
     if (false == isSuccessful)
     {
@@ -124,8 +125,10 @@ bool TimerService::start()
 
 void TimerService::stop()
 {
+    TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
+
     m_processTimer.stop();
-    TopicHandlerService::getInstance().unregisterTopic(m_deviceId, ENTITY, TOPIC);
+    topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
 
     LOG_INFO("Timer service stopped.");
 }
@@ -305,9 +308,10 @@ bool TimerService::getTopic(const String& topic, JsonObject& jsonValue)
 
 bool TimerService::hasTopicChanged(const String& topic)
 {
-    bool hasChanged      = m_hasSettingsChanged;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              hasChanged = m_hasSettingsChanged;
 
-    m_hasSettingsChanged = false;
+    m_hasSettingsChanged         = false;
 
     return hasChanged;
 }

@@ -25,16 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Memory monitor
+ * @brief  Indicator view interface
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup APP_LAYER
+ * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef MEM_MON_H
-#define MEM_MON_H
+#ifndef IINDICATOR_VIEW_H
+#define IINDICATOR_VIEW_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,8 +42,7 @@
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <SysMsgPlugin.h>
+#include <YAGfx.h>
 #include <WString.h>
 
 /******************************************************************************
@@ -56,94 +54,73 @@
  *****************************************************************************/
 
 /**
- * Memory monitor
+ * Interface for a view with indicators in each corner of the display.
+ * The indicators can be used to show the state of a certain functionality.
+ *
+ * If a indicator is set to on, it will be drawn with the corresponding color,
+ * otherwise it will not be drawn at all.
  */
-class MemMon
+class IIndicatorView
 {
 public:
 
     /**
-     * Get memory monitor instance.
+     * Destroy the interface.
+     */
+    virtual ~IIndicatorView()
+    {
+    }
+
+    /**
+     * Initialize view, which will prepare the widgets and the default values.
      *
-     * @return Memory monitor instance
+     * @param[in] width     Display width in pixel.
+     * @param[in] height    Display height in pixel.
      */
-    static MemMon& getInstance()
-    {
-        static MemMon instance; /* singleton idiom to force initialization in the first usage. */
-
-        return instance;
-    }
+    virtual void init(uint16_t width, uint16_t height)        = 0;
 
     /**
-     * Start memory monitor.
+     * Update the underlying canvas.
      *
-     * @return If successful started, it will return true otherwise false.
+     * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
-    bool start();
+    virtual void update(YAGfx& gfx)                           = 0;
 
     /**
-     * Process memory monitor.
+     * Set the indicator at given position to on/off state.
+     * If the indicator id is invalid, it will do nothing.
+     *
+     * The indicator id 255 will be used to turn on/off all indicators at once.
+     *
+     * @param[in] indicatorId   Id of the indicator, which to set.
+     * @param[in] isOn          If true, the indicator will be set to on state, otherwise off.
      */
-    void process();
+    virtual void setIndicator(uint8_t indicatorId, bool isOn) = 0;
 
     /**
-     * Stop memory monitor.
+     * Get the indicator state at given position.
+     * If the indicator id is invalid, it will return false.
+     *
+     * @param[in]  indicatorId   Id of the indicator, which to set.
+     *
+     * @return If the indicator is on, it will return true otherwise false.
      */
-    void stop();
+    virtual bool isIndicatorOn(uint8_t indicatorId) const     = 0;
 
-    /** Processing cycle in ms. */
-    static const uint32_t PROCESSING_CYCLE        = 60U * 1000U;
+protected:
 
     /**
-     * Minimum size of current heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
+     * Construct the interface.
      */
-    static const size_t MIN_HEAP_MEMORY           = (60U * 1024U);
-
-    /**
-     * Lowest size of heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
-     */
-    static const size_t LOWEST_HEAP_MEMORY        = (50U * 1024U);
-
-    /**
-     * Minimum size of largest block of heap that can be allocated at once in bytes, the monitor starts to warn.
-     */
-    static const size_t LARGEST_HEAP_BLOCK_MEMORY = CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN;
-
-private:
-
-    /**
-     * Memory capabilities used for heap operations.
-     */
-    static const uint32_t MEM_CAPABILITIES = MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT;
-
-    SimpleTimer           m_timer; /**< Timer used for cyclic processing. */
-
-    /**
-     * Constructs the memory monitor.
-     */
-    MemMon() :
-        m_timer()
+    IIndicatorView()
     {
     }
-
-    /**
-     * Destroys the memory monitor.
-     */
-    ~MemMon()
-    {
-        /* Will never be called. */
-    }
-
-    MemMon(const MemMon& taskMon);
-    MemMon& operator=(const MemMon& taskMon);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* MEM_MON_H */
+#endif /* IINDICATOR_VIEW_H */
 
 /** @} */

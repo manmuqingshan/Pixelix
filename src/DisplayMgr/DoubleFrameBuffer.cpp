@@ -25,18 +25,14 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  Double frame buffer
  * @author Andreas Merkle <web@blue-andi.de>
  */
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include "SysMsg.h"
-#include "DisplayMgr.h"
-#include "PluginMgr.h"
-
-#include <Logging.h>
+#include "DoubleFrameBuffer.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -62,61 +58,42 @@
  * Public Methods
  *****************************************************************************/
 
-bool SysMsg::init()
+bool DoubleFrameBuffer::create(uint16_t width, uint16_t height)
 {
-    bool status = false;
+    bool   isSuccessful = true;
+    size_t idx;
 
-    m_plugin = static_cast<SysMsgPlugin*>(PluginMgr::getInstance().install("SysMsgPlugin"));
-
-    if (nullptr != m_plugin)
+    for (idx = 0U; idx < FB_MAX; ++idx)
     {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Set infinite slot duration, because the system message plugin will enable/disable
-         * itself.
-         */
-        DisplayMgr::getInstance().setSlotDuration(slotId, 0U, false);
-        DisplayMgr::getInstance().lockSlot(slotId);
-        status = true;
-    }
-
-    return status;
-}
-
-void SysMsg::show(const String& msg, uint32_t duration, uint32_t max)
-{
-    if (nullptr != m_plugin)
-    {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Important: Call first show() to enable plugin. Otherwise the slot activation request will fail. */
-        m_plugin->show(msg, duration, max);
-
-        if (false == DisplayMgr::getInstance().activateSlot(slotId))
+        if (false == m_framebuffers[idx].create(width, height))
         {
-            LOG_WARNING("System message suppressed.");
+            isSuccessful = false;
+            break;
         }
     }
-}
 
-bool SysMsg::isActive() const
-{
-    bool isActive = false;
-
-    if (nullptr != m_plugin)
+    if (false == isSuccessful)
     {
-        isActive = m_plugin->isEnabled();
+        release();
+    }
+    else
+    {
+        m_selectedIndex = 0U;
     }
 
-    return isActive;
+    return isSuccessful;
 }
 
-void SysMsg::next()
+void DoubleFrameBuffer::release()
 {
-    if (nullptr != m_plugin)
+    size_t idx;
+
+    for (idx = 0U; idx < FB_MAX; ++idx)
     {
-        m_plugin->next();
+        m_framebuffers[idx].release();
     }
+
+    m_selectedIndex = 0U;
 }
 
 /******************************************************************************

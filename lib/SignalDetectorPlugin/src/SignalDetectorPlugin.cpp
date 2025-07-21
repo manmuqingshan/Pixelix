@@ -242,6 +242,7 @@ void SignalDetectorPlugin::stop()
 void SignalDetectorPlugin::active(YAGfx& gfx)
 {
     /* Nothing to do. */
+    UTIL_NOT_USED(gfx);
 }
 
 void SignalDetectorPlugin::inactive()
@@ -275,20 +276,23 @@ void SignalDetectorPlugin::process(bool isConnected)
     {
         m_isDetected = isDetected;
 
-        /* Observe active phase. */
-        if (nullptr != m_slotInterf)
+        if (true == m_isDetected)
         {
-            /* Start with 10% greater slot duration. */
-            m_timer.start(m_slotInterf->getDuration() * 110U / 100U);
-        }
-
-        /* Only one request can be sent at a time. */
-        if (true == m_isAllowedToSend)
-        {
-            /* Send notification */
-            if (true == startHttpRequest())
+            /* Observe active phase. */
+            if (nullptr != m_slotInterf)
             {
-                m_isAllowedToSend = false;
+                /* Start with 10% greater slot duration. */
+                m_timer.start(m_slotInterf->getDuration() * 110U / 100U);
+            }
+
+            /* Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
+            {
+                /* Send notification */
+                if (true == startHttpRequest())
+                {
+                    m_isAllowedToSend = false;
+                }
             }
         }
     }

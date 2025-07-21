@@ -36,6 +36,7 @@
 #include "LzwDecoder.h"
 #include "GifFileLoader.h"
 #include "GifFileToMemLoader.h"
+#include <Logging.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -249,6 +250,8 @@ GifImgPlayer::Ret GifImgPlayer::open(FS& fs, const String& fileName, bool toMem)
 
         if (nullptr == m_gifLoader)
         {
+            LOG_ERROR("Failed to allocate GIF file loader.");
+
             ret = RET_IMG_TOO_BIG;
         }
         else if (false == m_gifLoader->open(fs, fileName))
@@ -262,6 +265,8 @@ GifImgPlayer::Ret GifImgPlayer::open(FS& fs, const String& fileName, bool toMem)
 
             if (nullptr == m_imageDataBlock)
             {
+                LOG_ERROR("Failed to allocate image data block, size: %u bytes", IMAGE_DATA_BLOCK_SIZE);
+
                 ret = RET_FILE_FORMAT_UNSUPPORTED;
             }
         }
@@ -326,12 +331,14 @@ GifImgPlayer::Ret GifImgPlayer::open(FS& fs, const String& fileName, bool toMem)
                 {
                     size_t globalColorTableSize = calcColorTableSize(logicalScreenDescriptor.packedField.globalColorTableSizeExp);
                     
-                    m_globalColorTableLength    =  globalColorTableSize / sizeof(PaletteColor);
+                    m_globalColorTableLength    = globalColorTableSize / sizeof(PaletteColor);
                     m_globalColorTable          = new(std::nothrow) PaletteColor[m_globalColorTableLength];
 
                     /* Out of memory? */
                     if (nullptr == m_globalColorTable)
                     {
+                        LOG_ERROR("Failed to allocate global color table, size: %u bytes", globalColorTableSize);
+
                         m_globalColorTableLength = 0U;
                         ret = RET_IMG_TOO_BIG;
                     }
@@ -694,6 +701,8 @@ bool GifImgPlayer::parseImageDescriptor()
 
             if (nullptr == m_localColorTable)
             {
+                LOG_ERROR("Failed to allocate local color table, size: %u bytes", localColorTableSize);
+
                 m_localColorTableLength = 0U;
 
                 isSuccessful = false;
@@ -743,17 +752,27 @@ bool GifImgPlayer::parseImageDescriptor()
                 m_posX = 0U;
                 m_posY = 0U;
 
-                lzwDecoder.init(lzwMinCodeSize);
-
-                if (false == lzwDecoder.decode(readFromCodeStreamFunc, writeToIndexStreamFunc))
+                if (false == lzwDecoder.init(lzwMinCodeSize))
                 {
                     isSuccessful = false;
                 }
+                else
+                {
+                    if (false == lzwDecoder.decode(readFromCodeStreamFunc, writeToIndexStreamFunc))
+                    {
+                        isSuccessful = false;
+                    }
 
-                lzwDecoder.deInit();
+                    lzwDecoder.deInit();
+                }
 
+                /* Any error? */
+                if (false == isSuccessful)
+                {
+                    ;
+                }
                 /* After the image data, the block terminator marks the end. */
-                if (false == m_gifLoader->read(&blockTerminator, sizeof(blockTerminator)))
+                else if (false == m_gifLoader->read(&blockTerminator, sizeof(blockTerminator)))
                 {
                     isSuccessful = false;
                 }

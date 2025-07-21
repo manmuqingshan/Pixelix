@@ -25,18 +25,14 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  Fade effect controller
  * @author Andreas Merkle <web@blue-andi.de>
  */
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include "SysMsg.h"
-#include "DisplayMgr.h"
-#include "PluginMgr.h"
-
-#include <Logging.h>
+#include "FadeEffectController.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -62,60 +58,89 @@
  * Public Methods
  *****************************************************************************/
 
-bool SysMsg::init()
+void FadeEffectController::selectFadeEffect(FadeEffect effect)
 {
-    bool status = false;
-
-    m_plugin = static_cast<SysMsgPlugin*>(PluginMgr::getInstance().install("SysMsgPlugin"));
-
-    if (nullptr != m_plugin)
+    if (FADE_EFFECT_COUNT <= effect)
     {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Set infinite slot duration, because the system message plugin will enable/disable
-         * itself.
-         */
-        DisplayMgr::getInstance().setSlotDuration(slotId, 0U, false);
-        DisplayMgr::getInstance().lockSlot(slotId);
-        status = true;
+        selectNextFadeEffect();
     }
-
-    return status;
+    else
+    {
+        m_nextFadeEffectIndex = effect;
+    }
 }
 
-void SysMsg::show(const String& msg, uint32_t duration, uint32_t max)
+void FadeEffectController::selectNextFadeEffect()
 {
-    if (nullptr != m_plugin)
+    uint8_t fadeEffectIndex = static_cast<uint8_t>(m_nextFadeEffectIndex);
+
+    fadeEffectIndex         = (fadeEffectIndex + 1U) % FADE_EFFECT_COUNT;
+    m_nextFadeEffectIndex   = static_cast<FadeEffect>(fadeEffectIndex);
+}
+
+void FadeEffectController::update(YAGfx& gfx)
+{
+    YAGfxDynamicBitmap& selectedFrameBuffer = m_doubleFrameBuffer.getSelectedFramebuffer();
+
+    /* No fade effect? */
+    if (nullptr == m_fadeEffect)
     {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
+        gfx.drawBitmap(0, 0, selectedFrameBuffer);
+        m_state = FADE_IDLE;
+    }
+    /* Process fade effect. */
+    else
+    {
+        YAGfxDynamicBitmap& prevFrameBuffer = m_doubleFrameBuffer.getPreviousFramebuffer();
 
-        /* Important: Call first show() to enable plugin. Otherwise the slot activation request will fail. */
-        m_plugin->show(msg, duration, max);
-
-        if (false == DisplayMgr::getInstance().activateSlot(slotId))
+        /* Handle fading */
+        switch (m_state)
         {
-            LOG_WARNING("System message suppressed.");
+        /* No fading at all */
+        case FADE_IDLE:
+            gfx.drawBitmap(0, 0, selectedFrameBuffer);
+            break;
+
+        /* Fade new display content in */
+        case FADE_IN:
+            if (true == m_fadeEffect->fadeIn(gfx, prevFrameBuffer, selectedFrameBuffer))
+            {
+                m_state = FADE_IDLE;
+            }
+            break;
+
+        /* Fade old display content out! */
+        case FADE_OUT:
+            if (true == m_fadeEffect->fadeOut(gfx, prevFrameBuffer, selectedFrameBuffer))
+            {
+                m_state = FADE_IN;
+            }
+            break;
+
+        default:
+            break;
         }
     }
-}
 
-bool SysMsg::isActive() const
-{
-    bool isActive = false;
-
-    if (nullptr != m_plugin)
+    if (FADE_IDLE == m_state)
     {
-        isActive = m_plugin->isEnabled();
+        /* Change fade effect on demand. */
+        changeFadeEffectOnDemand();
     }
-
-    return isActive;
 }
 
-void SysMsg::next()
+void FadeEffectController::start()
 {
-    if (nullptr != m_plugin)
+    /* Select next framebuffer and keep old content, until the fade effect is
+     * finished.
+     */
+    m_doubleFrameBuffer.selectNextFramebuffer();
+
+    m_state = FADE_OUT;
+
+    if (nullptr != m_fadeEffect)
     {
-        m_plugin->next();
+        m_fadeEffect->init();
     }
 }
 
@@ -126,6 +151,37 @@ void SysMsg::next()
 /******************************************************************************
  * Private Methods
  *****************************************************************************/
+
+void FadeEffectController::changeFadeEffectOnDemand()
+{
+    if (m_fadeEffectIndex != m_nextFadeEffectIndex)
+    {
+        /* Select the next fade effect */
+        m_fadeEffectIndex = m_nextFadeEffectIndex;
+
+        switch (m_fadeEffectIndex)
+        {
+        case FADE_EFFECT_NONE:
+            m_fadeEffect = nullptr;
+            break;
+
+        case FADE_EFFECT_LINEAR:
+            m_fadeEffect = &m_fadeLinearEffect;
+            break;
+
+        case FADE_EFFECT_MOVE_X:
+            m_fadeEffect = &m_fadeMoveXEffect;
+            break;
+
+        case FADE_EFFECT_MOVE_Y:
+            m_fadeEffect = &m_fadeMoveYEffect;
+            break;
+
+        default:
+            break;
+        }
+    }
+}
 
 /******************************************************************************
  * External Functions

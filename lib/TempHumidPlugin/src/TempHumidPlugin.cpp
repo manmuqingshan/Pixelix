@@ -157,18 +157,6 @@ void TempHumidPlugin::process(bool isConnected)
     }
 }
 
-void TempHumidPlugin::active(YAGfx& gfx)
-{
-    MutexGuard<MutexRecursive> guard(m_mutex);
-
-    m_view.update(gfx);
-}
-
-void TempHumidPlugin::inactive()
-{
-    /* Nothing to do. */
-}
-
 void TempHumidPlugin::update(YAGfx& gfx)
 {
     bool                        showPage = false;

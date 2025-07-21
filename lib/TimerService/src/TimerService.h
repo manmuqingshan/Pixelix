@@ -101,7 +101,7 @@ private:
     static const uint8_t  MAX_TIMER_COUNT = 8U;   /**< Maximum number of timer. */
     static const char*    FILE_NAME;              /**< File name of the timer settings. */
     static const char*    TOPIC;                  /**< Topic for timer settings. */
-    static const char*    ENTITY;                 /**< Entity for timer settings. */
+    static const char*    ENTITY_ID;              /**< Entity id for timer settings. */
 
     String                m_deviceId;                  /**< Device id. */
     TimerSetting          m_settings[MAX_TIMER_COUNT]; /**< Timer settings. */
