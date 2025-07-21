@@ -25,18 +25,14 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  System message
+ * @brief  Generic view with indicators in each display corner.
  * @author Andreas Merkle <web@blue-andi.de>
  */
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include "SysMsg.h"
-#include "DisplayMgr.h"
-#include "PluginMgr.h"
-
-#include <Logging.h>
+#include "IndicatorViewGeneric.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -62,61 +58,57 @@
  * Public Methods
  *****************************************************************************/
 
-bool SysMsg::init()
+void IndicatorViewGeneric::update(YAGfx& gfx)
 {
-    bool status = false;
+    size_t idx;
 
-    m_plugin = static_cast<SysMsgPlugin*>(PluginMgr::getInstance().install("SysMsgPlugin"));
-
-    if (nullptr != m_plugin)
+    for (idx = 0U; idx < MAX_LAMPS; ++idx)
     {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
+        LampWidget& lampWidget = m_lampWidgets[idx];
 
-        /* Set infinite slot duration, because the system message plugin will enable/disable
-         * itself.
-         */
-        DisplayMgr::getInstance().setSlotDuration(slotId, 0U, false);
-        DisplayMgr::getInstance().lockSlot(slotId);
-        status = true;
-    }
-
-    return status;
-}
-
-void SysMsg::show(const String& msg, uint32_t duration, uint32_t max)
-{
-    if (nullptr != m_plugin)
-    {
-        uint8_t slotId = DisplayMgr::getInstance().getSlotIdByPluginUID(m_plugin->getUID());
-
-        /* Important: Call first show() to enable plugin. Otherwise the slot activation request will fail. */
-        m_plugin->show(msg, duration, max);
-
-        if (false == DisplayMgr::getInstance().activateSlot(slotId))
+        /* If the lamp is on, it will be drawn otherwise not. */
+        if (true == lampWidget.getOnState())
         {
-            LOG_WARNING("System message suppressed.");
+            lampWidget.update(gfx);
         }
     }
 }
 
-bool SysMsg::isActive() const
+void IndicatorViewGeneric::setIndicator(uint8_t indicatorId, bool isOn)
 {
-    bool isActive = false;
-
-    if (nullptr != m_plugin)
+    /* Check if the indicator id is valid. */
+    if (indicatorId < MAX_LAMPS)
     {
-        isActive = m_plugin->isEnabled();
+        m_lampWidgets[indicatorId].setOnState(isOn);
     }
+    /* Special case to turn on/off all lamps? */
+    else if (INDICATOR_ID_ALL == indicatorId)
+    {
+        size_t idx;
 
-    return isActive;
+        for (idx = 0U; idx < MAX_LAMPS; ++idx)
+        {
+            m_lampWidgets[idx].setOnState(isOn);
+        }
+    }
+    /* Invalid indicator id, do nothing. */
+    else
+    {
+        /* Nothing to do. */
+        ;
+    }
 }
 
-void SysMsg::next()
+bool IndicatorViewGeneric::isIndicatorOn(uint8_t indicatorId) const
 {
-    if (nullptr != m_plugin)
+    bool isOn = false;
+
+    if (indicatorId < MAX_LAMPS)
     {
-        m_plugin->next();
+        isOn = m_lampWidgets[indicatorId].getOnState();
     }
+
+    return isOn;
 }
 
 /******************************************************************************

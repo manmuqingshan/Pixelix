@@ -104,6 +104,7 @@ static String getHostname();
 static String getIPAddress();
 static String getRSSI();
 static String getSSID();
+static String getHeapSize();
 }; /* namespace tmpl */
 
 /******************************************************************************
@@ -125,6 +126,9 @@ static const String SERVICE_PAGE_PATH             = "/services/";
 /** Flag used to signal any kind of file upload error. */
 static bool gIsUploadError                        = false;
 
+/** Memory capabilities used for memory state requests. */
+static const uint32_t MEM_CAPABILITIES            = MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT;
+
 /**
  * List of all used template keywords and the function how to retrieve the information.
  * The list is alphabetic sorted in ascending order.
@@ -145,8 +149,8 @@ static const TmplKeyWordFunc gTmplKeyWordToFunc[] = {
     { "FREERTOS_VERSION", []() -> String { return tskKERNEL_VERSION_NUMBER; } },
     { "FS_SIZE", []() -> String { return String(FILESYSTEM.totalBytes()); } },
     { "FS_SIZE_USED", []() -> String { return String(FILESYSTEM.usedBytes()); } },
-    { "HEAP_SIZE", []() -> String { return String(ESP.getHeapSize()); } },
-    { "HEAP_SIZE_AVAILABLE", []() -> String { return String(ESP.getFreeHeap()); } },
+    { "HEAP_SIZE", []() -> String { return tmpl::getHeapSize(); } },
+    { "HEAP_SIZE_AVAILABLE", []() -> String { return String(heap_caps_get_free_size(MEM_CAPABILITIES)); } },
     { "MBED_TLS_VERSION", []() -> String { return String(MBEDTLS_VERSION_STRING); } },
     { "PSRAM_SIZE", []() -> String { return String(ESP.getPsramSize()); } },
     { "PSRAM_SIZE_AVAILABLE", []() -> String { return String(ESP.getFreePsram()); } },
@@ -749,4 +753,19 @@ static String getSSID()
 
     return result;
 }
+
+/**
+ * Get heap size which is available for malloc/new operation as string.
+ *
+ * @return Heap size in byte as string.
+ */
+static String getHeapSize()
+{
+    multi_heap_info_t info;
+
+    heap_caps_get_info(&info, MEM_CAPABILITIES);
+
+    return String(info.total_free_bytes + info.total_allocated_bytes);
+}
+
 }; /* namespace tmpl */

@@ -25,16 +25,16 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Memory monitor
+ * @brief  Double frame buffer
  * @author Andreas Merkle <web@blue-andi.de>
  *
- * @addtogroup APP_LAYER
+ * @addtogroup DISPLAY_MGR
  *
  * @{
  */
 
-#ifndef MEM_MON_H
-#define MEM_MON_H
+#ifndef DOUBLE_FRAME_BUFFER_H
+#define DOUBLE_FRAME_BUFFER_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,8 +44,7 @@
  * Includes
  *****************************************************************************/
 #include <stdint.h>
-#include <SysMsgPlugin.h>
-#include <WString.h>
+#include <YAGfxBitmap.h>
 
 /******************************************************************************
  * Macros
@@ -56,94 +55,108 @@
  *****************************************************************************/
 
 /**
- * Memory monitor
+ * This class provides a double buffered framebuffer.
+ * It contains two framebuffers, which can be used for double buffering.
+ * The framebuffers memory is allocated dynamically.
  */
-class MemMon
+class DoubleFrameBuffer
 {
 public:
 
     /**
-     * Get memory monitor instance.
-     *
-     * @return Memory monitor instance
+     * Construct the double framebuffer.
      */
-    static MemMon& getInstance()
+    DoubleFrameBuffer() :
+        m_framebuffers(),
+        m_selectedIndex(0U)
     {
-        static MemMon instance; /* singleton idiom to force initialization in the first usage. */
-
-        return instance;
+        /* Nothing to do */
     }
 
     /**
-     * Start memory monitor.
+     * Destruct the double framebuffer.
+     */
+    ~DoubleFrameBuffer()
+    {
+        /* Nothing to do */
+    }
+
+    /**
+     * Create framebuffers.
      *
-     * @return If successful started, it will return true otherwise false.
+     * @param[in] width     Width in pixels
+     * @param[in] height    Height in pixels
+     *
+     * @return If successful, it will return true otherwise false.
      */
-    bool start();
+    bool create(uint16_t width, uint16_t height);
 
     /**
-     * Process memory monitor.
+     * Release framebuffers.
      */
-    void process();
+    void release();
 
     /**
-     * Stop memory monitor.
+     * Get the selected framebuffer.
+     *
+     * @return Selected framebuffer
      */
-    void stop();
-
-    /** Processing cycle in ms. */
-    static const uint32_t PROCESSING_CYCLE        = 60U * 1000U;
-
-    /**
-     * Minimum size of current heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
-     */
-    static const size_t MIN_HEAP_MEMORY           = (60U * 1024U);
+    YAGfxDynamicBitmap& getSelectedFramebuffer()
+    {
+        return m_framebuffers[m_selectedIndex];
+    }
 
     /**
-     * Lowest size of heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
+     * Select the next framebuffer.
+     * This will switch between the two framebuffers.
      */
-    static const size_t LOWEST_HEAP_MEMORY        = (50U * 1024U);
+    void selectNextFramebuffer()
+    {
+        m_selectedIndex = (m_selectedIndex + 1) % FB_MAX;
+    }
 
     /**
-     * Minimum size of largest block of heap that can be allocated at once in bytes, the monitor starts to warn.
+     * Get previous framebuffer.
+     *
+     * @return Previous framebuffer
      */
-    static const size_t LARGEST_HEAP_BLOCK_MEMORY = CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN;
+    YAGfxDynamicBitmap& getPreviousFramebuffer()
+    {
+        size_t previousIndex = (m_selectedIndex + 1) % FB_MAX;
+        return m_framebuffers[previousIndex];
+    }
 
 private:
 
     /**
-     * Memory capabilities used for heap operations.
+     * Max. number of frame buffers.
      */
-    static const uint32_t MEM_CAPABILITIES = MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT;
+    static const size_t FB_MAX = 2U;
 
-    SimpleTimer           m_timer; /**< Timer used for cyclic processing. */
+    YAGfxDynamicBitmap  m_framebuffers[FB_MAX]; /**< Two framebuffers, which can be used for double buffering. */
+    size_t              m_selectedIndex;        /**< Index of the selected framebuffer. */
 
     /**
-     * Constructs the memory monitor.
+     * Copy consturctor is not allowed.
+     *
+     * @param[in] other  Other instance, which to copy
      */
-    MemMon() :
-        m_timer()
-    {
-    }
+    DoubleFrameBuffer(const DoubleFrameBuffer& other)            = delete;
 
     /**
-     * Destroys the memory monitor.
+     * Assignment operator is not allowed.
+     *
+     * @param[in] other  Other instance, which to assign
+     *
+     * @return Reference to this instance
      */
-    ~MemMon()
-    {
-        /* Will never be called. */
-    }
-
-    MemMon(const MemMon& taskMon);
-    MemMon& operator=(const MemMon& taskMon);
+    DoubleFrameBuffer& operator=(const DoubleFrameBuffer& other) = delete;
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* MEM_MON_H */
+#endif /* DOUBLE_FRAME_BUFFER_H */
 
 /** @} */

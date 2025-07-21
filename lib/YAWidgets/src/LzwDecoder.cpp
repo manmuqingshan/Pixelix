@@ -33,6 +33,7 @@
  * Includes
  *****************************************************************************/
 #include "LzwDecoder.h"
+#include <Logging.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -58,16 +59,32 @@
  * Public Methods
  *****************************************************************************/
 
-void LzwDecoder::init(uint8_t lzwMinCodeWidth)
+bool LzwDecoder::init(uint8_t lzwMinCodeWidth)
 {
+    bool isSuccessful = true;
+
     if (nullptr == m_codes)
     {
         m_codes = new(std::nothrow) uint32_t[CODE_LIMIT];
+
+        if (nullptr == m_codes)
+        {
+            LOG_ERROR("Failed to allocate memory for LZW codes, size: %u bytes", CODE_LIMIT * sizeof(uint32_t));
+
+            isSuccessful = false;
+        }
     }
 
     if (nullptr == m_stack)
     {
         m_stack = new(std::nothrow) uint8_t[STACK_SIZE];
+
+        if (nullptr == m_stack)
+        {
+            LOG_ERROR("Failed to allocate memory for LZW stack, size: %u bytes", STACK_SIZE);
+
+            isSuccessful = false;
+        }
     }
 
     m_lzwMinCodeWidth   = lzwMinCodeWidth;
@@ -76,6 +93,13 @@ void LzwDecoder::init(uint8_t lzwMinCodeWidth)
     m_stackPtr          = m_stack;
     m_bitsInBuffer      = 0U;
     clear();
+
+    if (false == isSuccessful)
+    {
+        deInit();
+    }
+
+    return isSuccessful;
 }
 
 bool LzwDecoder::decode(const ReadFromInStream& readFromInStreamFunc, const WriteToOutStream& writeToOutStreamFunc)

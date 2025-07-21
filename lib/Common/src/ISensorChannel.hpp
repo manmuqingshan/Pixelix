@@ -85,7 +85,8 @@ public:
         TYPE_STATE_OF_CHARGE_PERCENT,    /**< State of Charge in [%] */
         TYPE_FREE_HEAP_BYTES,            /**< Size in [bytes] */
         TYPE_MIN_FREE_HEAP_BYTES,        /**< Size in [bytes] */
-        TYPE_MAX_ALLOC_HEAP_BYTES        /**< Size in [bytes] */
+        TYPE_MAX_ALLOC_HEAP_BYTES,       /**< Size in [bytes] */
+        TYPE_SIGNAL_STRENGTH_DBM         /**< Signal strength in [dBm] */
     };
 
     /**
@@ -163,6 +164,10 @@ public:
             name = "maxAllocHeap";
             break;
 
+        case ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM:
+            name = "signalStrength";
+            break;
+
         default:
             break;
         }
@@ -209,6 +214,10 @@ public:
             /* fallthrough */
         case ISensorChannel::TYPE_MAX_ALLOC_HEAP_BYTES:
             unit = "bytes";
+            break;
+
+        case ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM:
+            unit = "dBm";
             break;
 
         default:

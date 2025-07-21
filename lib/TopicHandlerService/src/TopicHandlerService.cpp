@@ -408,7 +408,7 @@ void TopicHandlerService::strToAccess(IPluginMaintenance* plugin, const String& 
         if (true == isReadAccess)
         {
             getTopicFunc = [plugin](const String& topic, JsonObject& value) -> bool {
-                LOG_INFO("Get %s of plugin %u.", topic.c_str(), plugin->getUID());
+                LOG_DEBUG("Get %s of plugin %u.", topic.c_str(), plugin->getUID());
                 return plugin->getTopic(topic, value);
             };
         }
@@ -416,7 +416,7 @@ void TopicHandlerService::strToAccess(IPluginMaintenance* plugin, const String& 
         if (true == isWriteAccess)
         {
             setTopicFunc = [plugin](const String& topic, const JsonObjectConst& value) -> bool {
-                LOG_INFO("Set %s of plugin %u.", topic.c_str(), plugin->getUID());
+                LOG_DEBUG("Set %s of plugin %u.", topic.c_str(), plugin->getUID());
                 return plugin->setTopic(topic, value);
             };
 

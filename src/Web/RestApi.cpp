@@ -296,12 +296,9 @@ static void handleFadeEffect(AsyncWebServerRequest* request)
     }
     else if (HTTP_POST == request->method())
     {
-        JsonVariant            dataObj           = RestUtil::prepareRspSuccess(jsonDoc);
-        DisplayMgr::FadeEffect currentFadeEffect = DisplayMgr::getInstance().getFadeEffect();
-        uint8_t                fadeEffectId      = static_cast<uint8_t>(currentFadeEffect);
-        DisplayMgr::FadeEffect nextFadeEffect    = static_cast<DisplayMgr::FadeEffect>(fadeEffectId + 1U);
+        JsonVariant dataObj = RestUtil::prepareRspSuccess(jsonDoc);
 
-        DisplayMgr::getInstance().activateNextFadeEffect(nextFadeEffect);
+        DisplayMgr::getInstance().activateNextFadeEffect(FadeEffectController::FADE_EFFECT_COUNT);
 
         dataObj["fadeEffect"] = DisplayMgr::getInstance().getFadeEffect();
     }

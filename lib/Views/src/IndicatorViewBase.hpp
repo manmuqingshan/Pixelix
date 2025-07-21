@@ -25,16 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Memory monitor
+ * @brief  Base class for view with indicators.
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup APP_LAYER
+ * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef MEM_MON_H
-#define MEM_MON_H
+#ifndef INDICATOR_VIEW_BASE_HPP
+#define INDICATOR_VIEW_BASE_HPP
 
 /******************************************************************************
  * Compile Switches
@@ -43,9 +42,8 @@
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <SysMsgPlugin.h>
-#include <WString.h>
+#include "Layouts.h"
+#include "./layouts/IndicatorViewGeneric.h"
 
 /******************************************************************************
  * Macros
@@ -56,94 +54,27 @@
  *****************************************************************************/
 
 /**
- * Memory monitor
+ * View for indicators in each display corner.
+ * 
+ * @tparam option   Layout which to choose
  */
-class MemMon
+template< Layout option >
+class IndicatorView : public IndicatorViewGeneric
 {
 public:
-
     /**
-     * Get memory monitor instance.
-     *
-     * @return Memory monitor instance
+     * Destroys the view.
      */
-    static MemMon& getInstance()
-    {
-        static MemMon instance; /* singleton idiom to force initialization in the first usage. */
-
-        return instance;
-    }
-
-    /**
-     * Start memory monitor.
-     *
-     * @return If successful started, it will return true otherwise false.
-     */
-    bool start();
-
-    /**
-     * Process memory monitor.
-     */
-    void process();
-
-    /**
-     * Stop memory monitor.
-     */
-    void stop();
-
-    /** Processing cycle in ms. */
-    static const uint32_t PROCESSING_CYCLE        = 60U * 1000U;
-
-    /**
-     * Minimum size of current heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
-     */
-    static const size_t MIN_HEAP_MEMORY           = (60U * 1024U);
-
-    /**
-     * Lowest size of heap memory in bytes, the monitor starts to warn.
-     * See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mbedtls.html#performance-and-memory-tweaks
-     */
-    static const size_t LOWEST_HEAP_MEMORY        = (50U * 1024U);
-
-    /**
-     * Minimum size of largest block of heap that can be allocated at once in bytes, the monitor starts to warn.
-     */
-    static const size_t LARGEST_HEAP_BLOCK_MEMORY = CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN;
-
-private:
-
-    /**
-     * Memory capabilities used for heap operations.
-     */
-    static const uint32_t MEM_CAPABILITIES = MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT;
-
-    SimpleTimer           m_timer; /**< Timer used for cyclic processing. */
-
-    /**
-     * Constructs the memory monitor.
-     */
-    MemMon() :
-        m_timer()
-    {
-    }
-
-    /**
-     * Destroys the memory monitor.
-     */
-    ~MemMon()
-    {
-        /* Will never be called. */
-    }
-
-    MemMon(const MemMon& taskMon);
-    MemMon& operator=(const MemMon& taskMon);
+    virtual ~IndicatorView() = default;
 };
+
+/** View for indicators in each display corner, considering the display size. */
+using IndicatorViewBase = IndicatorView<LAYOUT_TYPE>;
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* MEM_MON_H */
+#endif  /* INDICATOR_VIEW_BASE_HPP */
 
 /** @} */

@@ -38,7 +38,7 @@
 #include "LogSinkWebsocket.h"
 #include <StateMachine.hpp>
 #include <Board.h>
-
+#include <esp_task_wdt.h>
 #include "InitState.h"
 #include "RestartState.h"
 #include "MemMon.h"
@@ -178,12 +178,18 @@ void setup()
     /* Set severity for Pixelix logging system. */
     Logging::getInstance().setLogLevel(CONFIG_LOG_SEVERITY);
 
+    /* Setup memory monitoring. */
+    MemMon::getInstance().start();
+
     /* The setup routine shall handle only the initialization state.
      * All other states are handled in the loop routine.
      */
     do
     {
         gSysStateMachine.process();
+
+        /* Memory monitor */
+        MemMon::getInstance().process();
     }
     while(static_cast<AbstractState*>(&InitState::getInstance()) == gSysStateMachine.getState());
 
@@ -191,6 +197,16 @@ void setup()
      * Do this after init state!
      */
     ButtonDrv::getInstance().registerObserver(gButtonHandler);
+
+    /* Enable task watchdog for the loop task.
+     * See CONFIG_ESP_TASK_WDT_TIMEOUT_S for the timeout value.
+     *
+     * The task watchdog is used to detect a deadlock of the main loop.
+     * If the main loop does not reset the watchdog, it will trigger a reset.
+     * The task watchdog is not used to detect a deadlock of the init state,
+     * because it is expected that the init state will finish in a short time.
+    */
+    (void)esp_task_wdt_add(nullptr);
 }
 
 /**
@@ -198,6 +214,12 @@ void setup()
  */
 void loop()
 {
+    /* Reset task watchdog to avoid a timeout.
+     * The task watchdog is used to detect a deadlock of the main loop.
+     * If the main loop does not reset the watchdog, it will trigger a reset.
+     */
+    esp_task_wdt_reset();
+
     /* Process system state machine */
     gSysStateMachine.process();
 

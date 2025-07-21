@@ -93,7 +93,7 @@ public:
      */
     uint32_t getValue() final
     {
-        return ESP.getFreeHeap();
+        return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT);
     }
 
     /**
@@ -162,7 +162,7 @@ public:
      */
     uint32_t getValue() final
     {
-        return ESP.getMinFreeHeap();
+        return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT);
     }
 
     /**
@@ -231,7 +231,7 @@ public:
      */
     uint32_t getValue() final
     {
-        return ESP.getMaxAllocHeap();
+        return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT);
     }
 
     /**

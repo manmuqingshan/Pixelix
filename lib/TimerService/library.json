@@ -20,6 +20,8 @@
     }, {
         "name": "Utilities"
     }, {
+        "name": "Views"
+    }, {
         "name": "YAWidgets"
     }],
     "frameworks": "*",
