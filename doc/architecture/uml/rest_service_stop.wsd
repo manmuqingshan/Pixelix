@@ -28,7 +28,7 @@ autoactivate on
     return
 <-- RestService
 
--> Plugin: processTask
+Plugin <- : processTask
     Plugin -> RestService: get()
         alt false == m_isRunning
             Plugin <-- RestService: false 
@@ -43,6 +43,6 @@ autoactivate on
         Once the plugin calls getResponse(), its m_isAllowedToSend-flag will be reset leaving it in a safe state until the rest-service is started again. 
         During that time rest-service does not accept any new requests.
     end note 
-<-- Plugin
+Plugin -->
 
 @enduml
