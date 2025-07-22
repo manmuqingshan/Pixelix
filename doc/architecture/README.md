@@ -127,9 +127,15 @@ The diagram shows the task deployment on the esp32 dual core derivates.
 
 ![rest-service-class-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service.wsd)
 
+#### Get Request
+
 ![rest-service-get-request-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_get_request.wsd)
 
+#### Service Stop
+
 ![rest-service-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_stop.wsd)
+
+#### Plugin Stop
 
 ![rest-service-plugin-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_plugin_stop.wsd)
 
