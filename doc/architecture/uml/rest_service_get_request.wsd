@@ -129,3 +129,5 @@ Plugin <- : processTask runs
     Plugin -> Plugin: react
     return
 Plugin -->
+
+@enduml

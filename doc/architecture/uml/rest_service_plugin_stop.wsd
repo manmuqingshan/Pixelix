@@ -35,3 +35,5 @@ autoactivate on
         end
     Plugin <-- RestService
 <-- Plugin
+
+@enduml

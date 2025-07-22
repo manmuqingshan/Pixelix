@@ -44,3 +44,5 @@ autoactivate on
         During that time rest-service does not accept any new requests.
     end note 
 <-- Plugin
+
+@enduml
