@@ -127,11 +127,11 @@ The diagram shows the task deployment on the esp32 dual core derivates.
 
 ![rest-service-class-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service.wsd)
 
-![rest-service-get-request-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/RESTService-Doc-changes/doc/architecture/uml/rest_service_get_request.wsd)
+![rest-service-get-request-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_get_request.wsd)
 
-![rest-service-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/RESTService-Doc-changes/doc/architecture/uml/rest_service_stop.wsd)
+![rest-service-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_stop.wsd)
 
-![rest-service-plugin-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/RESTService-Doc-changes/doc/architecture/uml/rest_service_plugin_stop.wsd)
+![rest-service-plugin-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/feature/RESTService-Doc-changes/doc/architecture/uml/rest_service_plugin_stop.wsd)
 
 ### Topic Handler Service
 
