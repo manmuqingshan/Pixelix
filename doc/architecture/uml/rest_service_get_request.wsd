@@ -43,7 +43,7 @@ RestService <- : loopTask runs
 RestService -->
 
 AsyncHttpClient <- : AsyncHttpClientTask runs
-    alt (cmd in m_cmdQueue available)
+    alt cmd in m_cmdQueue available
         AsyncHttpClient -> AsyncHttpClient: takeGlobalMutex()
         return
 
@@ -66,22 +66,26 @@ note over TcpClient, Server
 end note
 
 TcpClient <- : async_tcp(Task) runs
-    loop for each TCP-packet
+    loop for each TCP-chunk
         TcpClient <- Server: response
+            TcpClient -> TcpClient: _sockIsReadable
+                alt 0 < lwip_read()
+                    TcpClient -> AsyncHttpClient:  _recv_cb()
+                        AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DATA in m_evtQueue
+                        return
+                    TcpClient <-- AsyncHttpClient
+
+                else 0 == lwip_read()
+                    TcpClient -> TcpClient: _close()
+                        TcpClient -> AsyncHttpClient: _discard_cb()
+                            AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DISCONNECTED in m_evtQueue
+                            return
+                        TcpClient <-- AsyncHttpClient
+                    return
+                end
+            return
         TcpClient --> Server
-
-        TcpClient -> AsyncHttpClient:  _recv_cb()
-            AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DATA in m_evtQueue
-            return
-        TcpClient <-- AsyncHttpClient
     end
-
-    TcpClient -> TcpClient: _close()
-        TcpClient -> AsyncHttpClient: _discard_cb()
-            AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DISCONNECTED in m_evtQueue
-            return
-        TcpClient <-- AsyncHttpClient
-    return
 TcpClient -->
 
 AsyncHttpClient <- : AsyncHttpClientTask runs
