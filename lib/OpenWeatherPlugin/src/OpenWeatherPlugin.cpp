@@ -314,18 +314,7 @@ void OpenWeatherPlugin::process(bool isConnected)
     {
         if (true == isValidResponse)
         {
-            JsonObject root = jsonDoc.as<JsonObject>();
-
-            /* Call handleWebResponse() only if jsonDoc is valid and has content. */
-            if ((false == root.isNull()) && (0U != root.size()))
-            {
-                handleWebResponse(jsonDoc);
-            }
-            else
-            {
-                /* Reset weather request status to avoid to be stuck. */
-                m_weatherReqStatus = WEATHER_REQUEST_STATUS_IDLE;
-            }
+            handleWebResponse(jsonDoc);
         }
         else
         {
@@ -579,9 +568,9 @@ bool OpenWeatherPlugin::startHttpRequest(const IOpenWeatherGeneric* source)
 
 bool OpenWeatherPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-
     bool                       isSuccessful = false;
-    const IOpenWeatherGeneric* source       = getWeatherSourceByStatus();
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    const IOpenWeatherGeneric* source = getWeatherSourceByStatus();
 
     if (nullptr != source)
     {
