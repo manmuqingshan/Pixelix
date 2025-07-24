@@ -1,7 +1,5 @@
 @startuml RestService
 
-struct "RestService::Request" as Request
-
 interface IService{
     # IService()
     + ~IService()
@@ -50,7 +48,7 @@ note right of RestService::m_activePreProcessCallback
     std::function<bool(const char*, size_t, DynamicJsonDocument&)>
 end note 
 
-struct RestService::Response{
+struct Response{
     + restId : uint32_t
     + isRsp : bool
     + data : DynamicJsonDocument
@@ -58,7 +56,7 @@ struct RestService::Response{
     + Response(dataSize : size_t)
 }
 
-enum RestService::RequestId{
+enum RequestId{
     REQUEST_ID_GET = 0
     REQUEST_ID_POST
 }
@@ -101,11 +99,11 @@ Plugin ..> RestService : <<use>>
 
 RestService --> AsyncHttpClient: <<use>>
 
-RestService +-- RestService::Response
+RestService +-- Response
 
 RestService +-- Request
 
-RestService +-- RestService::RequestId
+RestService +-- RequestId
 
 IService <|.. RestService
 
