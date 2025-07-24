@@ -36,29 +36,10 @@ class RestService <<singleton>> {
     - getRestId() : uint32_t
 }
 
-note right of RestService::m_requestQueue
-    std::vector<Request>
-end note
-
-note right of RestService::m_responseQueue
-    std::vector<Response>
-end note
-
-note right of RestService::m_activePreProcessCallback
-    std::function<bool(const char*, size_t, DynamicJsonDocument&)>
-end note 
-
-struct Response{
-    + restId : uint32_t
-    + isRsp : bool
-    + data : DynamicJsonDocument
-    + Response()
-    + Response(dataSize : size_t)
-}
-
-enum RequestId{
-    REQUEST_ID_GET = 0
-    REQUEST_ID_POST
+class Plugin{
+    - m_dynamicRestID : uint32_t
+    - m_isAllowedToSend : bool
+    - preProcessAsyncWebResponse(payload : const char*, payloadSize : size_t, jsonDoc : DynamicJsonDocument&) : void
 }
 
 struct Request{
@@ -74,18 +55,17 @@ struct Request{
     + operator=(other : const Request&&) : Request&
 }
 
-note right of Request::data
-    unnamed struct:
-        {
-            const uint8_t* data; 
-            size_t         size; 
-        }
-end note 
+struct Response{
+    + restId : uint32_t
+    + isRsp : bool
+    + data : DynamicJsonDocument
+    + Response()
+    + Response(dataSize : size_t)
+}
 
-class Plugin{
-    - m_dynamicRestID : uint32_t
-    - m_isAllowedToSend : bool
-    - preProcessAsyncWebResponse(payload : const char*, payloadSize : size_t, jsonDoc : DynamicJsonDocument&) : void
+enum RequestId{
+    REQUEST_ID_GET = 0
+    REQUEST_ID_POST
 }
 
 class AsyncHttpClient{
@@ -95,15 +75,41 @@ class AsyncHttpClient{
     + POST(payload: const String&) : bool
 }
 
+note right of RestService::m_requestQueue
+    std::vector<Request>
+end note
+
+note right of RestService::m_responseQueue
+    std::vector<Response>
+end note
+
+note right of RestService::m_activePreProcessCallback
+    std::function<bool(const char*, size_t, DynamicJsonDocument&)>
+end note 
+
+note right of Request::data
+    unnamed struct:
+        {
+            const uint8_t* data; 
+            size_t         size; 
+        }
+end note 
+
 Plugin ..> RestService : <<use>>
 
-RestService --> AsyncHttpClient: <<use>>
+RestService --> AsyncHttpClient
 
 RestService +-- Response
 
 RestService +-- Request
 
 RestService +-- RequestId
+
+RestService ..> Response: <<use>>
+
+RestService ..> Request: <<use>>
+
+RestService ..> RequestId: <<use>>
 
 IService <|.. RestService
 
