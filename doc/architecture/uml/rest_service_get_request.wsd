@@ -9,7 +9,7 @@ entity Server
 autoactivate on
 
 -> RestService: start()
-    RestService -> AsyncHttpClient: regOnResponse/Error/Closed
+    RestService -> AsyncHttpClient: register callbacks for onResponse/Error/Closed
     RestService <-- AsyncHttpClient
 <-- RestService
 
@@ -56,37 +56,9 @@ AsyncHttpClient <- : AsyncHttpClientTask runs
     end   
 AsyncHttpClient -->
 
-TcpClient <- : async_tcp(Task) runs
-    TcpClient -> Server: send request
-    TcpClient <-- Server
-TcpClient -->
-
 note over TcpClient, Server
-    Asynchronous
+    Request will be sent and response will be received in async_tcp(task) (Asynchronous)
 end note
-
-TcpClient <- : async_tcp(Task) runs
-    loop for each TCP-chunk
-        TcpClient <- Server: response
-            TcpClient -> TcpClient: _sockIsReadable
-                alt 0 < lwip_read()
-                    TcpClient -> AsyncHttpClient:  _recv_cb()
-                        AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DATA in m_evtQueue
-                        return
-                    TcpClient <-- AsyncHttpClient
-
-                else 0 == lwip_read()
-                    TcpClient -> TcpClient: _close()
-                        TcpClient -> AsyncHttpClient: _discard_cb()
-                            AsyncHttpClient -> AsyncHttpClient: put evt with EVENT_ID_DISCONNECTED in m_evtQueue
-                            return
-                        TcpClient <-- AsyncHttpClient
-                    return
-                end
-            return
-        TcpClient --> Server
-    end
-TcpClient -->
 
 AsyncHttpClient <- : AsyncHttpClientTask runs
     loop evt in m_evtQueue available

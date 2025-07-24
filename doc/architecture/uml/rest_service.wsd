@@ -97,15 +97,15 @@ class AsyncHttpClient{
     + POST(payload: const String&) : bool
 }
 
-Plugin ..> RestService : uses
+Plugin ..> RestService : <<use>>
 
-RestService o-- AsyncHttpClient
+RestService --> AsyncHttpClient: <<use>>
 
-RestService *-- RestService::Response
+RestService +-- RestService::Response
 
-RestService *-- Request
+RestService +-- Request
 
-RestService *-- RestService::RequestId
+RestService +-- RestService::RequestId
 
 IService <|.. RestService
 
