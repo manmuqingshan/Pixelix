@@ -338,13 +338,7 @@ void GrabViaRestPlugin::process(bool isConnected)
     {
         if (true == isValidResponse)
         {
-            JsonObject root = jsonDoc.as<JsonObject>();
-
-            /* Call handleWebResponse() only if jsonDoc is valid and has content. */
-            if ((false == root.isNull()) && (0U != root.size()))
-            {
-                handleWebResponse(jsonDoc);
-            }
+            handleWebResponse(jsonDoc);
         }
         else
         {
@@ -533,7 +527,8 @@ bool GrabViaRestPlugin::startHttpRequest()
 
 bool GrabViaRestPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    bool isSuccessful = false;
+    bool                       isSuccessful = false;
+    MutexGuard<MutexRecursive> guard(m_mutex);
 
     if (true == m_filter.overflowed())
     {
@@ -623,7 +618,13 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     String              outputStr;
     size_t              valueCount = 0U;
 
-    getJsonValueByFilter(jsonDoc, m_filter, jsonValuesArray);
+    /* Protect against concurrent access. */
+    {
+        MutexGuard<MutexRecursive> guard(m_mutex);
+
+        getJsonValueByFilter(jsonDoc, m_filter, jsonValuesArray);
+    }
+    
     valueCount = jsonValuesArray.size();
 
     if (true == jsonDocValues.overflowed())
