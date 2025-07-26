@@ -402,14 +402,10 @@ uint32_t RestService::getRestId()
     {
         /* Skip the INVALID_REST_ID and use the next one. */
         ++m_restIdCounter;
-        restId = m_restIdCounter;
-        ++m_restIdCounter;
     }
-    else
-    {
-        restId = m_restIdCounter;
-        ++m_restIdCounter;
-    }
+
+    restId = m_restIdCounter;
+    ++m_restIdCounter;
 
     return restId;
 }
