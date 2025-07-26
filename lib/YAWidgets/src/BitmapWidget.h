@@ -108,7 +108,7 @@ public:
     /**
      * Destroys the bitmap widget.
      */
-    virtual ~BitmapWidget()
+    ~BitmapWidget() override
     {
     }
 

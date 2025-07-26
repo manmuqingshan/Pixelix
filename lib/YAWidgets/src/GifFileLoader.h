@@ -72,7 +72,7 @@ public:
     /**
      * Destroy the GIF file loader.
      */
-    ~GifFileLoader()
+    ~GifFileLoader() override
     {
         close();
     }

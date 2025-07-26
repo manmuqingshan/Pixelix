@@ -103,7 +103,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueJson()
+    ~KeyValueJson() override
     {
     }
 

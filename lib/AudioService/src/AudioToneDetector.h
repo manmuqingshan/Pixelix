@@ -87,7 +87,7 @@ public:
     /**
      * Destroys the audio tone detector instance.
      */
-    ~AudioToneDetector()
+    ~AudioToneDetector() override
     {
         /* Never called. */
     }
