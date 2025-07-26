@@ -74,7 +74,6 @@ const char* TimerService::ENTITY_ID = "timerService";
 
 bool TimerService::start()
 {
-    bool                        isSuccessful        = true;
     SettingsService&            settings            = SettingsService::getInstance();
     TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
     JsonObjectConst             jsonExtra; /* Empty */
@@ -109,18 +108,11 @@ bool TimerService::start()
 
     topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
 
-    if (false == isSuccessful)
-    {
-        stop();
-    }
-    else
-    {
-        m_processTimer.start(PROCESS_PERIOD);
+    m_processTimer.start(PROCESS_PERIOD);
 
-        LOG_INFO("Timer service started.");
-    }
+    LOG_INFO("Timer service started.");
 
-    return isSuccessful;
+    return true;
 }
 
 void TimerService::stop()
