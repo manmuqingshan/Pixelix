@@ -415,8 +415,8 @@ void WebSocketSrv::handleMsg(AsyncWebSocket* server, AsyncWebSocketClient* clien
             WebSocketMsg* wsMsg = new(std::nothrow) WebSocketMsg;
 
             /* Overstep delimiter in case there are parameters. */
-            if ((DELIMITER == msg[msgIndex]) &&
-                (msgLen > msgIndex))
+            if ((msgLen > msgIndex) &&
+                (DELIMITER == msg[msgIndex]))
             {
                 ++msgIndex;
             }
