@@ -160,8 +160,7 @@ void RestService::process()
 uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallback)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -175,10 +174,6 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
         m_requestQueue.push_back(std::move(req));
     }
-    else
-    {
-        restId = INVALID_REST_ID;
-    }
 
     return restId;
 }
@@ -186,8 +181,7 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -203,10 +197,6 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
         m_requestQueue.push_back(std::move(req));
     }
-    else
-    {
-        restId = INVALID_REST_ID;
-    }
 
     return restId;
 }
@@ -214,8 +204,7 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 uint32_t RestService::post(const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -230,10 +219,6 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
         req.data.size          = payload.length();
 
         m_requestQueue.push_back(std::move(req));
-    }
-    else
-    {
-        restId = INVALID_REST_ID;
     }
 
     return restId;
@@ -334,7 +319,6 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 
     if (HttpStatus::STATUS_CODE_OK == httpRsp.getStatusCode())
     {
-        bool        isSuccessful = false;
         size_t      payloadSize  = 0U;
         const void* vPayload     = httpRsp.getPayload(payloadSize);
         const char* payload      = static_cast<const char*>(vPayload);
