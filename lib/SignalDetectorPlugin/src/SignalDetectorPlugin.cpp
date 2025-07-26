@@ -309,10 +309,14 @@ void SignalDetectorPlugin::process(bool isConnected)
         }
     }
 
-    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        m_dynamicRestId   = RestService::INVALID_REST_ID;
-        m_isAllowedToSend = true;
+        /* Get the response from the REST service. */
+        if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
+        {
+            m_dynamicRestId   = RestService::INVALID_REST_ID;
+            m_isAllowedToSend = true;
+        }
     }
 
     PluginWithConfig::process(isConnected);

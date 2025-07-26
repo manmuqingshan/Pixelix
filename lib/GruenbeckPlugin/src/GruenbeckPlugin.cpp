@@ -233,24 +233,28 @@ void GruenbeckPlugin::process(bool isConnected)
         }
     }
 
-    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        if (true == isValidResponse)
+        /* Get the response from the REST service. */
+        if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
         {
-            handleWebResponse(jsonDoc);
+            if (true == isValidResponse)
+            {
+                handleWebResponse(jsonDoc);
+            }
+            else
+            {
+                LOG_WARNING("Connection error.");
+
+                /* If a request fails, show standard icon and a '?' */
+                m_view.setFormatText("{hc}?");
+
+                m_requestTimer.start(UPDATE_PERIOD_SHORT);
+            }
+
+            m_dynamicRestId   = RestService::INVALID_REST_ID;
+            m_isAllowedToSend = true;
         }
-        else
-        {
-            LOG_WARNING("Connection error.");
-
-            /* If a request fails, show standard icon and a '?' */
-            m_view.setFormatText("{hc}?");
-
-            m_requestTimer.start(UPDATE_PERIOD_SHORT);
-        }
-
-        m_dynamicRestId   = RestService::INVALID_REST_ID;
-        m_isAllowedToSend = true;
     }
 }
 

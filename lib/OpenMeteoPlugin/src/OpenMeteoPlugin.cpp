@@ -289,20 +289,24 @@ void OpenMeteoPlugin::process(bool isConnected)
         m_view.setViewDuration(m_slotInterf->getDuration());
     }
 
-    if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        if (true == isValidResponse)
+        /* Get the response from the REST service. */
+        if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
         {
-            handleWebResponse(jsonDoc);
-        }
-        else
-        {
-            LOG_WARNING("Connection error.");
-            m_requestTimer.start(UPDATE_PERIOD_SHORT);
-        }
+            if (true == isValidResponse)
+            {
+                handleWebResponse(jsonDoc);
+            }
+            else
+            {
+                LOG_WARNING("Connection error.");
+                m_requestTimer.start(UPDATE_PERIOD_SHORT);
+            }
 
-        m_dynamicRestId   = RestService::INVALID_REST_ID;
-        m_isAllowedToSend = true;
+            m_dynamicRestId   = RestService::INVALID_REST_ID;
+            m_isAllowedToSend = true;
+        }
     }
 }
 

@@ -226,33 +226,37 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 
 bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload)
 {
-    MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = false;
+    bool isSuccessful = false;
 
-    if (true == m_isRunning)
+    if (INVALID_REST_ID != restId)
     {
-        ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+        MutexGuard<Mutex> guard(m_mutex);
 
-        while (rspIterator != m_responseQueue.end())
+        if (true == m_isRunning)
         {
-            if (restId == rspIterator->restId)
+            ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+
+            while (rspIterator != m_responseQueue.end())
             {
-                isValidRsp   = rspIterator->isRsp;
-                payload      = std::move(rspIterator->jsonDocData);
-                rspIterator  = m_responseQueue.erase(rspIterator);
-                isSuccessful = true;
-                break;
-            }
-            else
-            {
-                ++rspIterator;
+                if (restId == rspIterator->restId)
+                {
+                    isValidRsp   = rspIterator->isRsp;
+                    payload      = std::move(rspIterator->jsonDocData);
+                    rspIterator  = m_responseQueue.erase(rspIterator);
+                    isSuccessful = true;
+                    break;
+                }
+                else
+                {
+                    ++rspIterator;
+                }
             }
         }
-    }
-    else
-    {
-        isValidRsp   = false;
-        isSuccessful = true;
+        else
+        {
+            isValidRsp   = false;
+            isSuccessful = true;
+        }
     }
 
     return isSuccessful;
@@ -319,9 +323,9 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 
     if (HttpStatus::STATUS_CODE_OK == httpRsp.getStatusCode())
     {
-        size_t      payloadSize  = 0U;
-        const void* vPayload     = httpRsp.getPayload(payloadSize);
-        const char* payload      = static_cast<const char*>(vPayload);
+        size_t      payloadSize = 0U;
+        const void* vPayload    = httpRsp.getPayload(payloadSize);
+        const char* payload     = static_cast<const char*>(vPayload);
 
         if ((nullptr == payload) ||
             (0U == payloadSize))
