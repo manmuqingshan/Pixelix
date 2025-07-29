@@ -160,8 +160,7 @@ void RestService::process()
 uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallback)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -175,10 +174,6 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
         m_requestQueue.push_back(std::move(req));
     }
-    else
-    {
-        restId = INVALID_REST_ID;
-    }
 
     return restId;
 }
@@ -186,8 +181,7 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -203,10 +197,6 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
         m_requestQueue.push_back(std::move(req));
     }
-    else
-    {
-        restId = INVALID_REST_ID;
-    }
 
     return restId;
 }
@@ -214,8 +204,7 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 uint32_t RestService::post(const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
     MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = true;
-    uint32_t          restId;
+    uint32_t          restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
@@ -231,43 +220,43 @@ uint32_t RestService::post(const String& url, const String& payload, PreProcessC
 
         m_requestQueue.push_back(std::move(req));
     }
-    else
-    {
-        restId = INVALID_REST_ID;
-    }
 
     return restId;
 }
 
 bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload)
 {
-    MutexGuard<Mutex> guard(m_mutex);
-    bool              isSuccessful = false;
+    bool isSuccessful = false;
 
-    if (true == m_isRunning)
+    if (INVALID_REST_ID != restId)
     {
-        ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+        MutexGuard<Mutex> guard(m_mutex);
 
-        while (rspIterator != m_responseQueue.end())
+        if (true == m_isRunning)
         {
-            if (restId == rspIterator->restId)
+            ResponseQueue::iterator rspIterator = m_responseQueue.begin();
+
+            while (rspIterator != m_responseQueue.end())
             {
-                isValidRsp   = rspIterator->isRsp;
-                payload      = std::move(rspIterator->jsonDocData);
-                rspIterator  = m_responseQueue.erase(rspIterator);
-                isSuccessful = true;
-                break;
-            }
-            else
-            {
-                ++rspIterator;
+                if (restId == rspIterator->restId)
+                {
+                    isValidRsp   = rspIterator->isRsp;
+                    payload      = std::move(rspIterator->jsonDocData);
+                    rspIterator  = m_responseQueue.erase(rspIterator);
+                    isSuccessful = true;
+                    break;
+                }
+                else
+                {
+                    ++rspIterator;
+                }
             }
         }
-    }
-    else
-    {
-        isValidRsp   = false;
-        isSuccessful = true;
+        else
+        {
+            isValidRsp   = false;
+            isSuccessful = true;
+        }
     }
 
     return isSuccessful;
@@ -334,10 +323,9 @@ void RestService::handleAsyncWebResponse(const HttpResponse& httpRsp)
 
     if (HttpStatus::STATUS_CODE_OK == httpRsp.getStatusCode())
     {
-        bool        isSuccessful = false;
-        size_t      payloadSize  = 0U;
-        const void* vPayload     = httpRsp.getPayload(payloadSize);
-        const char* payload      = static_cast<const char*>(vPayload);
+        size_t      payloadSize = 0U;
+        const void* vPayload    = httpRsp.getPayload(payloadSize);
+        const char* payload     = static_cast<const char*>(vPayload);
 
         if ((nullptr == payload) ||
             (0U == payloadSize))
@@ -414,14 +402,10 @@ uint32_t RestService::getRestId()
     {
         /* Skip the INVALID_REST_ID and use the next one. */
         ++m_restIdCounter;
-        restId = m_restIdCounter;
-        ++m_restIdCounter;
     }
-    else
-    {
-        restId = m_restIdCounter;
-        ++m_restIdCounter;
-    }
+
+    restId = m_restIdCounter;
+    ++m_restIdCounter;
 
     return restId;
 }

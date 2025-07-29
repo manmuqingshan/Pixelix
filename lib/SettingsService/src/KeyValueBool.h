@@ -94,7 +94,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueBool()
+    ~KeyValueBool() override
     {
     }
 

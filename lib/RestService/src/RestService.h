@@ -174,6 +174,7 @@ private:
          * Constructs a response.
          */
         Response() :
+            restId(INVALID_REST_ID),
             isRsp(false),
             jsonDocData(4096U)
         {
@@ -185,6 +186,7 @@ private:
          * @param[in] dataSize Size of the DynamicJsonDocument which holds the data.
          */
         explicit Response(size_t dataSize) :
+            restId(INVALID_REST_ID),
             isRsp(false),
             jsonDocData(dataSize)
         {

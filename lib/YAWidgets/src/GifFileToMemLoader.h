@@ -75,7 +75,7 @@ public:
     /**
      * Destroy the GIF file loader.
      */
-    ~GifFileToMemLoader()
+    ~GifFileToMemLoader() override
     {
         close();
     }

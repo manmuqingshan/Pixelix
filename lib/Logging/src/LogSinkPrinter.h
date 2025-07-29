@@ -85,7 +85,7 @@ public:
     /**
      * Destroys the printer log sink.
      */
-    ~LogSinkPrinter()
+    ~LogSinkPrinter() override
     {
     }
 

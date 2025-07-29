@@ -106,7 +106,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueString()
+    ~KeyValueString() override
     {
     }
 

@@ -92,7 +92,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueInt32()
+    ~KeyValueInt32() override
     {
     }
 

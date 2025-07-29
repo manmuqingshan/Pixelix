@@ -186,7 +186,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    virtual ~KeyValueNumber()
+    ~KeyValueNumber() override
     {
     }
 
