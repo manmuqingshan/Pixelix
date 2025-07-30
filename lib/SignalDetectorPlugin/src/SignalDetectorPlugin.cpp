@@ -222,8 +222,6 @@ void SignalDetectorPlugin::start(uint16_t width, uint16_t height)
     m_isDetected = false;
 
     PluginWithConfig::start(width, height);
-
-    initHttpClient();
 }
 
 void SignalDetectorPlugin::stop()
@@ -231,6 +229,14 @@ void SignalDetectorPlugin::stop()
     MutexGuard<MutexRecursive> guard(m_mutex);
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().abortRequest(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
+    }
 }
 
 void SignalDetectorPlugin::active(YAGfx& gfx)
@@ -252,6 +258,8 @@ void SignalDetectorPlugin::inactive()
 void SignalDetectorPlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
+    DynamicJsonDocument        jsonDoc(0U);
+    bool                       isValidResponse;
 
     /* Call isSignalDetected() every time although it was already detected in the
      * previous call. This clears the detection flag in the audio service.
@@ -277,8 +285,15 @@ void SignalDetectorPlugin::process(bool isConnected)
                 m_timer.start(m_slotInterf->getDuration() * 110U / 100U);
             }
 
-            /* Send notification */
-            (void)startHttpRequest();
+            /* Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
+            {
+                /* Send notification */
+                if (true == startHttpRequest())
+                {
+                    m_isAllowedToSend = false;
+                }
+            }
         }
     }
     else
@@ -291,6 +306,16 @@ void SignalDetectorPlugin::process(bool isConnected)
         {
             m_timer.stop();
             m_isDetected = false;
+        }
+    }
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        /* Get the response from the REST service. */
+        if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
+        {
+            m_dynamicRestId   = RestService::INVALID_REST_ID;
+            m_isAllowedToSend = true;
         }
     }
 
@@ -421,7 +446,16 @@ bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool SignalDetectorPlugin::startHttpRequest()
 {
-    bool status = false;
+    bool                            status             = false;
+    RestService::PreProcessCallback preProcessCallback = [](const char* payload, size_t size, DynamicJsonDocument& doc) {
+        UTIL_NOT_USED(payload);
+        UTIL_NOT_USED(size);
+        UTIL_NOT_USED(doc);
+
+        LOG_INFO("Signal detection reported.");
+
+        return true;
+    };
 
     if (false == m_pushUrl.isEmpty())
     {
@@ -447,51 +481,35 @@ bool SignalDetectorPlugin::startHttpRequest()
             ;
         }
 
-        if (true == m_client.begin(url))
+        if (false == isGet)
         {
-            if (false == isGet)
+            m_dynamicRestId = RestService::getInstance().post(url, preProcessCallback);
+
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
             {
-                if (false == m_client.POST())
-                {
-                    LOG_WARNING("POST %s failed.", url.c_str());
-                }
-                else
-                {
-                    status = true;
-                }
+                LOG_WARNING("POST %s failed.", url.c_str());
             }
             else
             {
-                if (false == m_client.GET())
-                {
-                    LOG_WARNING("GET %s failed.", url.c_str());
-                }
-                else
-                {
-                    status = true;
-                }
+                status = true;
+            }
+        }
+        else
+        {
+            m_dynamicRestId = RestService::getInstance().get(url, preProcessCallback);
+
+            if (RestService::INVALID_REST_ID == m_dynamicRestId)
+            {
+                LOG_WARNING("GET %s failed.", url.c_str());
+            }
+            else
+            {
+                status = true;
             }
         }
     }
 
     return status;
-}
-
-void SignalDetectorPlugin::initHttpClient()
-{
-    /* Note: All registered callbacks are running in a different task context! */
-    m_client.regOnResponse([](const HttpResponse& rsp) {
-        uint16_t statusCode = rsp.getStatusCode();
-
-        if (HttpStatus::STATUS_CODE_OK == statusCode)
-        {
-            LOG_INFO("Signal detection reported.");
-        }
-    });
-
-    m_client.regOnError([]() {
-        LOG_WARNING("Connection error happened.");
-    });
 }
 
 bool SignalDetectorPlugin::isSignalDetected()

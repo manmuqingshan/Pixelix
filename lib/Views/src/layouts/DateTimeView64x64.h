@@ -98,7 +98,7 @@ public:
     /**
      * Destroy the view.
      */
-    virtual ~DateTimeView64x64()
+    ~DateTimeView64x64() override
     {
     }
 

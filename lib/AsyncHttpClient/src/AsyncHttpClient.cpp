@@ -106,7 +106,8 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE)
+    m_chunkBodyPart(CHUNK_SIZE),
+    m_isError(false)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
@@ -612,6 +613,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_GET:
                 if (false == getRequest())
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -619,6 +622,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_POST:
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -716,6 +721,12 @@ void AsyncHttpClient::onDisconnect()
         m_isConnected = false;
     }
 
+    if ((false == isConnected) && (false == m_isError))
+    {
+        onError(ERR_CONN);
+    }
+
+    m_isError = false;
     clear();
 
     /* It happens that during the connection establishment the SSL handshake fails.
@@ -751,6 +762,7 @@ void AsyncHttpClient::onError(int8_t error)
         }
     }
 
+    m_isError = true;
     notifyError();
     disconnect();
 }

@@ -82,7 +82,7 @@ public:
     /**
      * Destroys the spectrum analyzer instance.
      */
-    ~SpectrumAnalyzer()
+    ~SpectrumAnalyzer() override
     {
         m_mutex.destroy();
     }

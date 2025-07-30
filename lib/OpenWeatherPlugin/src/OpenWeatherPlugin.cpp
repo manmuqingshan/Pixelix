@@ -210,8 +210,6 @@ void OpenWeatherPlugin::start(uint16_t width, uint16_t height)
     setViewUnits();
 
     PluginWithConfig::start(width, height);
-
-    initHttpClient();
 }
 
 void OpenWeatherPlugin::stop()
@@ -221,6 +219,14 @@ void OpenWeatherPlugin::stop()
     m_requestTimer.stop();
 
     PluginWithConfig::stop();
+
+    m_isAllowedToSend = false;
+
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
+    {
+        RestService::getInstance().abortRequest(m_dynamicRestId);
+        m_dynamicRestId = RestService::INVALID_REST_ID;
+    }
 }
 
 void OpenWeatherPlugin::active(YAGfx& gfx)
@@ -236,9 +242,10 @@ void OpenWeatherPlugin::inactive()
 
 void OpenWeatherPlugin::process(bool isConnected)
 {
-    Msg                        msg;
     MutexGuard<MutexRecursive> guard(m_mutex);
     bool                       isRestRequestRequired = false;
+    DynamicJsonDocument        jsonDoc(0U);
+    bool                       isValidResponse;
 
     PluginWithConfig::process(isConnected);
 
@@ -279,16 +286,21 @@ void OpenWeatherPlugin::process(bool isConnected)
         if ((nullptr != source) &&
             (false == source->getApiKey().isEmpty()))
         {
-            if (false == startHttpRequest(source))
+            /* Only one request can be sent at a time. */
+            if (true == m_isAllowedToSend)
             {
-                LOG_WARNING("Failed to request weather info.");
+                if (false == startHttpRequest(source))
+                {
+                    LOG_WARNING("Failed to request weather info.");
 
-                m_requestTimer.start(UPDATE_PERIOD_SHORT);
-            }
-            else
-            {
-                weatherRequestStarted();
-                m_requestTimer.start(m_updatePeriod);
+                    m_requestTimer.start(UPDATE_PERIOD_SHORT);
+                }
+                else
+                {
+                    weatherRequestStarted();
+                    m_requestTimer.start(m_updatePeriod);
+                    m_isAllowedToSend = false;
+                }
             }
         }
     }
@@ -298,48 +310,23 @@ void OpenWeatherPlugin::process(bool isConnected)
         m_view.setViewDuration(m_slotInterf->getDuration());
     }
 
-    if (true == m_taskProxy.receive(msg))
+    if (RestService::INVALID_REST_ID != m_dynamicRestId)
     {
-        switch (msg.type)
+        /* Get the response from the REST service. */
+        if (true == RestService::getInstance().getResponse(m_dynamicRestId, isValidResponse, jsonDoc))
         {
-        case MSG_TYPE_INVALID:
-            /* Should never happen. */
-            break;
-
-        case MSG_TYPE_RSP:
-            /* Any internal error happened? */
-            if (nullptr == msg.rsp)
+            if (true == isValidResponse)
             {
-                /* Reset weather request status to avoid to be stucked. */
-                m_weatherReqStatus = WEATHER_REQUEST_STATUS_IDLE;
+                handleWebResponse(jsonDoc);
             }
-            /* Successful received a response. */
             else
             {
-                handleWebResponse(*msg.rsp);
-                delete msg.rsp;
-                msg.rsp = nullptr;
-            }
-            break;
-
-        case MSG_TYPE_CONN_CLOSED:
-            LOG_INFO("Connection closed.");
-
-            if (true == m_isConnectionError)
-            {
+                LOG_WARNING("Connection error.");
                 m_requestTimer.start(UPDATE_PERIOD_SHORT);
             }
-            m_isConnectionError = false;
-            break;
 
-        case MSG_TYPE_CONN_ERROR:
-            LOG_WARNING("Connection error.");
-            m_isConnectionError = true;
-            break;
-
-        default:
-            /* Should never happen. */
-            break;
+            m_dynamicRestId   = RestService::INVALID_REST_ID;
+            m_isAllowedToSend = true;
         }
     }
 }
@@ -552,7 +539,11 @@ bool OpenWeatherPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
 
 bool OpenWeatherPlugin::startHttpRequest(const IOpenWeatherGeneric* source)
 {
-    bool status = false;
+    bool                            status = false;
+    RestService::PreProcessCallback preProcessCallback =
+        [this](const char* payload, size_t size, DynamicJsonDocument& doc) {
+            return this->preProcessAsyncWebResponse(payload, size, doc);
+        };
 
     if ((nullptr != source) &&
         (false == source->getApiKey().isEmpty()) &&
@@ -564,126 +555,54 @@ bool OpenWeatherPlugin::startHttpRequest(const IOpenWeatherGeneric* source)
 
         source->getUrl(url);
 
-        if (true == m_client.begin(url))
+        m_dynamicRestId = RestService::getInstance().get(url, preProcessCallback);
+
+        if (RestService::INVALID_REST_ID == m_dynamicRestId)
         {
-            if (false == m_client.GET())
-            {
-                LOG_WARNING("GET %s failed.", url.c_str());
-            }
-            else
-            {
-                status = true;
-            }
+            LOG_WARNING("GET %s failed.", url.c_str());
+        }
+        else
+        {
+            status = true;
         }
     }
 
     return status;
 }
 
-void OpenWeatherPlugin::initHttpClient()
+bool OpenWeatherPlugin::preProcessAsyncWebResponse(const char* payload, size_t payloadSize, DynamicJsonDocument& jsonDoc)
 {
-    /* Note: All registered callbacks are running in a different task context!
-     *       Therefore it is not allowed to access a member here directly.
-     *       The processing must be deferred via task proxy.
-     */
-    m_client.regOnResponse(
-        [this](const HttpResponse& rsp) {
-            handleAsyncWebResponse(rsp);
-        });
+    bool                       isSuccessful = false;
+    MutexGuard<MutexRecursive> guard(m_mutex);
+    const IOpenWeatherGeneric* source = getWeatherSourceByStatus();
 
-    m_client.regOnClosed(
-        [this]() {
-            Msg msg;
-
-            msg.type = MSG_TYPE_CONN_CLOSED;
-
-            (void)this->m_taskProxy.send(msg);
-        });
-
-    m_client.regOnError(
-        [this]() {
-            Msg msg;
-
-            msg.type = MSG_TYPE_CONN_ERROR;
-
-            (void)this->m_taskProxy.send(msg);
-        });
-}
-
-void OpenWeatherPlugin::handleAsyncWebResponse(const HttpResponse& rsp)
-{
-    if (HttpStatus::STATUS_CODE_OK == rsp.getStatusCode())
+    if (nullptr != source)
     {
-        bool                       isSuccessful = false;
-        const IOpenWeatherGeneric* source       = getWeatherSourceByStatus();
+        const size_t                    FILTER_SIZE = 640U;
+        StaticJsonDocument<FILTER_SIZE> jsonFilterDoc;
 
-        if (nullptr != source)
+        source->getFilter(jsonFilterDoc);
+
+        if (true == jsonFilterDoc.overflowed())
         {
-            const size_t         JSON_DOC_SIZE = 2048U;
-            DynamicJsonDocument* jsonDoc       = new (std::nothrow) DynamicJsonDocument(JSON_DOC_SIZE);
-
-            if (nullptr != jsonDoc)
-            {
-                size_t                          payloadSize = 0U;
-                const void*                     vPayload    = rsp.getPayload(payloadSize);
-                const char*                     payload     = static_cast<const char*>(vPayload);
-                const size_t                    FILTER_SIZE = 640U;
-                StaticJsonDocument<FILTER_SIZE> jsonFilterDoc;
-
-                source->getFilter(jsonFilterDoc);
-
-                if (true == jsonFilterDoc.overflowed())
-                {
-                    LOG_ERROR("Less memory for filter available.");
-                }
-                else if ((nullptr == payload) ||
-                         (0U == payloadSize))
-                {
-                    LOG_ERROR("No payload.");
-                }
-                else
-                {
-                    DeserializationError error = deserializeJson(*jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
-
-                    if (DeserializationError::Ok != error.code())
-                    {
-                        LOG_WARNING("JSON parse error: %s", error.c_str());
-                    }
-                    else
-                    {
-                        Msg msg;
-
-                        msg.type     = MSG_TYPE_RSP;
-                        msg.rsp      = jsonDoc;
-
-                        isSuccessful = this->m_taskProxy.send(msg);
-                    }
-                }
-
-                if (false == isSuccessful)
-                {
-                    delete jsonDoc;
-                    jsonDoc = nullptr;
-                }
-            }
+            LOG_ERROR("Less memory for filter available.");
         }
-
-        /* If something went wrong, send a response with empty payload to
-         * trigger state change in weather request status and not stuck.
-         */
-        if (false == isSuccessful)
+        else
         {
-            Msg msg;
+            DeserializationError error = deserializeJson(jsonDoc, payload, payloadSize, DeserializationOption::Filter(jsonFilterDoc));
 
-            msg.type = MSG_TYPE_RSP;
-            msg.rsp  = nullptr;
-
-            if (false == this->m_taskProxy.send(msg))
+            if (DeserializationError::Ok != error.code())
             {
-                LOG_FATAL("Internal error.");
+                LOG_WARNING("JSON parse error: %s", error.c_str());
+            }
+            else
+            {
+                isSuccessful = true;
             }
         }
     }
+
+    return isSuccessful;
 }
 
 void OpenWeatherPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
@@ -773,20 +692,6 @@ void OpenWeatherPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
                 /* Should never happen. */
                 m_weatherReqStatus = WEATHER_REQUEST_STATUS_IDLE;
             }
-        }
-    }
-}
-
-void OpenWeatherPlugin::clearQueue()
-{
-    Msg msg;
-
-    while (true == m_taskProxy.receive(msg))
-    {
-        if (MSG_TYPE_RSP == msg.type)
-        {
-            delete msg.rsp;
-            msg.rsp = nullptr;
         }
     }
 }
