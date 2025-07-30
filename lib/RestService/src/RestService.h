@@ -143,7 +143,7 @@ public:
      * @param[out] isValidRsp  Does Response have a payload
      * @param[out] payload     Content of the Response. The output variable is move-assigned.
      *
-     * @return If a response is available, it will return true otherwise false. However, when the RestService is stopped, it will always return true, ensuring that any user still waiting receives an empty response.
+     * @return If a response is available, it will return true otherwise false. 
      */
     bool getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocument& payload);
 

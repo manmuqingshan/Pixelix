@@ -252,6 +252,7 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
                 }
             }
         }
+        /* When the RestService is stopped, isSuccessful is always true, ensuring that any user still waiting receives an empty response. */
         else
         {
             isValidRsp   = false;
