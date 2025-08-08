@@ -64,8 +64,9 @@
                             A filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it.
                         </div>
                         <div class="alert alert-warning" role="alert">
-                            A filesystem update will disable the HomeAssistant MQTT discovery feature. After the update, you have to re-enable it manually.
-                            This prevents that the welcome plugin will be discovered, after a filesystem update.
+                            A filesystem update will disable the HomeAssistant MQTT discovery feature in the settings. After the update, you have to re-enable it manually.
+                            Because after the filesystem update the plugin configuration must first be restored or reconfigured, before its enabled again.
+                            Otherwise HomeAssistant will see the welcome plugin via MQTT, which is usually not intended.
                         </div>
                         <p>Use multi-select to upload several files at once.</p>
                         <div class="input-group">
