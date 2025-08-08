@@ -114,9 +114,6 @@ static String getHeapSize();
 /** Firmware binary filename, used for update. */
 static const char* FIRMWARE_FILENAME              = "firmware.bin";
 
-/** Bootloader binary filename, used for update. */
-static const char* BOOTLOADER_FILENAME            = "bootloader.bin";
-
 /** Path to the plugin webpages. */
 static const String PLUGIN_PAGE_PATH              = "/plugins/";
 
@@ -135,7 +132,6 @@ static const uint32_t MEM_CAPABILITIES            = MALLOC_CAP_INTERNAL | MALLOC
  */
 static const TmplKeyWordFunc gTmplKeyWordToFunc[] = {
     { "ARDUINO_IDF_BRANCH", []() -> String { return CONFIG_ARDUINO_IDF_BRANCH; } },
-    { "BOOTLOADER_FILENAME", []() -> String { return BOOTLOADER_FILENAME; } },
     { "ESP_CHIP_ID", tmpl::getEspChipId },
     { "ESP_CHIP_REV", []() -> String { return String(ESP.getChipRevision()); } },
     { "ESP_CPU_FREQ", []() -> String { return String(ESP.getCpuFreqMHz()); } },
@@ -466,11 +462,6 @@ static void uploadHandler(AsyncWebServerRequest* request, const String& filename
         {
             cmd             = U_FLASH;
             headerXFileSize = request->getHeader("X-File-Size-Firmware");
-        }
-        else if (filename == BOOTLOADER_FILENAME)
-        {
-            cmd             = U_FLASH;
-            headerXFileSize = request->getHeader("X-File-Size-Bootloader");
         }
         else if (filename == FILESYSTEM_FILENAME)
         {
