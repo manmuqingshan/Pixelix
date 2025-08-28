@@ -96,6 +96,12 @@ static const char*  KEY_HOSTNAME                    = "hostname";
 /** Brightness key */
 static const char*  KEY_BRIGHTNESS                  = "brightness";
 
+/** Min. brightness soft limit key */
+static const char*  KEY_MIN_BRIGHTNESS_SL           = "min_bright_sl";
+
+/** Max. brightness soft limit key */
+static const char*  KEY_MAX_BRIGHTNESS_SL           = "max_bright_sl";
+
 /** Automatic brightness control key */
 static const char*  KEY_AUTO_BRIGHTNESS_CTRL        = "a_brightn_ctrl";
 
@@ -148,6 +154,12 @@ static const char*  NAME_HOSTNAME                   = "Hostname";
 
 /** Brightness name of key value pair */
 static const char*  NAME_BRIGHTNESS                 = "Brightness set at startup in %";
+
+/** Min. brightness soft limit name of key value pair */
+static const char*  NAME_MIN_BRIGHTNESS_SL          = "Min. brightness soft limit in %";
+
+/** Max. brightness soft limit name of key value pair */
+static const char*  NAME_MAX_BRIGHTNESS_SL          = "Max. brightness soft limit in %";
 
 /** Automatic brightness control name of key value pair */
 static const char*  NAME_AUTO_BRIGHTNESS_CTRL       = "Autom. brightness control";
@@ -202,6 +214,12 @@ static const char*      DEFAULT_HOSTNAME                = "pixelix";
 /** Brightness default value in % */
 static const uint8_t    DEFAULT_BRIGHTNESS              = 25U; /* If powered via USB, keep this at 25% to avoid damage. */
 
+/** Min. brightness soft limit default value in % */
+static const uint8_t    DEFAULT_MIN_BRIGHTNESS_SL       = 10U;
+
+/** Max. brightness soft limit default value in % */
+static const uint8_t    DEFAULT_MAX_BRIGHTNESS_SL       = 100U;
+
 /** Automatic brightness control default value */
 static const bool       DEFAULT_AUTO_BRIGHTNESS_CTRL    = false;
 
@@ -255,6 +273,12 @@ static const size_t     MIN_VALUE_HOSTNAME              = 1U;
 /** Brightness min. value in %. Its a hard limit. The soft limit can be adjusted by the user. */
 static const uint8_t    MIN_VALUE_BRIGHTNESS            = 10U;
 
+/** Min. brightness soft limit min. value in %. */
+static const uint8_t    MIN_VALUE_MIN_BRIGHTNESS_SL     = MIN_VALUE_BRIGHTNESS;
+
+/** Max. brightness soft limit min. value in %. */
+static const uint8_t    MIN_VALUE_MAX_BRIGHTNESS_SL     = MIN_VALUE_BRIGHTNESS;
+
 /*                      MIN_VALUE_AUTO_BRIGHTNESS_CTRL */
 
 /** POSIX timezone min. length */
@@ -305,6 +329,12 @@ static const size_t     MAX_VALUE_HOSTNAME              = 63U;
 
 /** Brightness max. value in %. Its a hard limit. The soft limit can be adjusted by the user. */
 static const uint8_t    MAX_VALUE_BRIGHTNESS            = 100U;
+
+/** Min. brightness soft limit max. value in %. */
+static const uint8_t    MAX_VALUE_MIN_BRIGHTNESS_SL     = MAX_VALUE_BRIGHTNESS;
+
+/** Max. brightness soft limit max. value in %. */
+static const uint8_t    MAX_VALUE_MAX_BRIGHTNESS_SL     = MAX_VALUE_BRIGHTNESS;
 
 /*                      MAX_VALUE_AUTO_BRIGHTNESS_CTRL */
 
@@ -493,25 +523,26 @@ void SettingsService::unregisterSetting(KeyValue* setting)
 SettingsService::SettingsService() :
     m_preferences(),
     m_keyValueList(),
-    m_version               (m_preferences, KEY_VERSION,                NAME_VERSION,               DEFAULT_VERSION,                MIN_VALUE_VERSION,              MAX_VALUE_VERSION),
-    m_wifiSSID              (m_preferences, KEY_WIFI_SSID,              NAME_WIFI_SSID,             DEFAULT_WIFI_SSID,              MIN_VALUE_WIFI_SSID,            MAX_VALUE_WIFI_SSID),
-    m_wifiPassphrase        (m_preferences, KEY_WIFI_PASSPHRASE,        NAME_WIFI_PASSPHRASE,       DEFAULT_WIFI_PASSPHRASE,        MIN_VALUE_WIFI_PASSPHRASE,      MAX_VALUE_WIFI_PASSPHRASE,      true),
-    m_apSSID                (m_preferences, KEY_WIFI_AP_SSID,           NAME_WIFI_AP_SSID,          DEFAULT_WIFI_AP_SSID,           MIN_VALUE_WIFI_AP_SSID,         MAX_VALUE_WIFI_AP_SSID),
-    m_apPassphrase          (m_preferences, KEY_WIFI_AP_PASSPHRASE,     NAME_WIFI_AP_PASSPHRASE,    DEFAULT_WIFI_AP_PASSPHRASE,     MIN_VALUE_WIFI_AP_PASSPHRASE,   MAX_VALUE_WIFI_AP_PASSPHRASE,   true),
-    m_webLoginUser          (m_preferences, KEY_WEB_LOGIN_USER,         NAME_WEB_LOGIN_USER,        DEFAULT_WEB_LOGIN_USER,         MIN_VALUE_WEB_LOGIN_USER,       MAX_VALUE_WEB_LOGIN_USER),
-    m_webLoginPassword      (m_preferences, KEY_WEB_LOGIN_PASSWORD,     NAME_WEB_LOGIN_PASSWORD,    DEFAULT_WEB_LOGIN_PASSWORD,     MIN_VALUE_WEB_LOGIN_PASSWORD,   MAX_VALUE_WEB_LOGIN_PASSWORD,   true),
-    m_hostname              (m_preferences, KEY_HOSTNAME,               NAME_HOSTNAME,              DEFAULT_HOSTNAME,               MIN_VALUE_HOSTNAME,             MAX_VALUE_HOSTNAME),
-    m_brightness            (m_preferences, KEY_BRIGHTNESS,             NAME_BRIGHTNESS,            DEFAULT_BRIGHTNESS,             MIN_VALUE_BRIGHTNESS,           MAX_VALUE_BRIGHTNESS),
-    m_autoBrightnessCtrl    (m_preferences, KEY_AUTO_BRIGHTNESS_CTRL,   NAME_AUTO_BRIGHTNESS_CTRL,  DEFAULT_AUTO_BRIGHTNESS_CTRL),
-    m_timezone              (m_preferences, KEY_TIMEZONE,               NAME_TIMEZONE,              DEFAULT_TIMEZONE,               MIN_VALUE_TIMEZONE,             MAX_VALUE_TIMEZONE),
-    m_ntpServer             (m_preferences, KEY_NTP_SERVER,             NAME_NTP_SERVER,            DEFAULT_NTP_SERVER,             MIN_VALUE_NTP_SERVER,           MAX_VALUE_NTP_SERVER),
-    m_maxSlots              (m_preferences, KEY_MAX_SLOTS,              NAME_MAX_SLOTS,             DEFAULT_MAX_SLOTS,              MIN_MAX_SLOTS,                  MAX_MAX_SLOTS),
-    m_scrollPause           (m_preferences, KEY_SCROLL_PAUSE,           NAME_SCROLL_PAUSE,          DEFAULT_SCROLL_PAUSE,           MIN_VALUE_SCROLL_PAUSE,         MAX_VALUE_SCROLL_PAUSE),
-    m_notifyURL             (m_preferences, KEY_NOTIFY_URL,             NAME_NOTIFY_URL,            DEFAULT_NOTIFY_URL,             MIN_VALUE_NOTIFY_URL,           MAX_VALUE_NOTIFY_URL),
-    m_quietMode             (m_preferences, KEY_QUIET_MODE,             NAME_QUIET_MODE,            DEFAULT_QUIET_MODE),
-    m_fadeEffect            (m_preferences, KEY_FADE_EFFECT,            NAME_FADE_EFFECT,           DEFAULT_FADE_EFFECT,            MIN_VALUE_FADE_EFFECT,          MAX_VALUE_FADE_EFFECT)
+    m_version                   (m_preferences, KEY_VERSION,                NAME_VERSION,               DEFAULT_VERSION,                MIN_VALUE_VERSION,              MAX_VALUE_VERSION),
+    m_wifiSSID                  (m_preferences, KEY_WIFI_SSID,              NAME_WIFI_SSID,             DEFAULT_WIFI_SSID,              MIN_VALUE_WIFI_SSID,            MAX_VALUE_WIFI_SSID),
+    m_wifiPassphrase            (m_preferences, KEY_WIFI_PASSPHRASE,        NAME_WIFI_PASSPHRASE,       DEFAULT_WIFI_PASSPHRASE,        MIN_VALUE_WIFI_PASSPHRASE,      MAX_VALUE_WIFI_PASSPHRASE,      true),
+    m_apSSID                    (m_preferences, KEY_WIFI_AP_SSID,           NAME_WIFI_AP_SSID,          DEFAULT_WIFI_AP_SSID,           MIN_VALUE_WIFI_AP_SSID,         MAX_VALUE_WIFI_AP_SSID),
+    m_apPassphrase              (m_preferences, KEY_WIFI_AP_PASSPHRASE,     NAME_WIFI_AP_PASSPHRASE,    DEFAULT_WIFI_AP_PASSPHRASE,     MIN_VALUE_WIFI_AP_PASSPHRASE,   MAX_VALUE_WIFI_AP_PASSPHRASE,   true),
+    m_webLoginUser              (m_preferences, KEY_WEB_LOGIN_USER,         NAME_WEB_LOGIN_USER,        DEFAULT_WEB_LOGIN_USER,         MIN_VALUE_WEB_LOGIN_USER,       MAX_VALUE_WEB_LOGIN_USER),
+    m_webLoginPassword          (m_preferences, KEY_WEB_LOGIN_PASSWORD,     NAME_WEB_LOGIN_PASSWORD,    DEFAULT_WEB_LOGIN_PASSWORD,     MIN_VALUE_WEB_LOGIN_PASSWORD,   MAX_VALUE_WEB_LOGIN_PASSWORD,   true),
+    m_hostname                  (m_preferences, KEY_HOSTNAME,               NAME_HOSTNAME,              DEFAULT_HOSTNAME,               MIN_VALUE_HOSTNAME,             MAX_VALUE_HOSTNAME),
+    m_brightness                (m_preferences, KEY_BRIGHTNESS,             NAME_BRIGHTNESS,            DEFAULT_BRIGHTNESS,             MIN_VALUE_BRIGHTNESS,           MAX_VALUE_BRIGHTNESS),
+    m_minBrightnessSoftLimit    (m_preferences, KEY_MIN_BRIGHTNESS_SL,      NAME_MIN_BRIGHTNESS_SL,     DEFAULT_MIN_BRIGHTNESS_SL,      MIN_VALUE_MIN_BRIGHTNESS_SL,    MAX_VALUE_MIN_BRIGHTNESS_SL),
+    m_maxBrightnessSoftLimit    (m_preferences, KEY_MAX_BRIGHTNESS_SL,      NAME_MAX_BRIGHTNESS_SL,     DEFAULT_MAX_BRIGHTNESS_SL,      MIN_VALUE_MAX_BRIGHTNESS_SL,    MAX_VALUE_MAX_BRIGHTNESS_SL),
+    m_autoBrightnessCtrl        (m_preferences, KEY_AUTO_BRIGHTNESS_CTRL,   NAME_AUTO_BRIGHTNESS_CTRL,  DEFAULT_AUTO_BRIGHTNESS_CTRL),
+    m_timezone                  (m_preferences, KEY_TIMEZONE,               NAME_TIMEZONE,              DEFAULT_TIMEZONE,               MIN_VALUE_TIMEZONE,             MAX_VALUE_TIMEZONE),
+    m_ntpServer                 (m_preferences, KEY_NTP_SERVER,             NAME_NTP_SERVER,            DEFAULT_NTP_SERVER,             MIN_VALUE_NTP_SERVER,           MAX_VALUE_NTP_SERVER),
+    m_maxSlots                  (m_preferences, KEY_MAX_SLOTS,              NAME_MAX_SLOTS,             DEFAULT_MAX_SLOTS,              MIN_MAX_SLOTS,                  MAX_MAX_SLOTS),
+    m_scrollPause               (m_preferences, KEY_SCROLL_PAUSE,           NAME_SCROLL_PAUSE,          DEFAULT_SCROLL_PAUSE,           MIN_VALUE_SCROLL_PAUSE,         MAX_VALUE_SCROLL_PAUSE),
+    m_notifyURL                 (m_preferences, KEY_NOTIFY_URL,             NAME_NOTIFY_URL,            DEFAULT_NOTIFY_URL,             MIN_VALUE_NOTIFY_URL,           MAX_VALUE_NOTIFY_URL),
+    m_quietMode                 (m_preferences, KEY_QUIET_MODE,             NAME_QUIET_MODE,            DEFAULT_QUIET_MODE),
+    m_fadeEffect                (m_preferences, KEY_FADE_EFFECT,            NAME_FADE_EFFECT,           DEFAULT_FADE_EFFECT,            MIN_VALUE_FADE_EFFECT,          MAX_VALUE_FADE_EFFECT)
 {
-
     /* Skip m_version, because it shall not be modified by the user. */
     m_keyValueList.push_back(&m_wifiSSID);
     m_keyValueList.push_back(&m_wifiPassphrase);
@@ -521,6 +552,8 @@ SettingsService::SettingsService() :
     m_keyValueList.push_back(&m_webLoginPassword);
     m_keyValueList.push_back(&m_hostname);
     m_keyValueList.push_back(&m_brightness);
+    m_keyValueList.push_back(&m_minBrightnessSoftLimit);
+    m_keyValueList.push_back(&m_maxBrightnessSoftLimit);
     m_keyValueList.push_back(&m_autoBrightnessCtrl);
     m_keyValueList.push_back(&m_timezone);
     m_keyValueList.push_back(&m_ntpServer);

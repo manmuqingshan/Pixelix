@@ -256,6 +256,26 @@ public:
     }
 
     /**
+     * Get minimum brightness soft limit in %.
+     *
+     * @return Key value pair
+     */
+    KeyValueUInt8& getMinBrightnessSoftLimit()
+    {
+        return m_minBrightnessSoftLimit;
+    }
+
+    /**
+     * Get maximum brightness soft limit in %.
+     *
+     * @return Key value pair
+     */
+    KeyValueUInt8& getMaxBrightnessSoftLimit()
+    {
+        return m_maxBrightnessSoftLimit;
+    }
+
+    /**
      * Get state of automatic brightness adjustment.
      *
      * @return Key value pair
@@ -342,30 +362,32 @@ public:
      * - a existing setting changed
      * - a existing setting was removed
      */
-    static const uint32_t VERSION = 3U;
+    static const uint32_t VERSION = 4U;
 
 private:
 
     Preferences            m_preferences;  /**< Persistent storage */
     std::vector<KeyValue*> m_keyValueList; /**< List of key/value pairs, stored in persistent storage. */
 
-    KeyValueUInt32         m_version;            /**< Settings version (just an consequtive incremented number) */
-    KeyValueString         m_wifiSSID;           /**< Remote wifi network SSID */
-    KeyValueString         m_wifiPassphrase;     /**< Remote wifi network passphrase */
-    KeyValueString         m_apSSID;             /**< Access point SSID */
-    KeyValueString         m_apPassphrase;       /**< Access point passphrase */
-    KeyValueString         m_webLoginUser;       /**< Website login user account */
-    KeyValueString         m_webLoginPassword;   /**< Website login user password */
-    KeyValueString         m_hostname;           /**< Hostname */
-    KeyValueUInt8          m_brightness;         /**< The brightness level in % set at startup. */
-    KeyValueBool           m_autoBrightnessCtrl; /**< Automatic brightness control switch */
-    KeyValueString         m_timezone;           /**< POSIX timezone string */
-    KeyValueString         m_ntpServer;          /**< NTP server address */
-    KeyValueUInt8          m_maxSlots;           /**< Max. number of display slots. */
-    KeyValueUInt32         m_scrollPause;        /**< Text scroll pause */
-    KeyValueString         m_notifyURL;          /**< URL to be triggered when PIXELIX has connected to a remote network. */
-    KeyValueBool           m_quietMode;          /**< Quiet mode (skip unnecessary system messages) */
-    KeyValueUInt8          m_fadeEffect;         /**< Fade effect */
+    KeyValueUInt32         m_version;                /**< Settings version (just an consequtive incremented number) */
+    KeyValueString         m_wifiSSID;               /**< Remote wifi network SSID */
+    KeyValueString         m_wifiPassphrase;         /**< Remote wifi network passphrase */
+    KeyValueString         m_apSSID;                 /**< Access point SSID */
+    KeyValueString         m_apPassphrase;           /**< Access point passphrase */
+    KeyValueString         m_webLoginUser;           /**< Website login user account */
+    KeyValueString         m_webLoginPassword;       /**< Website login user password */
+    KeyValueString         m_hostname;               /**< Hostname */
+    KeyValueUInt8          m_brightness;             /**< The brightness level in % set at startup. */
+    KeyValueUInt8          m_minBrightnessSoftLimit; /**< The minimum brightness level in % for automatic brightness adjustment. */
+    KeyValueUInt8          m_maxBrightnessSoftLimit; /**< The maximum brightness level in % for automatic brightness adjustment. */
+    KeyValueBool           m_autoBrightnessCtrl;     /**< Automatic brightness control switch */
+    KeyValueString         m_timezone;               /**< POSIX timezone string */
+    KeyValueString         m_ntpServer;              /**< NTP server address */
+    KeyValueUInt8          m_maxSlots;               /**< Max. number of display slots. */
+    KeyValueUInt32         m_scrollPause;            /**< Text scroll pause */
+    KeyValueString         m_notifyURL;              /**< URL to be triggered when PIXELIX has connected to a remote network. */
+    KeyValueBool           m_quietMode;              /**< Quiet mode (skip unnecessary system messages) */
+    KeyValueUInt8          m_fadeEffect;             /**< Fade effect */
 
     /**
      * Constructs the settings service instance.

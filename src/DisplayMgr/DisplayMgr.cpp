@@ -87,45 +87,58 @@ struct Statistics
 
 bool DisplayMgr::begin()
 {
-    bool             status                 = false;
-    bool             isError                = false;
-    uint8_t          maxSlots               = 0U;
-    uint8_t          brightnessPercent      = 0U;
-    uint8_t          minBrightnessPercent   = 0U;
-    uint8_t          maxBrightnessPercent   = 0U;
-    uint16_t         brightness             = 0U;
-    uint16_t         minBrightnessHardLimit = 0U;
-    uint16_t         maxBrightnessHardLimit = 0U;
-    uint8_t          fadeEffect             = 0U;
-    SettingsService& settings               = SettingsService::getInstance();
-    BrightnessCtrl&  brightnessCtrl         = BrightnessCtrl::getInstance();
+    const uint16_t   PERCENT_100                   = 100U; /* [%] */
+    bool             status                        = false;
+    bool             isError                       = false;
+    uint8_t          maxSlots                      = 0U;
+    uint8_t          brightnessPercent             = 0U;
+    uint8_t          minBrightnessHardLimitPercent = 0U;
+    uint8_t          maxBrightnessHardLimitPercent = 0U;
+    uint8_t          minBrightnessSoftLimitPercent = 0U;
+    uint8_t          maxBrightnessSoftLimitPercent = 0U;
+    uint16_t         brightness                    = 0U;
+    uint16_t         minBrightnessHardLimit        = 0U;
+    uint16_t         maxBrightnessHardLimit        = 0U;
+    uint16_t         minBrightnessSoftLimit        = 0U;
+    uint16_t         maxBrightnessSoftLimit        = 0U;
+    uint8_t          fadeEffect                    = 0U;
+    SettingsService& settings                      = SettingsService::getInstance();
+    BrightnessCtrl&  brightnessCtrl                = BrightnessCtrl::getInstance();
 
     if (false == settings.open(true))
     {
-        maxSlots          = settings.getMaxSlots().getDefault();
-        brightnessPercent = settings.getBrightness().getDefault();
-        fadeEffect        = settings.getFadeEffect().getDefault();
+        maxSlots                      = settings.getMaxSlots().getDefault();
+        brightnessPercent             = settings.getBrightness().getDefault();
+        minBrightnessSoftLimitPercent = settings.getMinBrightnessSoftLimit().getDefault();
+        maxBrightnessSoftLimitPercent = settings.getMaxBrightnessSoftLimit().getDefault();
+        fadeEffect                    = settings.getFadeEffect().getDefault();
     }
     else
     {
-        maxSlots          = settings.getMaxSlots().getValue();
-        brightnessPercent = settings.getBrightness().getValue();
-        fadeEffect        = settings.getFadeEffect().getValue();
+        maxSlots                      = settings.getMaxSlots().getValue();
+        brightnessPercent             = settings.getBrightness().getValue();
+        minBrightnessSoftLimitPercent = settings.getMinBrightnessSoftLimit().getValue();
+        maxBrightnessSoftLimitPercent = settings.getMaxBrightnessSoftLimit().getValue();
+        fadeEffect                    = settings.getFadeEffect().getValue();
 
         settings.close();
     }
 
-    minBrightnessPercent   = settings.getBrightness().getMin();
-    maxBrightnessPercent   = settings.getBrightness().getMax();
-
-    minBrightnessHardLimit = (static_cast<uint16_t>(minBrightnessPercent) * UINT8_MAX) / 100U;
-    maxBrightnessHardLimit = (static_cast<uint16_t>(maxBrightnessPercent) * UINT8_MAX) / 100U;
+    /* Derive the hard limits from the min. and max. brightness values. */
+    minBrightnessHardLimitPercent = settings.getBrightness().getMin();
+    maxBrightnessHardLimitPercent = settings.getBrightness().getMax();
+    minBrightnessHardLimit        = (static_cast<uint16_t>(minBrightnessHardLimitPercent) * UINT8_MAX) / PERCENT_100;
+    maxBrightnessHardLimit        = (static_cast<uint16_t>(maxBrightnessHardLimitPercent) * UINT8_MAX) / PERCENT_100;
+    minBrightnessSoftLimit        = (static_cast<uint16_t>(minBrightnessSoftLimitPercent) * UINT8_MAX) / PERCENT_100;
+    maxBrightnessSoftLimit        = (static_cast<uint16_t>(maxBrightnessSoftLimitPercent) * UINT8_MAX) / PERCENT_100;
 
     /* Set the display brightness here just once.
      * There is no need to do this in the process() method periodically.
      */
-    brightnessCtrl.init(Display::getInstance(), minBrightnessHardLimit, maxBrightnessHardLimit);
-    brightness = (static_cast<uint16_t>(brightnessPercent) * UINT8_MAX) / 100U;
+    brightnessCtrl.init(Display::getInstance(), static_cast<uint8_t>(minBrightnessHardLimit), static_cast<uint8_t>(maxBrightnessHardLimit));
+    brightnessCtrl.setSoftLimits(static_cast<uint8_t>(minBrightnessSoftLimit), static_cast<uint8_t>(maxBrightnessSoftLimit));
+
+    brightness = (static_cast<uint16_t>(brightnessPercent) * UINT8_MAX) / PERCENT_100;
     brightnessCtrl.setBrightness(static_cast<uint8_t>(brightness));
 
     /* Set fade effect */
@@ -1113,13 +1126,13 @@ void DisplayMgr::update()
     {
         m_selectedPlugin->update(selectedFrameBuffer);
     }
-    
+
     /* Update frame buffer with indicators (foreground). */
     m_indicatorView.update(selectedFrameBuffer);
-    
+
     /* Update the display buffer. */
     m_fadeEffectController.update(display);
-    
+
     /* Latch display buffer. */
     display.show();
 }
