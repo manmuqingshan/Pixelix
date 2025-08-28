@@ -55,6 +55,7 @@
                     <li class="nav-item" role="presentation"><a class="nav-link" id="restart-tab" data-bs-toggle="tab" role="tab" href="#restart" aria-controls="restart" aria-selected="false">Restart</a></li>
                 </ul>
                 <div class="tab-content" id="myTabContent">
+
                     <div class="tab-pane fade show active" id="logging" role="tabpanel" aria-labelledby="logging-tab">
                         <br />
                         <div class="btn-toolbar" role="toolbar" aria-label="Log Toolbar">
@@ -89,17 +90,22 @@
                             </table>
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="measurement" role="tabpanel" aria-labelledby="measurement-tab">
+                        <br />
                         <p>Measure the performance with iperf.</p>
                         <p>Start/Stop the iperf server:</p>
                         <p>
                             <button class="btn btn-light" id="buttonMeasurement" type="button" onclick="toggleMeasurement();" disabled>Start</button>
                         </p>
                     </div>
+
                     <div class="tab-pane fade" id="restart" role="tabpanel" aria-labelledby="restart-tab">
+                        <br />
                         <p>Restart the system now: </p>
                         <p><button class="btn btn-light" type="button" onclick="restart();" disabled>Restart</button></p>
                     </div>
+
                 </div>
             </div>
         </main>

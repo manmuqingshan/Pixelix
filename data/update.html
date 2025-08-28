@@ -53,6 +53,7 @@
                     <li class="nav-item" role="presentation"><a class="nav-link active" id="update-tab" data-bs-toggle="tab" role="tab" href="#update"  aria-controls="update" aria-selected="true">Update</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" id="backup-tab" data-bs-toggle="tab" role="tab" href="#backup" aria-controls="backup" aria-selected="false">Backup</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" id="restore-tab" data-bs-toggle="tab" role="tab" href="#restore" aria-controls="restore" aria-selected="false">Restore</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" id="restart-tab" data-bs-toggle="tab" role="tab" href="#restart" aria-controls="restart" aria-selected="false">Restart</a></li>
                 </ul>
 
                 <div class="tab-content" id="myTabContent">
@@ -94,6 +95,12 @@
                         <div class="progress">
                             <div id="progressBarRestore" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                         </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="restart" role="tabpanel" aria-labelledby="restart-tab">
+                        <br />
+                        <p>Restart the system now: </p>
+                        <p><button class="btn btn-light" type="button" onclick="restart();" disabled>Restart</button></p>
                     </div>
 
                 </div>
@@ -372,6 +379,17 @@
                 }
             }
 
+            /* Restart device */
+            function restart() {
+                disableUI();
+
+                restClient.restart().then(function(rsp) {
+                    return dialog.showInfo("<p>Ok.</p>");
+                }).catch(function(err) {
+                    return dialog.showError("<p>Error: " + err + "</p>");
+                });
+            }
+
             /* Execute after page is ready. */
             $(document).ready(function() {
                 menu.addSubMenu(menu.data, "Plugins", pluginSubMenu);
@@ -391,6 +409,8 @@
 
                     updateProgressBar("progressBarRestore", 0);
                 });
+
+                enableUI();
             });
         </script>
     </body>
