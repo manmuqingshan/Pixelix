@@ -402,28 +402,42 @@
 
                 $.fn.extend({
                     treed: function (o) {
+                        
+                        // Helper function to toggle a branch
+                        function toggleBranch(branch) {
+                            var icon = branch.children("i:first").children("svg:first");
+                            icon.toggleClass("rotate270");
+                            branch.children().not("i").children().toggle();
+                        }
 
                         //initialize each of the top levels
                         var tree = $(this);
                         tree.addClass("tree");
                         tree.find('li').has("ul").each(function () {
                             var branch = $(this); //li with children ul
-                            branch.prepend("<i><svg class=\"rotate270 bg-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"10\" viewBox=\"0 0 13 10\"><polygon points=\"2 1, 12 1, 7 9\"></polygon></svg></i>");
+                            branch.prepend("<i class=\"tree-icon\"><svg class=\"rotate270 bg-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"10\" viewBox=\"0 0 13 10\"><polygon points=\"2 1, 12 1, 7 9\"></polygon></svg></i>");
                             branch.addClass('branch');
                             branch.on('click', function (e) {
                                 if (this == e.target) {
-                                    var icon = $(this).children("i:first").children("svg:first");
-                                    icon.toggleClass("rotate270");
-                                    $(this).children().not("i").children().toggle();
+                                    toggleBranch($(this));
                                 }
                             });
                             branch.children().not("i").children().toggle();
                         });
 
                         //fire event from the dynamically added icon
-                        tree.find('.branch .indicator').each(function(){
-                            $(this).on('click', function () {
-                                $(this).closest('li').click();
+                        tree.find('.branch .tree-icon').each(function(){
+                            $(this).on('click', function (e) {
+                                e.stopPropagation(); // Prevent event bubbling
+                                toggleBranch($(this).closest('li'));
+                            });
+                        });
+
+                        //fire event from the dynamically added SVG icon
+                        tree.find('.branch .tree-icon svg').each(function(){
+                            $(this).on('click', function (e) {
+                                e.stopPropagation(); // Prevent event bubbling
+                                toggleBranch($(this).closest('li'));
                             });
                         });
 
