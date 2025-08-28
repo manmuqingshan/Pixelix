@@ -234,7 +234,10 @@
             function createDirectoryInTree(directoryInfo, meta = null) {
                 var idx         = 0;
                 var dirName     = directoryInfo.name.split('/').pop() || directoryInfo.name; // Extract only the directory name without path
-                var $dirName    = $("<li>").text(dirName);
+                var $dirName    = $("<li>")
+                                    .attr("data-full-path", directoryInfo.name)
+                                    .attr("data-loaded", "false")
+                                    .text(dirName);
                 var $itemDir    = $("<ul>");
 
                 $($dirName).append($itemDir);
@@ -245,25 +248,90 @@
                     };
                 }
 
-                for(idx = 0; idx < directoryInfo.listing.length; ++idx) {
+                // Only process the listing if it exists (for initially loaded directories)
+                if (directoryInfo.listing && directoryInfo.listing.length > 0) {
+                    for(idx = 0; idx < directoryInfo.listing.length; ++idx) {
 
-                    if (directoryInfo.listing[idx].type === "dir") {
-                        $($itemDir).append(createDirectoryInTree(directoryInfo.listing[idx], meta))
-                    } else {
-                        $($itemDir).append(createFileInTree(directoryInfo.listing[idx], meta.seqNo))
-                        ++meta.seqNo
+                        if (directoryInfo.listing[idx].type === "dir") {
+                            // For subdirectories, create placeholder without listing to enable lazy loading
+                            var subDir = {
+                                name: directoryInfo.listing[idx].name,
+                                type: "dir"
+                                // No listing property - this will trigger lazy loading
+                            };
+                            $($itemDir).append(createDirectoryInTree(subDir, meta));
+                        } else {
+                            $($itemDir).append(createFileInTree(directoryInfo.listing[idx], meta.seqNo));
+                            ++meta.seqNo;
+                        }
                     }
+                    $dirName.attr("data-loaded", "true");
                 }
 
                 return $dirName;
             }
 
-            function listAllFiles(id) {
-                return restClient.listAllFilesRecursive("/").then(function(items) {
+            function listRootFiles(id) {
+                return restClient.listAllFiles("/").then(function(items) {
                     var $menu = $("#" + id);
-                    var $root = createDirectoryInTree(items).children().appendTo($menu);
+                    
+                    // Create root directory structure with only first-level contents
+                    var rootDir = {
+                        name: "/",
+                        type: "dir",
+                        listing: items
+                    };
+                    
+                    var $root = createDirectoryInTree(rootDir).children().appendTo($menu);
 
                     $("#" + id).treed();
+
+                    return Promise.resolve();
+
+                }).catch(function(rsp) {
+                    var alertMsg = "";
+
+                    if (typeof rsp === "string") {
+                        alertMsg = rsp;
+                    } else {
+                        alertMsg = rsp.error.msg;
+                    }
+
+                    return dialog.showError("<p>" + alertMsg + "</p>").then(function() {
+                        return Promise.reject();
+                    });
+                });
+            }
+
+            function loadDirectoryContents(dirPath, $dirElement) {
+                return restClient.listAllFiles(dirPath).then(function(items) {
+                    var $itemDir = $dirElement.children('ul').first();
+                    var meta = {
+                        seqNo: $("#fileTree").find('a[id^="file"]').length // Continue numbering from existing files
+                    };
+
+                    // Clear any existing placeholder content
+                    $itemDir.empty();
+
+                    // Add the directory contents
+                    for(var idx = 0; idx < items.length; ++idx) {
+                        if (items[idx].type === "dir") {
+                            // For subdirectories, create without listing to enable lazy loading
+                            var subDir = {
+                                name: items[idx].name,
+                                type: "dir"
+                                // No listing property - this will trigger lazy loading
+                            };
+                            $itemDir.append(createDirectoryInTree(subDir, meta));
+                        } else {
+                            $itemDir.append(createFileInTree(items[idx], meta.seqNo));
+                            ++meta.seqNo;
+                        }
+                    }
+
+                    // Mark as loaded and reinitialize tree functionality for new elements
+                    $dirElement.attr("data-loaded", "true");
+                    $("#fileTree").treed();
 
                     return Promise.resolve();
 
@@ -409,8 +477,29 @@
                         // Helper function to toggle a branch
                         function toggleBranch(branch) {
                             var icon = branch.children("i:first").children("svg:first");
-                            icon.toggleClass("rotate270");
-                            branch.children().not("i").children().toggle();
+                            var isCurrentlyCollapsed = icon.hasClass("rotate270");
+                            var dirPath = branch.attr("data-full-path");
+                            var isLoaded = branch.attr("data-loaded") === "true";
+
+                            // If expanding (currently collapsed) a directory that hasn't been loaded yet, load its contents
+                            if (isCurrentlyCollapsed && dirPath && !isLoaded) {
+                                dialog.show("Loading directory", "<p>Please wait, loading directory contents...</p>")
+                                .then(function() {
+                                    return loadDirectoryContents(dirPath, branch);
+                                })
+                                .then(function() {
+                                    // After loading, toggle the visual state
+                                    icon.removeClass("rotate270");
+                                    branch.children().not("i").children().show();
+                                })
+                                .finally(function() {
+                                    dialog.hide();
+                                });
+                            } else {
+                                // Normal toggle behavior for already loaded directories
+                                icon.toggleClass("rotate270");
+                                branch.children().not("i").children().toggle();
+                            }
                         }
 
                         //initialize each of the top levels
@@ -418,19 +507,29 @@
                         tree.addClass("tree");
                         tree.find('li').has("ul").each(function () {
                             var branch = $(this); //li with children ul
-                            branch.prepend("<i class=\"tree-icon\"><svg class=\"rotate270 bg-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"10\" viewBox=\"0 0 13 10\"><polygon points=\"2 1, 12 1, 7 9\"></polygon></svg></i>");
-                            branch.addClass('branch');
-                            branch.on('click', function (e) {
-                                if (this == e.target) {
-                                    toggleBranch($(this));
+                            
+                            // Only add icon if it doesn't already exist
+                            if (branch.children("i.tree-icon").length === 0) {
+                                branch.prepend("<i class=\"tree-icon\"><svg class=\"rotate270 bg-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"10\" viewBox=\"0 0 13 10\"><polygon points=\"2 1, 12 1, 7 9\"></polygon></svg></i>");
+                                branch.addClass('branch');
+                                
+                                // Remove old click handlers and add new one
+                                branch.off('click.tree').on('click.tree', function (e) {
+                                    if (this == e.target) {
+                                        toggleBranch($(this));
+                                    }
+                                });
+                                
+                                // Initially hide children unless it's the root or already loaded
+                                if (branch.attr("data-loaded") !== "true") {
+                                    branch.children().not("i").children().hide();
                                 }
-                            });
-                            branch.children().not("i").children().toggle();
+                            }
                         });
 
                         //fire event from the dynamically added icon
                         tree.find('.branch .tree-icon').each(function(){
-                            $(this).on('click', function (e) {
+                            $(this).off('click.tree').on('click.tree', function (e) {
                                 e.stopPropagation(); // Prevent event bubbling
                                 toggleBranch($(this).closest('li'));
                             });
@@ -438,7 +537,7 @@
 
                         //fire event from the dynamically added SVG icon
                         tree.find('.branch .tree-icon svg').each(function(){
-                            $(this).on('click', function (e) {
+                            $(this).off('click.tree').on('click.tree', function (e) {
                                 e.stopPropagation(); // Prevent event bubbling
                                 toggleBranch($(this).closest('li'));
                             });
@@ -446,7 +545,7 @@
 
                         //fire event to open branch if the li contains an anchor instead of text
                         tree.find('.branch>a').each(function () {
-                            $(this).on('click', function (e) {
+                            $(this).off('click.tree').on('click.tree', function (e) {
                                 $(this).closest('li').click();
                                 e.preventDefault();
                             });
@@ -454,7 +553,7 @@
 
                         //fire event to open branch if the li contains a button instead of text
                         tree.find('.branch>button').each(function () {
-                            $(this).on('click', function (e) {
+                            $(this).off('click.tree').on('click.tree', function (e) {
                                 $(this).closest('li').click();
                                 e.preventDefault();
                             });
@@ -505,7 +604,7 @@
 
                 dialog.show("Loading ...", "<p>Please wait, file informations are loading.</p>")
                 .then(function() {
-                    return listAllFiles("fileTree");
+                    return listRootFiles("fileTree");
                 })
                 .finally(function() {
                     dialog.hide();
