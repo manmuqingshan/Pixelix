@@ -63,7 +63,7 @@
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
                         <div class="form-group">
-                            <label class="form-label" for="bNextEffect">Currently active fade effect: <span id="lableFadeEffect"> Linear</span></label>
+                            <label class="form-label" for="bNextEffect">Currently active fade effect: <span id="lableFadeEffect" class="text-primary"> Linear</span></label>
                             <button class="btn btn-light" id="bNextEffect" type="button" onclick="nextEffect()" disabled>Next fade effect</button>
                         </div>
                     </form>
@@ -90,8 +90,8 @@
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
                         <div class="form-group">
-                            <label class="form-label" for="bAutoBrightnessCtrl">Automatic brightness control:</label>
-                            <button class="btn btn-light" id="bAutoBrightnessCtrl" type="button" value="false" onclick="triggerAutoBrightnessCtrl();changeBrightness();" disabled>?</button>
+                            <label class="form-label" for="bAutoBrightnessCtrl">Automatic brightness control: <span id="autoBrightnessStatus" class="text-primary">?</span></label>
+                            <button class="btn btn-light" id="bAutoBrightnessCtrl" type="button" value="false" onclick="triggerAutoBrightnessCtrl();changeBrightness();" disabled>Enable</button>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="currentBrightness">Current Brightness:</label>
@@ -764,10 +764,12 @@
 
             function updateAutoBrightnessCtrl(autoBrightnessCtrl) {
                 if (false === autoBrightnessCtrl) {
+                    $("#autoBrightnessStatus").text("Disabled");
                     $("#bAutoBrightnessCtrl").text("Enable");
                     $("#bAutoBrightnessCtrl").val("false");
                     $("#currentBrightness").prop("disabled", false);
                 } else {
+                    $("#autoBrightnessStatus").text("Enabled");
                     $("#bAutoBrightnessCtrl").text("Disable");
                     $("#bAutoBrightnessCtrl").val("true");
                     $("#currentBrightness").prop("disabled", true);
@@ -778,9 +780,11 @@
                 var autoBrightnessCtrl = $("#bAutoBrightnessCtrl").val() === "true";
 
                 if (false === autoBrightnessCtrl) {
+                    $("#autoBrightnessStatus").text("Enabled");
                     $("#bAutoBrightnessCtrl").text("Disable");
                     $("#bAutoBrightnessCtrl").val("true");
                 } else {
+                    $("#autoBrightnessStatus").text("Disabled");
                     $("#bAutoBrightnessCtrl").text("Enable");
                     $("#bAutoBrightnessCtrl").val("false");
                 }
