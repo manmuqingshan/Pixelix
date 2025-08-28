@@ -173,6 +173,7 @@
             function createFileInTree(fileInfo, seqNo) {
                 var fileTypeInfo    = getFileTypeInfo(fileInfo.name);
                 var itemId          = "file" + seqNo;
+                var fileName        = fileInfo.name.split('/').pop(); // Extract only the filename without path
                 var $itemFile       = $("<li>");
                 var $actions        = $("<div>")
                                     .attr("class", "dropdown-menu");
@@ -207,10 +208,11 @@
                                     .attr("role", "button")
                                     .attr("class", "nav-link dropdown-toggle")
                                     .attr("id", itemId)
+                                    .attr("data-full-path", fileInfo.name) // Store full path for operations
                                     .attr("data-bs-toggle", "dropdown")
                                     .attr("aria-haspopup", "true")
                                     .attr("aria-expanded", "false")
-                                    .text(fileInfo.name);
+                                    .text(fileName);
 
                 $($actions).append($actionSize);
                 $($actions).append($actionDownload);
@@ -231,7 +233,8 @@
 
             function createDirectoryInTree(directoryInfo, meta = null) {
                 var idx         = 0;
-                var $dirName    = $("<li>").text(directoryInfo.name);
+                var dirName     = directoryInfo.name.split('/').pop() || directoryInfo.name; // Extract only the directory name without path
+                var $dirName    = $("<li>").text(dirName);
                 var $itemDir    = $("<ul>");
 
                 $($dirName).append($itemDir);
@@ -280,7 +283,7 @@
             }
 
             function editFile(id) {
-                var filename = $("#" + id).text();
+                var filename = $("#" + id).attr("data-full-path"); // Use full path from data attribute
 
                 loadedFile = filename;
                 editor.setValue("");
@@ -310,7 +313,7 @@
             }
 
             function previewFile(id) {
-                var filename    = $("#" + id).text();
+                var filename    = $("#" + id).attr("data-full-path"); // Use full path from data attribute
                 var $image      = $("<img>")
                                     .attr("src", filename)
                                     .attr("alt", filename);
@@ -325,7 +328,7 @@
             }
 
             function removeFile(id) {
-                var filename = $("#" + id).text();
+                var filename = $("#" + id).attr("data-full-path"); // Use full path from data attribute
 
                 return restClient.removeFile(filename).then(function(rsp) {
 
