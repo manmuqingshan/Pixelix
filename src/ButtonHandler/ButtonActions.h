@@ -120,6 +120,9 @@ protected:
 
 private:
 
+    /**
+     * Brightness delta value in digit used by brightness adjustment.
+     */
     static const uint8_t    BRIGHTNESS_DELTA    = 10U;
 
     bool    m_incBrightness;        /**< If true the brightness will increase otherwise decrease. */
