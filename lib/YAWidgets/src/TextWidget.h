@@ -305,7 +305,7 @@ public:
 private:
 
     /** Fading brightness delta value per cycle. */
-    static const uint8_t    FADING_BRIGHTNESS_DELTA = 5U;
+    static const uint8_t    FADING_BRIGHTNESS_DELTA = 10U;
 
     /** Fading brigthness low (darkest value). */
     static const uint8_t    FADING_BRIGHTNESS_LOW   = 0U;
