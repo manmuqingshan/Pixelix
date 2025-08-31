@@ -58,6 +58,8 @@
  * Local Variables
  *****************************************************************************/
 
+/* clang-format off */
+
 /** SettingsService namespace used for preferences */
 static const char*  PREF_NAMESPACE                  = "settings";
 
@@ -364,6 +366,8 @@ static const size_t     MAX_VALUE_NOTIFY_URL            = 64U;
 /** Fade effect max. value */
 static const uint8_t    MAX_VALUE_FADE_EFFECT           = 3U;
 
+/* clang-format on */
+
 /******************************************************************************
  * Public Methods
  *****************************************************************************/
@@ -457,10 +461,10 @@ void SettingsService::cleanUp()
 
 KeyValue* SettingsService::getSettingByKey(const char* key)
 {
-    std::vector<KeyValue*>::const_iterator  it;
-    KeyValue*                               keyValuePair    = nullptr;
+    std::vector<KeyValue*>::const_iterator it;
+    KeyValue*                              keyValuePair = nullptr;
 
-    for(it = m_keyValueList.begin(); it != m_keyValueList.end(); ++it)
+    for (it = m_keyValueList.begin(); it != m_keyValueList.end(); ++it)
     {
         if (nullptr != *it)
         {
@@ -498,7 +502,7 @@ void SettingsService::unregisterSetting(KeyValue* setting)
 {
     std::vector<KeyValue*>::iterator it = m_keyValueList.begin();
 
-    while(m_keyValueList.end() != it)
+    while (m_keyValueList.end() != it)
     {
         if (setting == *it)
         {
@@ -520,6 +524,7 @@ void SettingsService::unregisterSetting(KeyValue* setting)
  * Private Methods
  *****************************************************************************/
 
+/* clang-format off */
 SettingsService::SettingsService() :
     m_preferences(),
     m_keyValueList(),
@@ -563,6 +568,7 @@ SettingsService::SettingsService() :
     m_keyValueList.push_back(&m_quietMode);
     m_keyValueList.push_back(&m_fadeEffect);
 }
+/* clang-format on */
 
 SettingsService::~SettingsService()
 {
