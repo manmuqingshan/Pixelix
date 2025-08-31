@@ -42,7 +42,6 @@
 #include "FileSystem.h"
 #include "RestUtil.h"
 #include "SlotList.h"
-#include "ButtonActions.h"
 
 #include <Util.h>
 #include <WiFi.h>
@@ -72,46 +71,10 @@ typedef struct
 
 } ContentTypeElem;
 
-/**
- * Virtual button which can be triggered via REST API.
- */
-class RestApiButton : public ButtonActions
-{
-public:
-
-    /**
-     * Construct virtual button instance.
-     */
-    RestApiButton() :
-        ButtonActions()
-    {
-    }
-
-    /**
-     * Destroy virtual button instance.
-     */
-    virtual ~RestApiButton()
-    {
-    }
-
-    /**
-     * Execute action by button action id.
-     *
-     * @param[in] id    Button action id
-     */
-    void executeAction(ButtonActionId id)
-    {
-        ButtonActions::executeAction(id, true);
-    }
-
-private:
-};
-
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
 
-static void        handleButton(AsyncWebServerRequest* request);
 static void        handleFadeEffect(AsyncWebServerRequest* request);
 static void        getSlotInfo(JsonObject& slot, uint16_t slotId);
 static void        handleSlots(AsyncWebServerRequest* request);
@@ -169,7 +132,6 @@ static const ContentTypeElem contentTypeTable[] = {
 
 void RestApi::init(AsyncWebServer& srv)
 {
-    (void)srv.on("/rest/api/v1/button", handleButton);
     (void)srv.on("/rest/api/v1/display/fadeEffect", handleFadeEffect);
     (void)srv.on("/rest/api/v1/display/slots", handleSlots);
     (void)srv.on("/rest/api/v1/display/slot/*", handleSlot);
@@ -210,66 +172,6 @@ void RestApi::error(AsyncWebServerRequest* request)
 /******************************************************************************
  * Local Functions
  *****************************************************************************/
-
-/**
- * Trigger virtual user button.
- * POST \c "/api/v1/button"
- *
- * @param[in] request   HTTP request
- */
-static void handleButton(AsyncWebServerRequest* request)
-{
-    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
-    const size_t        JSON_DOC_SIZE  = 512U;
-    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-
-    if (nullptr == request)
-    {
-        return;
-    }
-
-    if (HTTP_POST != request->method())
-    {
-        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
-        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
-    }
-    else
-    {
-        ButtonActionId actionId     = BUTTON_ACTION_ID_ACTIVATE_NEXT_SLOT; /* Default */
-        bool           isSuccessful = true;
-
-        if (true == request->hasArg("actionId"))
-        {
-            int32_t i32ActionId = request->arg("actionId").toInt();
-
-            if ((0 > i32ActionId) ||
-                (BUTTON_ACTION_ID_MAX <= i32ActionId))
-            {
-                isSuccessful = false;
-            }
-            else
-            {
-                actionId = static_cast<ButtonActionId>(i32ActionId);
-            }
-        }
-
-        if (false == isSuccessful)
-        {
-            RestUtil::prepareRspError(jsonDoc, "Invalid action id.");
-            httpStatusCode = HttpStatus::STATUS_CODE_METHOD_NOT_ALLOWED;
-        }
-        else
-        {
-            RestApiButton buttonActions;
-
-            buttonActions.executeAction(actionId);
-
-            (void)RestUtil::prepareRspSuccess(jsonDoc);
-        }
-    }
-
-    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
-}
 
 /**
  * Activate next fade effect.
