@@ -42,10 +42,6 @@
 #include <Util.h>
 #include <SettingsService.h>
 
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-#include <StatisticValue.hpp>
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -57,21 +53,6 @@
 /******************************************************************************
  * Types and classes
  *****************************************************************************/
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-
-/**
- * A collection of statistics, which are interesting for debugging purposes.
- */
-struct Statistics
-{
-    StatisticValue<uint32_t, 0U, 10U> pluginProcessing;
-    StatisticValue<uint32_t, 0U, 10U> displayUpdate;
-    StatisticValue<uint32_t, 0U, 10U> total;
-    StatisticValue<uint32_t, 0U, 10U> refreshPeriod;
-};
-
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
 /******************************************************************************
  * Prototypes
@@ -186,6 +167,10 @@ bool DisplayMgr::begin()
     if ((false == isError) &&
         (false == m_updateTask.isRunning()))
     {
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+        m_statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
         if (false == m_updateTask.start(this))
         {
             isError = true;
@@ -232,6 +217,10 @@ void DisplayMgr::end()
     {
         LOG_DEBUG("Update task is down.");
     }
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    m_statisticsLogTimer.stop();
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
     m_mutexUpdate.destroy();
     m_mutexInterf.destroy();
@@ -809,6 +798,15 @@ DisplayMgr::DisplayMgr() :
     m_fadeEffectController(m_doubleFrameBuffer),
     m_isNetworkConnected(false),
     m_indicatorView()
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    ,
+    m_statistics(),
+    m_statisticsLogTimer(),
+    m_timestampLastUpdate(0U)
+
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
 {
 }
 
@@ -1148,33 +1146,16 @@ void DisplayMgr::processTask(DisplayMgr* self)
     /* Calculate overall duration */
     duration = millis() - timestamp;
 
-    /* Give other tasks a chance. */
-    if (PROCESS_TASK_PERIOD <= duration)
-    {
-        delay(1U);
-    }
-    else
-    {
-        delay(PROCESS_TASK_PERIOD - duration);
-    }
+    /* Processing shall take place in aquidistant intervals. */
+    delay(PROCESS_TASK_PERIOD - (duration % PROCESS_TASK_PERIOD));
 }
 
 void DisplayMgr::updateTask(DisplayMgr* self)
 {
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-    Statistics     statistics;
-    SimpleTimer    statisticsLogTimer;
-    const uint32_t STATISTICS_LOG_PERIOD = 4000U; /* [ms] */
-
-    statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
-
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
-    uint32_t timestampLastUpdate = millis();
-    uint32_t timestamp           = millis();
-    uint32_t duration            = 0U;
-    uint32_t timestampPhyUpdate  = 0U;
-    uint32_t durationPhyUpdate   = 0U;
+    uint32_t timestamp           = millis(); /* ms */
+    uint32_t duration            = 0U;       /* ms */
+    uint32_t timestampPhyUpdate  = 0U;       /* ms */
+    uint32_t durationPhyUpdate   = 0U;       /* ms */
     bool     abort               = false;
 
     /* Observe the physical display refresh and limit the duration to 70% of refresh period. */
@@ -1184,7 +1165,8 @@ void DisplayMgr::updateTask(DisplayMgr* self)
     self->update();
 
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-    statistics.pluginProcessing.update(millis() - timestamp);
+    /* Update statistics for active plugin processing time. */
+    self->m_statistics.pluginProcessing.update(millis() - timestamp);
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
     /* Wait until the physical update is ready to avoid flickering
@@ -1203,53 +1185,53 @@ void DisplayMgr::updateTask(DisplayMgr* self)
     }
 
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-    statistics.displayUpdate.update(durationPhyUpdate);
-    statistics.total.update(statistics.pluginProcessing.getCurrent() + statistics.displayUpdate.getCurrent());
+    /* Update statistics for physical display update time. */
+    self->m_statistics.displayUpdate.update(durationPhyUpdate);
 
-    if (true == statisticsLogTimer.isTimeout())
+    /* Update statistics for total processing time. */
+    self->m_statistics.total.update(self->m_statistics.pluginProcessing.getCurrent() + self->m_statistics.displayUpdate.getCurrent());
+
+    if (true == self->m_statisticsLogTimer.isTimeout())
     {
-        LOG_DEBUG("[ %2u, %2u, %2u ]",
-            statistics.refreshPeriod.getMin(),
-            statistics.refreshPeriod.getAvg(),
-            statistics.refreshPeriod.getMax());
+        LOG_DEBUG("Refresh period   : min %2u avg %2u max %2u",
+            self->m_statistics.refreshPeriod.getMin(),
+            self->m_statistics.refreshPeriod.getAvg(),
+            self->m_statistics.refreshPeriod.getMax());
 
-        LOG_DEBUG("[ %2u, %2u, %2u ] [ %2u, %2u, %2u ] [ %2u, %2u, %2u ]",
-            statistics.pluginProcessing.getMin(),
-            statistics.pluginProcessing.getAvg(),
-            statistics.pluginProcessing.getMax(),
-            statistics.displayUpdate.getMin(),
-            statistics.displayUpdate.getAvg(),
-            statistics.displayUpdate.getMax(),
-            statistics.total.getMin(),
-            statistics.total.getAvg(),
-            statistics.total.getMax());
+        LOG_DEBUG("Plugin processing: min %2u avg %2u max %2u",
+            self->m_statistics.pluginProcessing.getMin(),
+            self->m_statistics.pluginProcessing.getAvg(),
+            self->m_statistics.pluginProcessing.getMax());
+
+        LOG_DEBUG("Display update   : min %2u avg %2u max %2u",
+            self->m_statistics.displayUpdate.getMin(),
+            self->m_statistics.displayUpdate.getAvg(),
+            self->m_statistics.displayUpdate.getMax());
+
+        LOG_DEBUG("Total            : min %2u avg %2u max %2u",
+            self->m_statistics.total.getMin(),
+            self->m_statistics.total.getAvg(),
+            self->m_statistics.total.getMax());
 
         /* Reset the statistics to get a new min./max. determination. */
-        statistics.pluginProcessing.reset();
-        statistics.displayUpdate.reset();
-        statistics.total.reset();
-        statistics.refreshPeriod.reset();
+        self->m_statistics.pluginProcessing.reset();
+        self->m_statistics.displayUpdate.reset();
+        self->m_statistics.total.reset();
+        self->m_statistics.refreshPeriod.reset();
 
-        statisticsLogTimer.restart();
+        self->m_statisticsLogTimer.restart();
     }
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
     /* Calculate overall duration */
     duration = millis() - timestamp;
 
-    /* Give other tasks a chance. */
-    if (UPDATE_TASK_PERIOD <= duration)
-    {
-        delay(1U);
-    }
-    else
-    {
-        delay(UPDATE_TASK_PERIOD - duration);
-    }
+    /* Updating the display shall take place in aquidistant intervals. */
+    delay(UPDATE_TASK_PERIOD - (duration % UPDATE_TASK_PERIOD));
 
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-    statistics.refreshPeriod.update(millis() - timestampLastUpdate);
-    timestampLastUpdate = millis();
+    self->m_statistics.refreshPeriod.update(millis() - self->m_timestampLastUpdate);
+    self->m_timestampLastUpdate = millis();
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 }
 

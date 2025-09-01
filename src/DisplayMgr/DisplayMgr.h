@@ -56,6 +56,10 @@
 #include "FadeEffectController.h"
 #include "DoubleFrameBuffer.h"
 
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+#include <StatisticValue.hpp>
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
 /******************************************************************************
  * Macros
  *****************************************************************************/
@@ -469,12 +473,34 @@ private:
     IPluginMaintenance* m_requestedPlugin;
 
     /** Timer, used for changing the slot after a specific duration. */
-    SimpleTimer                      m_slotTimer;
+    SimpleTimer          m_slotTimer;
 
-    DoubleFrameBuffer                m_doubleFrameBuffer;    /**< Double framebuffer. */
-    FadeEffectController             m_fadeEffectController; /**< Fade effect controller. */
-    bool                             m_isNetworkConnected;   /**< Is a network connection established? */
-    IndicatorViewBase                m_indicatorView;        /**< Indicator view shown as overlay to indicate user defined states. */
+    DoubleFrameBuffer    m_doubleFrameBuffer;    /**< Double framebuffer. */
+    FadeEffectController m_fadeEffectController; /**< Fade effect controller. */
+    bool                 m_isNetworkConnected;   /**< Is a network connection established? */
+    IndicatorViewBase    m_indicatorView;        /**< Indicator view shown as overlay to indicate user defined states. */
+
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+
+    /**
+     * A collection of statistics, which are interesting for debugging purposes.
+     */
+    struct Statistics
+    {
+        StatisticValue<uint32_t, 0U, 10U> pluginProcessing;
+        StatisticValue<uint32_t, 0U, 10U> displayUpdate;
+        StatisticValue<uint32_t, 0U, 10U> total;
+        StatisticValue<uint32_t, 0U, 10U> refreshPeriod;
+    };
+
+    /** Statistics log period in ms. */
+    static const uint32_t STATISTICS_LOG_PERIOD = 4000U; /* [ms] */
+    Statistics            m_statistics;                  /**< Statistics data. */
+    SimpleTimer           m_statisticsLogTimer;          /**< Statistics log timer. */
+    uint32_t              m_timestampLastUpdate;        /**< Timestamp of last display update. */
+
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
     /**
      * Constructs the display manager.
