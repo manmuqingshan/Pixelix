@@ -96,11 +96,19 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="temperatureUnit">Temperature unit:</label>
-                        <input class="form-control" type="text" id="temperatureUnit" name="temperatureUnit" value="The temperature unit." />
+                        <select class="form-select" id="temperatureUnit" size="1">
+                            <option value="celsius">°C</option>
+                            <option value="fahrenheit">°F</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="windSpeedUnit">Wind speed unit:</label>
-                        <input class="form-control" type="text" id="windSpeedUnit" name="windSpeedUnit" value="The wind speed unit." />
+                        <select class="form-select" id="windSpeedUnit" size="1">
+                            <option value="ms">m/s</option>
+                            <option value="kmh">km/h</option>
+                            <option value="mph">mph</option>
+                            <option value="kn">kn</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <div class="form-check">
