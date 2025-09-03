@@ -43,10 +43,6 @@
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <ArduinoOTA.h>
-#include <TextWidget.h>
-#include <ProgressBar.h>
 #include <SimpleTimer.hpp>
 
 /******************************************************************************
@@ -74,33 +70,6 @@ public:
         static UpdateMgr instance; /* singleton idiom to force initialization in the first usage. */
 
         return instance;
-    }
-
-    /**
-     * Initialize update manager, to be able to receive updates over-the-air.
-     * 
-     * @return If initialization is successful, it will return true otherwise false.
-     */
-    bool init(void);
-
-    /**
-     * Start over-the-air server.
-     */
-    void begin(void);
-
-    /**
-     * Stop over-the-air server.
-     */
-    void end(void);
-
-    /**
-     * Is an update in progress?
-     * 
-     * @return If an update is running it returns true otherwise false.
-     */
-    bool isUpdateRunning() const
-    {
-        return m_updateIsRunning;
     }
 
     /**
@@ -137,66 +106,10 @@ public:
         }
     }
 
-    /**
-     * Prepare the system for an update.
-     * 
-     * @param[in] isFilesystemUpdate Is it a filesystem update?
-     */
-    void prepareUpdate(bool isFilesystemUpdate);
-
-    /**
-     * Prepare the system for a restart after an successful or even
-     * and failed update.
-     */
-    void prepareForRestart();
-
-    /**
-     * Show the user that the update starts.
-     */
-    void beginProgress();
-
-    /**
-     * Show the user the current update progress.
-     * 
-     * @param[in] progress  Progress in [0; 100] %
-     */
-    void updateProgress(uint8_t progress);
-
-    /**
-     * Show the user that the update is finished.
-     */
-    void endProgress();
-
-    /** Over-the-air update password */
-    static const char*  OTA_PASSWORD;
-
-    /**
-     * Fixed slot, which to use in the display manager.
-     */
-    static const uint8_t SLOT_ID = 1U;
-
 private:
-
-    /** Is the over-the-air update initialized? */
-    bool                m_isInitialized;
-
-    /** Is an update in progress? */
-    bool                m_updateIsRunning;
-
-    /**
-     * Current update status in percent. Only used to avoid permanent logging
-     * output during status update.
-     */
-    uint32_t            m_progress;
 
     /** Restart requested? */
     bool                m_isRestartReq;
-
-    /** During the update the user shall be informed about whats going on. */
-    TextWidget          m_textWidget;
-
-    /** During the update the user shall be informed about the update progress. */
-    ProgressBar         m_progressBar;
 
     /** Timer used to delay a restart request. */
     SimpleTimer         m_timer;
@@ -210,39 +123,6 @@ private:
      * Destroys the update manager.
      */
     ~UpdateMgr();
-
-    /**
-     * Update the display content.
-     * 
-     * @param[in] showProgress If true, the progress bar will be shown too.
-     */
-    void updateDisplay(bool showProgress);
-
-    /**
-     * Over-the-air update start.
-     */
-    static void onStart(void);
-
-    /**
-     * Over-the-air update end.
-     */
-    static void onEnd(void);
-
-    /**
-     * On progress of over-the-air update.
-     * 
-     * @param[in] progress  Number of written bytes.
-     * @param[in] total     Total size of the whole binary, which to update.
-     */
-    static void onProgress(unsigned int progress, unsigned int total);
-
-    /**
-     * On error of over-the-air update.
-     * 
-     * @param[in] error Error information
-     */
-    static void onError(ota_error_t error);
-
 };
 
 /******************************************************************************

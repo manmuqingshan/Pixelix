@@ -121,8 +121,6 @@ void RestartState::process(StateMachine& sm)
             ;
         }
 
-        /* Avoid any external request. */
-        UpdateMgr::getInstance().end();
         Topics::end();
 
         /* Stop services.
