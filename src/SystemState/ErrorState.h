@@ -27,9 +27,9 @@
 /**
  * @brief  System state: Error
  * @author Andreas Merkle <web@blue-andi.de>
- * 
+ *
  * @addtogroup SYS_STATES
- * 
+ *
  * @{
  */
 
@@ -64,7 +64,7 @@ public:
 
     /**
      * Get state instance.
-     * 
+     *
      * @return State instance
      */
     static ErrorState& getInstance()
@@ -76,21 +76,21 @@ public:
 
     /**
      * The entry is called once, a state is entered.
-     * 
+     *
      * @param[in] sm    Responsible state machine
      */
     void entry(StateMachine& sm) final;
 
     /**
      * The process routine is called cyclic, as long as the state is active.
-     * 
+     *
      * @param[in] sm    Responsible state machine
      */
     void process(StateMachine& sm) final;
 
     /**
      * The exit is called once, a state will be left.
-     * 
+     *
      * @param[in] sm    Responsible state machine
      */
     void exit(StateMachine& sm) final;
@@ -103,20 +103,19 @@ public:
      */
     enum ErrorId
     {
-        ERROR_ID_NO_ERROR = 0,      /**< No error */
-        ERROR_ID_UNKNOWN,           /**< Unknown error */
-        ERROR_ID_TWO_WIRE_ERROR,    /**< Two-wire (I2C) error */
-        ERROR_ID_NO_USER_BUTTON,    /**< User button is not available */
-        ERROR_ID_BAD_FS,            /**< Bad filesystem */
-        ERROR_ID_DISP_MGR,          /**< Display manager error */
-        ERROR_ID_SYS_MSG,           /**< System message handler error */
-        ERROR_ID_UPDATE_MGR,        /**< Update manager error */
-        ERROR_ID_SERVICE            /**< Service error */
+        ERROR_ID_NO_ERROR = 0,   /**< No error */
+        ERROR_ID_UNKNOWN,        /**< Unknown error */
+        ERROR_ID_TWO_WIRE_ERROR, /**< Two-wire (I2C) error */
+        ERROR_ID_NO_USER_BUTTON, /**< User button is not available */
+        ERROR_ID_BAD_FS,         /**< Bad filesystem */
+        ERROR_ID_DISP_MGR,       /**< Display manager error */
+        ERROR_ID_SYS_MSG,        /**< System message handler error */
+        ERROR_ID_SERVICE         /**< Service error */
     };
 
     /**
      * Set error cause, why this state will be entered.
-     * 
+     *
      * @param[in] errorId   The error id of the root cause.
      */
     void setErrorId(ErrorId errorId)
@@ -126,7 +125,7 @@ public:
 
     /**
      * Get current set error id.
-     * 
+     *
      * @return Error id, which is set.
      */
     ErrorId getErrorId() const
@@ -137,17 +136,17 @@ public:
 private:
 
     /** Signal lamp on period in ms. */
-    static const uint32_t   BLINK_ON_PERIOD         = 200U;
+    static const uint32_t BLINK_ON_PERIOD        = 200U;
 
     /** Signal lamp short off period in ms. */
-    static const uint32_t   BLINK_OFF_SHORT_PERIOD  = 200U;
+    static const uint32_t BLINK_OFF_SHORT_PERIOD = 200U;
 
     /** Signal lamp long off period in ms. */
-    static const uint32_t   BLINK_OFF_LONG_PERIOD   = 1000U;
+    static const uint32_t BLINK_OFF_LONG_PERIOD  = 1000U;
 
-    ErrorId     m_errorId;  /**< The error cause, why this state is active. */
-    SimpleTimer m_timer;    /**< Timer used for onboard LED signalling. */
-    uint8_t     m_cnt;      /**< Count number of flashes. */
+    ErrorId               m_errorId; /**< The error cause, why this state is active. */
+    SimpleTimer           m_timer;   /**< Timer used for onboard LED signalling. */
+    uint8_t               m_cnt;     /**< Count number of flashes. */
 
     /**
      * Constructs the state.
@@ -165,7 +164,7 @@ private:
     ~ErrorState()
     {
     }
-    
+
     ErrorState(const ErrorState& state);
     ErrorState& operator=(const ErrorState& state);
 };
@@ -174,6 +173,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif  /* ERRORSTATE_H */
+#endif /* ERRORSTATE_H */
 
 /** @} */

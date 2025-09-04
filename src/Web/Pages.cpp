@@ -43,7 +43,6 @@
 
 #include <WiFi.h>
 #include <Esp.h>
-#include <Update.h>
 #include <Logging.h>
 #include <Util.h>
 #include <ArduinoJson.h>
