@@ -47,7 +47,7 @@
             </div>
             <!-- Main view -->
             <div class="container">
-                <h1 class="mt-5">Configuration Backup</h1>
+                <h1 class="mt-5">OTA Update</h1>
 
                 <ul class="nav nav-tabs" role="tablist">
                     <li class="nav-item" role="presentation"><a class="nav-link" id="backup-tab" data-bs-toggle="tab" role="tab" href="#backup" aria-controls="backup" aria-selected="false">Backup</a></li>
@@ -81,6 +81,12 @@
                         <p><button class="btn btn-light" type="button" onclick="restart();" disabled>Restart</button></p>
                     </div>
 
+                </div>
+
+                <div>
+                    <br />
+                        <p>To upload your firmware or filesystem binary go to Pixelix Updater. Be careful a filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it. </p>
+                    <button class="btn btn-light" type="button" onclick="sendPartitionChangeRequest();">Go to PixelixUpdater</button>
                 </div>
 
             </div>
@@ -286,6 +292,32 @@
                     return dialog.showInfo("<p>Ok.</p>");
                 }).catch(function(err) {
                     return dialog.showError("<p>Error: " + err + "</p>");
+                });
+            }
+
+             /* Request change of active partition. */
+            function sendPartitionChangeRequest() {
+                disableUI();
+
+                utils.makeRequest({
+                    method: "GET",
+                    url: "/change-partition",
+                }).then(function(rsp) {
+                    let seconds = 20;
+                    dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
+
+                    const intervalId = setInterval(() => {
+                        seconds--;
+                        if (seconds > 0) {
+                            dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
+                        } else {
+                            clearInterval(intervalId);
+                            location.reload();
+                        }
+                    }, 1000);
+                }).catch(function(rsp) {
+                    dialog.showError("<p>Error: " + rsp + "</p>")
+                    enableUI();
                 });
             }
 

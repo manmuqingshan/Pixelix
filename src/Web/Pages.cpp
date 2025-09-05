@@ -36,6 +36,7 @@
 #include "WebConfig.h"
 #include "Version.h"
 #include "DisplayMgr.h"
+#include "RestartMgr.h"
 #include "RestApi.h"
 #include "PluginList.h"
 #include "Services.h"
@@ -43,6 +44,8 @@
 
 #include <WiFi.h>
 #include <Esp.h>
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
 #include <Logging.h>
 #include <Util.h>
 #include <ArduinoJson.h>
@@ -87,7 +90,7 @@ struct HtmlPageRoute
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
-
+static bool   setFactoryPartitionActive();
 static String tmplPageProcessor(const String& var);
 static void   htmlPage(AsyncWebServerRequest* request);
 
@@ -167,7 +170,7 @@ static const HtmlPageRoute gHtmlPageRoutes[] = {
     { "/index.html", HTTP_GET },
     { "/info.html", HTTP_GET },
     { "/settings.html", HTTP_GET | HTTP_POST },
-    { "/config_backup.html", HTTP_GET }
+    { "/update.html", HTTP_GET }
 };
 
 /**
@@ -257,6 +260,24 @@ void Pages::init(AsyncWebServer& srv)
         ++idx;
     }
 
+    (void)srv.on("/change-partition", HTTP_GET, [](AsyncWebServerRequest* request) {
+        if (false == setFactoryPartitionActive())
+        {
+            request->send(500, "text/plain", "Failed to switch partition.");
+        }
+        else
+        {
+            const uint32_t RESTART_DELAY = 100U; /* ms */
+
+            request->send(200, "text/plain", "Partition switched. Restarting...");
+
+            /* To ensure that a positive response will be sent before the device restarts,
+             * a short delay is necessary.
+             */
+            RestartMgr::getInstance().reqRestart(RESTART_DELAY);
+        }
+    });
+
     /* Add one page per plugin. */
     idx = 0U;
     while (pluginTypeListLength > idx)
@@ -331,6 +352,36 @@ void Pages::error(AsyncWebServerRequest* request)
 /******************************************************************************
  * Local Functions
  *****************************************************************************/
+
+/**
+ * Set the factory partition active to be considered as the boot partition.
+ *
+ * @return True if factory partition was set active successfully, otherwise false.
+ */
+static bool setFactoryPartitionActive()
+{
+    bool                   isSuccessful = false;
+    const esp_partition_t* partition    = esp_partition_find_first(
+        esp_partition_type_t::ESP_PARTITION_TYPE_APP,
+        esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_FACTORY,
+        nullptr);
+
+    if (nullptr != partition)
+    {
+        esp_err_t err = esp_ota_set_boot_partition(partition);
+
+        LOG_INFO("Setting factory partition '%s' as boot partition", partition->label);
+        isSuccessful = true;
+
+        if (ESP_OK != err)
+        {
+            LOG_ERROR("Failed to set factory partition '%s' as boot partition: %d", partition->label, err);
+            isSuccessful = false;
+        }
+    }
+
+    return isSuccessful;
+}
 
 /**
  * Processor for page template, containing the common part, which is available
