@@ -45,47 +45,46 @@
  *****************************************************************************/
 
 /** Center X-coordinate of analog clock. */
-static const int16_t ANALOG_CENTER_X      = 32;
+static const int16_t ANALOG_CENTER_X                                                       = 32;
 
 /** Center Y-coordinate of analog clock.  */
-static const int16_t ANALOG_CENTER_Y      = 31;
+static const int16_t ANALOG_CENTER_Y                                                       = 31;
 
 /** Anaolog Clock radius. */
-static const int16_t ANALOG_RADIUS        = 31;
+static const int16_t ANALOG_RADIUS                                                         = 31;
 
 /** Factor by which sinus/cosinus values are scaled to use integer math.  */
-static const int16_t SINUS_VAL_SCALE      = 10000;
+static const int16_t SINUS_VAL_SCALE                                                       = 10000;
 
 /** Angle difference between two minute marks on analog clock ring. */
-static const int16_t MINUTES_ANGLE_DELTA  = 6;
+static const int16_t MINUTES_ANGLE_DELTA                                                   = 6;
 
 /** Each hour mark spawns 5 minutes. */
-static const int16_t MINUTE_HOUR_DELTA    = 5;
+static const int16_t MINUTE_HOUR_DELTA                                                     = 5;
 
 /** Number of minute marks on clock. */
-static const int16_t MINUTE_MARKS_COUNT   = 12;
+static const int16_t MINUTE_MARKS_COUNT                                                    = 12;
 
 /** Angle difference between 2 hour marks on analog clock ring. */
-static const int16_t HOURS_ANGLE_DELTA    = MINUTE_HOUR_DELTA * MINUTES_ANGLE_DELTA;
+static const int16_t HOURS_ANGLE_DELTA                                                     = MINUTE_HOUR_DELTA * MINUTES_ANGLE_DELTA;
 
 /** Pixel length of hour marks on analog clock ring. */
-static const int16_t HOUR_MARK_LENGTH     = ANALOG_RADIUS - 4;
+static const int16_t HOUR_MARK_LENGTH                                                      = ANALOG_RADIUS - 4;
 
 /** Pixel length of hour hand.*/
-static const int16_t HOUR_HAND_LENGTH     = ANALOG_RADIUS - 13;
+static const int16_t HOUR_HAND_LENGTH                                                      = ANALOG_RADIUS - 13;
 
 /** Pixel length of minute hand.*/
-static const int16_t MINUTE_HAND_LENGTH   = ANALOG_RADIUS - 6;
+static const int16_t MINUTE_HAND_LENGTH                                                    = ANALOG_RADIUS - 6;
 
 /** Pixel length of second hand.*/
-static const int16_t SECOND_HAND_LENGTH   = ANALOG_RADIUS - 2;
+static const int16_t SECOND_HAND_LENGTH                                                    = ANALOG_RADIUS - 2;
 
 /** Clock hand distance from clock center. */
-static const int16_t HAND_CENTER_DISTANCE = 3;
+static const int16_t HAND_CENTER_DISTANCE                                                  = 3;
 
 /* Color key names for the analog clock configuration. */
-const char* DateTimeView64x64::ANALOG_CLOCK_COLOR_KEYS[DateTimeView64x64::ANA_CLK_COL_MAX] =
-{
+const char* DateTimeView64x64::ANALOG_CLOCK_COLOR_KEYS[DateTimeView64x64::ANA_CLK_COL_MAX] = {
     "handHourCol",
     "handMinCol",
     "handSecCol",
@@ -175,7 +174,6 @@ static const int16_t MINUTE_SIN_TAB[16U] = {
  */
 void DateTimeView64x64::update(YAGfx& gfx)
 {
-
     if (m_lastUpdateSecondVal != m_now.tm_sec)
     {
         uint8_t idx;
@@ -299,19 +297,19 @@ void DateTimeView64x64::drawAnalogClockHand(YAGfx& gfx, int16_t minute, int16_t 
 
 void DateTimeView64x64::getConfiguration(JsonObject& jsonCfg) const
 {
-    JsonObject jsonAnalogClock = jsonCfg.createNestedObject("analogClock");
+    JsonObject jsonAnalogClock     = jsonCfg.createNestedObject("analogClock");
 
     jsonAnalogClock["secondsMode"] = m_secondsMode;
 
-    for (uint32_t index = 0U;  index < ANA_CLK_COL_MAX; ++index)
+    for (uint32_t index = 0U; index < ANA_CLK_COL_MAX; ++index)
     {
-        jsonAnalogClock[ANALOG_CLOCK_COLOR_KEYS[index]]= Util::colorToHtml(m_analogColors[index]);
+        jsonAnalogClock[ANALOG_CLOCK_COLOR_KEYS[index]] = Util::colorToHtml(m_analogColors[index]);
     }
 }
 
 bool DateTimeView64x64::setConfiguration(const JsonObjectConst& jsonCfg)
 {
-    bool result = true;
+    bool            result          = true;
     JsonObjectConst jsonAnalogClock = jsonCfg["analogClock"];
 
     if (false == jsonAnalogClock.isNull())
@@ -323,19 +321,19 @@ bool DateTimeView64x64::setConfiguration(const JsonObjectConst& jsonCfg)
         {
             LOG_WARNING("JSON attribute %s not found or invalid type.", "secondsMode");
             result = false;
-        } 
+        }
         else
         {
             m_secondsMode = static_cast<SecondsDisplayMode>(jsonSecondsMode.as<uint8_t>());
 
-            for (uint32_t idx = 0U; idx < ANA_CLK_COL_MAX; ++ idx)
+            for (uint32_t idx = 0U; idx < ANA_CLK_COL_MAX; ++idx)
             {
                 JsonVariantConst color = jsonAnalogClock[ANALOG_CLOCK_COLOR_KEYS[idx]];
 
                 if (false == color.is<String>())
                 {
                     LOG_WARNING(
-                        "JSON attribute %s not found or invalid type.", 
+                        "JSON attribute %s not found or invalid type.",
                         ANALOG_CLOCK_COLOR_KEYS[idx]);
                     result = false;
                 }
@@ -349,9 +347,9 @@ bool DateTimeView64x64::setConfiguration(const JsonObjectConst& jsonCfg)
     else
     {
         LOG_WARNING("JSON attribute %s not found or invalid type.", "analogClock");
-        result = false; 
+        result = false;
     }
-    
+
     return result;
 }
 
@@ -363,19 +361,18 @@ bool DateTimeView64x64::mergeConfiguration(JsonObject& jsonMerged, const JsonObj
     if (false == jsonAnalogClock.isNull())
     {
         /* Analog clock data present in jsonSource, patch it into JsonMerged.
-         * Note: Not all paramters may be present in jsonSoure, test for all individually.
+         * Note: Not all parameters may be present in jsonSource, test for all individually.
          */
-
-        JsonObject      jsonMergedAnalogClock = jsonMerged["analogClock"];
-
+        JsonObject       jsonMergedAnalogClock = jsonMerged["analogClock"];
         JsonVariantConst jsonSecondsMode       = jsonAnalogClock["secondsMode"];
+
         if (true == jsonSecondsMode.is<String>())
         {
             jsonMergedAnalogClock["secondsMode"] = jsonSecondsMode;
             result                               = true;
         }
 
-        for (uint32_t index = 0U;  index < ANA_CLK_COL_MAX; ++index)
+        for (uint32_t index = 0U; index < ANA_CLK_COL_MAX; ++index)
         {
             JsonVariantConst jsonColor = jsonAnalogClock[ANALOG_CLOCK_COLOR_KEYS[index]];
             if (true == jsonColor.is<String>())

@@ -84,7 +84,7 @@ public:
     void init(IRtc* rtc);
 
     /**
-     * Get the local time by considering device timezone.
+     * Get the local time by considering device time zone.
      *
      * @param[out] timeInfo Time information.
      *
@@ -102,9 +102,9 @@ public:
     bool getUtcTime(struct tm& timeInfo);
 
     /**
-     * Get the local time by considering the timezone.
-     * 
-     * @param[in]   tz          Timzone string
+     * Get the local time by considering the time zone.
+     *
+     * @param[in]   tz          Time zone string
      * @param[out]  timeInfo    Local time information
      * 
      * @return If time is not synchronized, it will return false otherwise true.
@@ -114,12 +114,12 @@ public:
 private:
 
     /**
-     * The minimum timezone string size (incl. string termination).
+     * The minimum time zone string size (incl. string termination).
      */
     static const size_t     TZ_MIN_SIZE             = 60U;
 
     /**
-     * Use UTC timezone by default.
+     * Use UTC time zone by default.
      */
     static const char*      TZ_UTC;
 
@@ -141,10 +141,10 @@ private:
     /** Flag indicating a initialized clock driver. */
     bool        m_isClockDrvInitialized;
 
-    /** Device timezone */
+    /** Device time zone */
     String      m_timeZone;
 
-    /** newlib's internal timezone buffer. */
+    /** newlib's internal time zone buffer. */
     char*       m_internalTimeZoneBuffer;
 
     /** NTP server address, used by sntp. Don't remove it! */

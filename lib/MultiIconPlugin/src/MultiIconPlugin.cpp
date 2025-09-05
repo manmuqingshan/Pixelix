@@ -99,7 +99,6 @@ bool MultiIconPlugin::getTopic(const String& topic, JsonObject& value) const
         if ((true == status) &&
             (_MultiIconPlugin::View::MAX_ICON_SLOTS > slotId))
         {
-            value["slotId"] = slotId;
             value["fileId"] = getIconFileId(slotId);
 
             isSuccessful    = true;

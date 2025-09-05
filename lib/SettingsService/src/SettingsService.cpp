@@ -107,7 +107,7 @@ static const char*  KEY_MAX_BRIGHTNESS_SL           = "max_bright_sl";
 /** Automatic brightness control key */
 static const char*  KEY_AUTO_BRIGHTNESS_CTRL        = "a_brightn_ctrl";
 
-/** POSIX timezone string key */
+/** POSIX time zone string key */
 static const char*  KEY_TIMEZONE                    = "timezone";
 
 /** NTP server key */
@@ -166,8 +166,8 @@ static const char*  NAME_MAX_BRIGHTNESS_SL          = "Max. brightness soft limi
 /** Automatic brightness control name of key value pair */
 static const char*  NAME_AUTO_BRIGHTNESS_CTRL       = "Autom. brightness control";
 
-/** POSIX timezone string name of key value pair. */
-static const char*  NAME_TIMEZONE                   = "POSIX timezone string";
+/** POSIX time zone string name of key value pair. */
+static const char*  NAME_TIMEZONE                   = "POSIX time zone string";
 
 /** NTP server name of key value pair */
 static const char*  NAME_NTP_SERVER                 = "NTP server address";
@@ -225,7 +225,7 @@ static const uint8_t    DEFAULT_MAX_BRIGHTNESS_SL       = 100U;
 /** Automatic brightness control default value */
 static const bool       DEFAULT_AUTO_BRIGHTNESS_CTRL    = false;
 
-/** POSIX timezone string default value */
+/** POSIX time zone string default value */
 static const char*      DEFAULT_TIMEZONE                = "WEST-1DWEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
 
 /** NTP server default value */
@@ -283,7 +283,7 @@ static const uint8_t    MIN_VALUE_MAX_BRIGHTNESS_SL     = MIN_VALUE_BRIGHTNESS;
 
 /*                      MIN_VALUE_AUTO_BRIGHTNESS_CTRL */
 
-/** POSIX timezone min. length */
+/** POSIX time zone min. length */
 static const size_t     MIN_VALUE_TIMEZONE              = 4U;
 
 /** NTP server address min. length */
@@ -340,7 +340,7 @@ static const uint8_t    MAX_VALUE_MAX_BRIGHTNESS_SL     = MAX_VALUE_BRIGHTNESS;
 
 /*                      MAX_VALUE_AUTO_BRIGHTNESS_CTRL */
 
-/** POSIX timezone max. length */
+/** POSIX time zone max. length */
 static const size_t     MAX_VALUE_TIMEZONE              = 128U;
 
 /** NTP server address max. length */

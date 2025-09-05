@@ -206,16 +206,7 @@ public:
      *
      * @return bool success
      */
-    bool setStartOfWeek(uint8_t startOfWeek) override
-    {
-        if (MAX_LAMPS <= startOfWeek)
-        {
-            LOG_WARNING("Illegal start of week value (%hhu).", startOfWeek);
-            return false;
-        }
-        m_startOfWeek = startOfWeek;
-        return true;
-    }
+    bool setStartOfWeek(uint8_t startOfWeek) override;
 
     /**
      * Get the color to show the actual day.

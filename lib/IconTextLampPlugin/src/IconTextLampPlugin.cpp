@@ -134,7 +134,6 @@ bool IconTextLampPlugin::getTopic(const String& topic, JsonObject& value) const
             bool   lampState    = getLamp(lampId);
             String lampStateStr = (false == lampState) ? "off" : "on";
 
-            value["id"]         = lampId;
             value["state"]      = lampStateStr;
 
             isSuccessful        = true;

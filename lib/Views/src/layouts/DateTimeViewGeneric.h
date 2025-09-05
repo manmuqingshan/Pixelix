@@ -200,16 +200,7 @@ public:
      *
      * @return bool success
      */
-    bool setStartOfWeek(uint8_t startOfWeek) override
-    {
-        if (MAX_LAMPS <= startOfWeek)
-        {
-            LOG_WARNING("Illegal start of week value (%hhu).", startOfWeek);
-            return false;
-        }
-        m_startOfWeek = startOfWeek;
-        return true;
-    }
+    bool setStartOfWeek(uint8_t startOfWeek) override;
 
     /**
      * Get the color to show the actual day.
@@ -410,7 +401,7 @@ protected:
     uint8_t         m_startOfWeek;              /**< Start of week offset for the week bar (Sunday = 0). */
     Color           m_dayOnColor;               /**< Color of current day in the day of the week bar. */
     Color           m_dayOffColor;              /**< Color of the other days in the day of the week bar. */
-    tm              m_now;                      /**< Latest time update */
+    tm              m_now;                      /**< Latest time update. */
 
 private:
     DateTimeViewGeneric(const DateTimeViewGeneric& other);

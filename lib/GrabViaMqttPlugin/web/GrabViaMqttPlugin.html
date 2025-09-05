@@ -34,23 +34,22 @@
             <div class="container">
                 <h1 class="mt-5">GrabViaMqttPlugin</h1>
                 <p><img src="GrabViaMqttPlugin.jpg" alt="Screenshot" /></p>
-                <p>The plugin can grab information in JSON format via MQTT and shows it on the display.</p>
-                <h2>REST API</h2>
-                <h3>Get configuration</h3>
-                <pre name="injectOrigin" class="text-light"><code>GET {{ORIGIN}}/rest/api/v1/display/uid/&lt;PLUGIN-UID&gt;/grabConfig</code></pre>
-                <h3>Set configuration</h3>
-                <pre name="injectOrigin" class="text-light"><code>POST {{ORIGIN}}/rest/api/v1/display/uid/&lt;PLUGIN-UID&gt;/grabConfig?path=&lt;PATH&gt;&filter=&lt;FILTER&gt;&iconFileId=&lt;ICON-FILE-ID&gt;&format=&lt;FORMAT&gt;&MULTIPLIER=&lt;MULTIPLIER&gt;&OFFSET=&lt;OFFSET&gt;</code></pre>
-                <pre name="injectOrigin" class="text-light"><code>POST {{ORIGIN}}/rest/api/v1/display/alias/&lt;PLUGIN-ALIAS&gt;/grabConfig?path=&lt;PATH&gt;&filter=&lt;FILTER&gt;&iconFileId=&lt;ICON-FILE-ID&gt;&format=&lt;FORMAT&gt;&MULTIPLIER=&lt;MULTIPLIER&gt;&OFFSET=&lt;OFFSET&gt;</code></pre>
-                <ul>
-                    <li>PLUGIN-UID: The plugin unique id.</li>
-                    <li>PLUGIN-ALIAS: The plugin alias name.</li>
-                    <li>PATH: MQTT topic path.</li>
-                    <li>FILTER: Filter to identify the value in the JSON response. See the details here: <a href="https://arduinojson.org/news/2020/03/22/version-6-15-0/" target="_blank">ArduinoJson 6.15: Filtering done right</a></li>
-                    <li>ICON-FILE-ID: File id of the icon.</li>
-                    <li>FORMAT: Format specifier, e.g. "%s" for strings or "%f" for numbers.</li>
-                    <li>MULTIPLIER: Number which is multiplied with a number value. Not used for string values.</li>
-                    <li>OFFSET: Number which is added to a number value. Not used for string values.</li>
-                </ul>
+                <p>This plugin connects to an MQTT server to receive data in JSON format and displays that information on the display. It helps you easily view live updates from devices or services that send data using MQTT.</p>
+                <p>The filter identifies the value in the JSON payload that you want to display.</p>
+                <p><strong>Example:</strong></p>
+                <p>JSON payload:</p>
+<p><code>
+{
+    "temperature": 22.5,
+    "humidity": 60
+}
+</code></p>
+                <p>The following filter extracts the temperature value from the JSON payload.</p>
+<p><code>
+{
+    "temperature": true
+}
+</code></p>
                 <p><a href="https://github.com/BlueAndi/Pixelix/tree/Development/doc/grabConfigs/mqtt" target="_blank">Configuration examples</a> may help to configure.</p>
                 <h2>Format text tags</h2>
                 <p>The following tags are supported in the format text:</p>
@@ -70,35 +69,40 @@
                 <h3>User</h3>
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3">
                     <form id="myForm" action="javascript:setConfig(pluginUid.options[pluginUid.selectedIndex].value)">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="pluginUid">Plugin UID:</label>
                             <select class="form-select" id="pluginUid" size="1" onChange="getConfig(pluginUid.options[pluginUid.selectedIndex].value)">
                             </select>    
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="path">Path:</label>
-                            <input class="form-control" type="text" id="path" name="path" value="" size="80" />    
+                            <input class="form-control" type="text" id="path" name="path" value="" size="80" />
+                            <small class="form-text">The MQTT topic path.</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="filter">Filter:</label>
                             <input class="form-control" type="text" id="filter" name="filter" value="null" size="80" />
+                            <small class="form-text">Filter to identify the value in the JSON response. See details in <a href="https://arduinojson.org/news/2020/03/22/version-6-15-0/" target="_blank">ArduinoJson 6.15: Filtering done right</a> chapter.</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="iconFileId">Icon file id:</label>
                             <input class="form-control" type="number" id="iconFileId" name="iconFileId" min="0" max="255" />
-                            <small class="form-text text-muted">Find the file id in the icons page. Use 255 to clear the icon.</small>
+                            <small class="form-text">The file id of the icon which to show. Find the file id in the icons page. Use 255 to clear the icon.</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="format">Format:</label>
                             <input class="form-control" type="text" id="format" name="format" value="%s" maxlength="40" />
+                            <small class="form-text">The format specifier. Supported are only "%s" for strings and "%f" for numbers.</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="multiplier">Multiplier:</label>
-                            <input class="form-control" type="number" id="multiplier" name="multiplier" value="1" />    
+                            <input class="form-control" type="number" id="multiplier" name="multiplier" value="1" />
+                            <small class="form-text">Number which is multiplied with a number value. Not used for string values.</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="offset">Offset:</label>
-                            <input class="form-control" type="number" id="offset" name="offset" value="0" />    
+                            <input class="form-control" type="number" id="offset" name="offset" value="0" />
+                            <small class="form-text">Number which is added to a number value. Not used for string values.</small>
                         </div>
                         <input name="submit" type="submit" value="Update"/>
                     </form>
@@ -226,8 +230,6 @@
                 menu.addSubMenu(menu.data, "Plugins", pluginSubMenu);
                 menu.addSubMenu(menu.data, "Services", serviceSubMenu);
                 menu.create("menu", menu.data);
-                
-                utils.injectOrigin("injectOrigin", "{{ORIGIN}}");
 
                 /* Disable all forms, until the plugin instances are loaded. */
                 disableUI();

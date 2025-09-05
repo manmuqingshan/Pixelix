@@ -286,11 +286,11 @@ public:
     }
 
     /**
-     * Get POSIX timezone string.
+     * Get POSIX time zone string.
      *
-     * @return POSIC timezone string
+     * @return POSIX time zone string
      */
-    KeyValueString& getTimezone()
+    KeyValueString& getTimeZone()
     {
         return m_timezone;
     }
@@ -381,7 +381,7 @@ private:
     KeyValueUInt8          m_minBrightnessSoftLimit; /**< The minimum brightness level in % for automatic brightness adjustment. */
     KeyValueUInt8          m_maxBrightnessSoftLimit; /**< The maximum brightness level in % for automatic brightness adjustment. */
     KeyValueBool           m_autoBrightnessCtrl;     /**< Automatic brightness control switch */
-    KeyValueString         m_timezone;               /**< POSIX timezone string */
+    KeyValueString         m_timezone;               /**< POSIX time zone string */
     KeyValueString         m_ntpServer;              /**< NTP server address */
     KeyValueUInt8          m_maxSlots;               /**< Max. number of display slots. */
     KeyValueUInt32         m_scrollPause;            /**< Text scroll pause */

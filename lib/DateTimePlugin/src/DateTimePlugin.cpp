@@ -250,7 +250,7 @@ bool DateTimePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     }
     else if (false == jsonTimeZone.is<String>())
     {
-        LOG_WARNING("JSON timezone not found or invalid type.");
+        LOG_WARNING("JSON time zone not found or invalid type.");
     }
     else if (false == jsonStartOfWeek.is<uint8_t>())
     {
@@ -374,7 +374,7 @@ void DateTimePlugin::updateDateTime(bool force)
     struct tm timeInfo         = { 0 };
     bool      isClockAvailable = false;
 
-    /* If no other timezone is given, the local time shall be used. */
+    /* If no other time zone is given, the local time shall be used. */
     if (true == m_timeZone.isEmpty())
     {
         isClockAvailable = clockDrv.getTime(timeInfo);

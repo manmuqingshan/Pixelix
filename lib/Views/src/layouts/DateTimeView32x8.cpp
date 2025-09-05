@@ -64,9 +64,26 @@ const Color DateTimeView32x8::DAY_OFF_COLOR = ColorDef::ULTRADARKGRAY;
  * Public Methods
  *****************************************************************************/
 
+bool DateTimeView32x8::setStartOfWeek(uint8_t startOfWeek)
+{
+    bool isSuccessful = false;
+
+    if (MAX_LAMPS <= startOfWeek)
+    {
+        LOG_WARNING("Illegal start of week value (%hhu).", startOfWeek);
+    }
+    else
+    {
+        m_startOfWeek = startOfWeek;
+        isSuccessful  = true;
+    }
+
+    return isSuccessful;
+}
+
 void DateTimeView32x8::setCurrentTime(const tm& now)
 {
-    /* update lamp widgets */
+    uint8_t index;
 
     /* tm_wday starts at sunday, first lamp specified via m_startOfWeek.*/
     uint8_t activeLamp = now.tm_wday - m_startOfWeek;
@@ -78,9 +95,7 @@ void DateTimeView32x8::setCurrentTime(const tm& now)
         activeLamp += MAX_LAMPS;
     }
 
-    uint8_t index;
-
-    for(index = 0U; index < MAX_LAMPS; ++index)
+    for (index = 0U; index < MAX_LAMPS; ++index)
     {
         m_lampWidgets[index].setOnState(index == activeLamp);
     }
@@ -98,7 +113,7 @@ void DateTimeView32x8::updateLampWidgetsColors()
 {
     uint8_t index;
 
-    for(index = 0U; index < MAX_LAMPS; ++index)
+    for (index = 0U; index < MAX_LAMPS; ++index)
     {
         m_lampWidgets[index].setColorOn(m_dayOnColor);
         m_lampWidgets[index].setColorOff(m_dayOffColor);

@@ -430,15 +430,15 @@ void SunrisePlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
         String sunrise         = jsonSunrise.as<String>();
         String sunset          = jsonSunset.as<String>();
 
-        sunrise                = addCurrentTimezoneValues(sunrise);
-        sunset                 = addCurrentTimezoneValues(sunset);
+        sunrise                = addCurrentTimeZoneValues(sunrise);
+        sunset                 = addCurrentTimeZoneValues(sunset);
 
         m_relevantResponsePart = sunrise + " / " + sunset;
         m_view.setFormatText(m_relevantResponsePart);
     }
 }
 
-String SunrisePlugin::addCurrentTimezoneValues(const String& dateTimeString) const
+String SunrisePlugin::addCurrentTimeZoneValues(const String& dateTimeString) const
 {
     tm        gmTimeInfo;
     const tm* lcTimeInfo = nullptr;
