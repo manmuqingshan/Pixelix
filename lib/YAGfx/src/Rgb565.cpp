@@ -25,66 +25,90 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Yet anoterh color class
+ * @brief  Color in RGB565 format
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup GFX
- *
- * @{
  */
-
-#ifndef YACOLOR_H
-#define YACOLOR_H
-
-/******************************************************************************
- * Compile Switches
- *****************************************************************************/
-
-#ifndef CONFIG_COLOR_DEPTH
-/** Color depth default configuration. */
-#define CONFIG_COLOR_DEPTH 32
-#endif
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
+#include "Rgb565.h"
 
-#if (CONFIG_COLOR_DEPTH == 32)
-#include <Rgb888.h>
-#elif (CONFIG_COLOR_DEPTH == 16)
-#include <Rgb565.h>
-#endif /* CONFIG_COLOR_DEPTH */
-
-#include <ColorDef.hpp>
+/******************************************************************************
+ * Compiler Switches
+ *****************************************************************************/
 
 /******************************************************************************
  * Macros
  *****************************************************************************/
 
 /******************************************************************************
- * Types and Classes
+ * Types and classes
  *****************************************************************************/
-
-#if (CONFIG_COLOR_DEPTH == 32)
-
-/**
- * Defines the general color to RGB888 format.
- */
-typedef Rgb888 Color;
-
-#elif (CONFIG_COLOR_DEPTH == 16)
-
-/**
- * Defines the general color to RGB888 format.
- */
-typedef Rgb565 Color;
-
-#endif /* CONFIG_COLOR_DEPTH */
 
 /******************************************************************************
- * Functions
+ * Prototypes
  *****************************************************************************/
 
-#endif /* YACOLOR_H */
+/******************************************************************************
+ * Local Variables
+ *****************************************************************************/
 
-/** @} */
+/******************************************************************************
+ * Public Methods
+ *****************************************************************************/
+
+void Rgb565::turnColorWheel(uint8_t wheelPos)
+{
+    const uint8_t COL_PARTS = 3U;
+    const uint8_t COL_RANGE = UINT8_MAX / COL_PARTS;
+    uint8_t  red;
+    uint8_t  green;
+    uint8_t  blue;
+
+    wheelPos                = UINT8_MAX - wheelPos;
+
+    /* Red + Blue ? */
+    if (wheelPos < COL_RANGE)
+    {
+        red   = UINT8_MAX - wheelPos * COL_PARTS;
+        green = 0U;
+        blue  = COL_PARTS * wheelPos;
+    }
+    /* Green + Blue ? */
+    else if (wheelPos < (2 * COL_RANGE))
+    {
+        wheelPos -= COL_RANGE;
+
+        red     = 0U;
+        green   = COL_PARTS * wheelPos;
+        blue    = UINT8_MAX - wheelPos * COL_PARTS;
+    }
+    /* Red + Green */
+    else
+    {
+        wheelPos -= ((COL_PARTS - 1U) * COL_RANGE);
+
+        red     = COL_PARTS * wheelPos;
+        green   = UINT8_MAX - wheelPos * COL_PARTS;
+        blue    = 0U;
+    }
+
+    m_color565 = ColorUtil::to565(red, green, blue);
+}
+
+/******************************************************************************
+ * Protected Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * Private Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * External Functions
+ *****************************************************************************/
+
+/******************************************************************************
+ * Local Functions
+ *****************************************************************************/

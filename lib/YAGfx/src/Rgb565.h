@@ -25,7 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Color in RGB888 format
+ * @brief  Color in RGB565 format
  * @author Andreas Merkle <web@blue-andi.de>
  *
  * @addtogroup GFX
@@ -33,8 +33,8 @@
  * @{
  */
 
-#ifndef RGB888_H
-#define RGB888_H
+#ifndef RGB565_H
+#define RGB565_H
 
 /******************************************************************************
  * Compile Switches
@@ -56,11 +56,11 @@
 
 /**
  * Color, which is based on the three base colors red, green and blue.
- * The base colors are internal stored as 8-bit values, so in RGB888 format.
+ * The base colors are internal stored in RGB565 format.
  * Additional one byte is used for color intensity, used for non-destructive
  * fading.
  */
-class Rgb888
+class Rgb565
 {
 public:
 
@@ -73,10 +73,8 @@ public:
     /**
      * Constructs the color black.
      */
-    Rgb888() :
-        m_red(0U),
-        m_green(0U),
-        m_blue(0U),
+    Rgb565() :
+        m_color565(0U),
         m_intensity(MAX_BRIGHT)
     {
     }
@@ -84,7 +82,7 @@ public:
     /**
      * Destroys the color.
      */
-    ~Rgb888()
+    ~Rgb565()
     {
     }
 
@@ -96,10 +94,8 @@ public:
      * @param[in] green Green value
      * @param[in] blue  Blue value
      */
-    Rgb888(uint8_t red, uint8_t green, uint8_t blue) :
-        m_red(red),
-        m_green(green),
-        m_blue(blue),
+    Rgb565(uint8_t red, uint8_t green, uint8_t blue) :
+        m_color565(ColorUtil::to565(red, green, blue)),
         m_intensity(MAX_BRIGHT)
     {
     }
@@ -113,10 +109,8 @@ public:
      * @param[in] blue      Blue value
      * @param[in] intensity Color intensity [0; 255]
      */
-    Rgb888(uint8_t red, uint8_t green, uint8_t blue, uint8_t intensity) :
-        m_red(red),
-        m_green(green),
-        m_blue(blue),
+    Rgb565(uint8_t red, uint8_t green, uint8_t blue, uint8_t intensity) :
+        m_color565(ColorUtil::to565(red, green, blue)),
         m_intensity(intensity)
     {
     }
@@ -127,10 +121,8 @@ public:
      *
      * @param[in] value Color value in 24 bit format
      */
-    Rgb888(uint32_t value) :
-        m_red(ColorUtil::rgb888Red(value)),
-        m_green(ColorUtil::rgb888Green(value)),
-        m_blue(ColorUtil::rgb888Blue(value)),
+    Rgb565(uint32_t value) :
+        m_color565(ColorUtil::to565(value)),
         m_intensity(MAX_BRIGHT)
     {
     }
@@ -141,10 +133,8 @@ public:
      *
      * @param[in] value Color value in 16 bit format
      */
-    Rgb888(uint16_t value) :
-        m_red(ColorUtil::rgb565Red(value)),
-        m_green(ColorUtil::rgb565Green(value)),
-        m_blue(ColorUtil::rgb565Blue(value)),
+    Rgb565(uint16_t value) :
+        m_color565(value),
         m_intensity(MAX_BRIGHT)
     {
     }
@@ -154,10 +144,8 @@ public:
      *
      * @param[in] color Color, which to copy
      */
-    Rgb888(const Rgb888& color) :
-        m_red(color.m_red),
-        m_green(color.m_green),
-        m_blue(color.m_blue),
+    Rgb565(const Rgb565& color) :
+        m_color565(color.m_color565),
         m_intensity(color.m_intensity)
     {
     }
@@ -169,13 +157,11 @@ public:
      *
      * @return RGB Color
      */
-    Rgb888& operator=(const Rgb888& color)
+    Rgb565& operator=(const Rgb565& color)
     {
         if (this != &color)
         {
-            m_red       = color.m_red;
-            m_green     = color.m_green;
-            m_blue      = color.m_blue;
+            m_color565  = color.m_color565;
             m_intensity = color.m_intensity;
         }
 
@@ -189,9 +175,9 @@ public:
      *
      * @return If both colors are equal, it will return true otherwise false.
      */
-    bool operator==(const Rgb888& other) const
+    bool operator==(const Rgb565& other) const
     {
-        return (m_red == other.m_red) && (m_green == other.m_green) && (m_blue == other.m_blue) && (m_intensity == other.m_intensity);
+        return (m_color565 == other.m_color565) && (m_intensity == other.m_intensity);
     }
 
     /**
@@ -201,13 +187,13 @@ public:
      *
      * @return If both colors are not equal, it will return true otherwise false.
      */
-    bool operator!=(const Rgb888& other) const
+    bool operator!=(const Rgb565& other) const
     {
-        return (m_red != other.m_red) || (m_green != other.m_green) || (m_blue != other.m_blue) || (m_intensity != other.m_intensity);
+        return (m_color565 != other.m_color565) || (m_intensity != other.m_intensity);
     }
 
     /**
-     * Convert to RGB24 uint32_t value.
+     * Convert to RGB24 uint32_t value with respect to current intensity.
      */
     operator uint32_t() const
     {
@@ -215,7 +201,7 @@ public:
     }
 
     /**
-     * Convert to RGB565 uint16_t value.
+     * Convert to RGB565 uint16_t value with respect to current intensity.
      */
     operator uint16_t() const
     {
@@ -231,9 +217,9 @@ public:
      */
     void get(uint8_t& red, uint8_t& green, uint8_t& blue) const
     {
-        red   = applyIntensity(m_red);
-        green = applyIntensity(m_green);
-        blue  = applyIntensity(m_blue);
+        red   = getRed();
+        green = getGreen();
+        blue  = getBlue();
     }
 
     /**
@@ -246,9 +232,7 @@ public:
      */
     void set(uint8_t red, uint8_t green, uint8_t blue)
     {
-        m_red   = red;
-        m_green = green;
-        m_blue  = blue;
+        m_color565 = ColorUtil::to565(red, green, blue);
     }
 
     /**
@@ -261,9 +245,7 @@ public:
      */
     void set(uint8_t red, uint8_t green, uint8_t blue, uint8_t intensity)
     {
-        m_red       = red;
-        m_green     = green;
-        m_blue      = blue;
+        m_color565  = ColorUtil::to565(red, green, blue);
         m_intensity = intensity;
     }
 
@@ -275,9 +257,7 @@ public:
      */
     void set(const uint32_t& value)
     {
-        m_red   = ColorUtil::rgb888Red(value);
-        m_green = ColorUtil::rgb888Green(value);
-        m_blue  = ColorUtil::rgb888Blue(value);
+        m_color565 = ColorUtil::to565(value);
     }
 
     /**
@@ -287,7 +267,7 @@ public:
      */
     uint8_t getRed() const
     {
-        return applyIntensity(m_red);
+        return applyIntensity(ColorUtil::rgb565Red(m_color565));
     }
 
     /**
@@ -297,7 +277,7 @@ public:
      */
     uint8_t getGreen() const
     {
-        return applyIntensity(m_green);
+        return applyIntensity(ColorUtil::rgb565Green(m_color565));
     }
 
     /**
@@ -307,7 +287,7 @@ public:
      */
     uint8_t getBlue() const
     {
-        return applyIntensity(m_blue);
+        return applyIntensity(ColorUtil::rgb565Blue(m_color565));
     }
 
     /**
@@ -327,7 +307,7 @@ public:
      */
     void setRed(uint8_t value)
     {
-        m_red = value;
+        m_color565 = ColorUtil::to565(value, getGreen(), getBlue());
     }
 
     /**
@@ -337,7 +317,7 @@ public:
      */
     void setGreen(uint8_t value)
     {
-        m_green = value;
+        m_color565 = ColorUtil::to565(getRed(), value, getBlue());
     }
 
     /**
@@ -347,7 +327,7 @@ public:
      */
     void setBlue(uint8_t value)
     {
-        m_blue = value;
+        m_color565 = ColorUtil::to565(getRed(), getGreen(), value);
     }
 
     /**
@@ -371,10 +351,8 @@ public:
 
 private:
 
-    uint8_t m_red;       /**< Red intensity value */
-    uint8_t m_green;     /**< Green intensity value */
-    uint8_t m_blue;      /**< Blue intensity value */
-    uint8_t m_intensity; /**< Color intensity [0; 255] - 0: min. bright / 255: max. bright */
+    uint16_t m_color565;  /**< Color value in 5-6-5 RGB format */
+    uint8_t  m_intensity; /**< Color intensity [0; 255] - 0: min. bright / 255: max. bright */
 
     /**
      * Calculate the base color with respect to the current intensity.
@@ -385,13 +363,12 @@ private:
     {
         return (static_cast<uint16_t>(baseColor) * static_cast<uint16_t>(m_intensity)) / MAX_BRIGHT;
     }
-
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* RGB888_H */
+#endif /* RGB565_H */
 
 /** @} */
