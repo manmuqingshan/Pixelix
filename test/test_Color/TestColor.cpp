@@ -240,7 +240,10 @@ static void testColor888()
 static void testColor565()
 {
     Rgb565 myColorA;
-    Rgb565 myColorB = static_cast<uint16_t>(0x0821U);
+    Rgb565 myColorB;
+
+    myColorB.fromRgb565(0x0821);
+
     Rgb565 myColorC = myColorB;
 
     /* Default color is black */

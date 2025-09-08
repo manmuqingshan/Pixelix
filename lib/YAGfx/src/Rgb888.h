@@ -136,20 +136,6 @@ public:
     }
 
     /**
-     * Specialized constructor, used in case a color value (RGB) is given as uint16 type.
-     * Color intensity will be set to max. bright.
-     *
-     * @param[in] value Color value in 16 bit format
-     */
-    Rgb888(uint16_t value) :
-        m_red(ColorUtil::rgb565Red(value)),
-        m_green(ColorUtil::rgb565Green(value)),
-        m_blue(ColorUtil::rgb565Blue(value)),
-        m_intensity(MAX_BRIGHT)
-    {
-    }
-
-    /**
      * Copy the given color.
      *
      * @param[in] color Color, which to copy
@@ -268,7 +254,7 @@ public:
     }
 
     /**
-     * Set new color information.
+     * Set new color information by RGB24 value.
      * The intensity won't change.
      *
      * @param[in] value Color value (RGB) in 24 bit format
@@ -368,6 +354,19 @@ public:
      * @param[in] wheelPos  Color wheel position
      */
     void turnColorWheel(uint8_t wheelPos);
+
+    /**
+     * Set new color information by RGB565 value.
+     * The intensity won't change.
+     *
+     * @param[in] value Color value (RGB) in 16 bit format
+     */
+    void fromRgb565(const uint16_t& value)
+    {
+        m_red   = ColorUtil::rgb565Red(value);
+        m_green = ColorUtil::rgb565Green(value);
+        m_blue  = ColorUtil::rgb565Blue(value);
+    }
 
 private:
 
