@@ -352,7 +352,7 @@ public:
     static const int16_t DEFAULT_TEXT_COLOR_GRADIENT_OFFSET   = 0;
 
     /** Default text color gradient length in pixels. */
-    static const uint16_t DEFAULT_TEXT_COLOR_GRADIENT_LENGTH  = CONFIG_LED_MATRIX_HEIGHT;
+    static const uint16_t DEFAULT_TEXT_COLOR_GRADIENT_LENGTH  = 32U;
 
     /** Default text color gradient direction (true = vertical, false = horizontal). */
     static const bool DEFAULT_TEXT_COLOR_GRADIENT_VERTICAL    = true;
