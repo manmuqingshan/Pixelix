@@ -190,7 +190,7 @@ public:
     }
 
     /**
-     * Set brush used to draw text.
+     * Set brush used to draw text. The brush must be kept alive as long as the text widget is used.
      *
      * @param[in] brush Brush used to draw text.
      */
@@ -200,7 +200,7 @@ public:
     }
 
     /**
-     * Use the solid brush with the already configured color.
+     * Use the internal solid brush with the already configured color.
      */
     void setSolidBrush()
     {
@@ -209,7 +209,7 @@ public:
     }
 
     /**
-     * Use the linear gradient brush with the already configured values.
+     * Use the internal linear gradient brush with the already configured values.
      */
     void setLinearGradientBrush()
     {
@@ -218,7 +218,7 @@ public:
     }
 
     /**
-     * Set solid brush.
+     * Set internal solid brush.
      *
      * @param[in] color Color of the brush
      */
@@ -230,7 +230,7 @@ public:
     }
 
     /**
-     * Set linear gradient brush.
+     * Set internal linear gradient brush.
      *
      * @param[in] color1    Start color of the gradient.
      * @param[in] color2    End color of the gradient.
