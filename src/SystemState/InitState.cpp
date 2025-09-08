@@ -48,7 +48,6 @@
 #include "SysMsg.h"
 #include "Version.h"
 #include "MyWebServer.h"
-#include "UpdateMgr.h"
 #include "PluginMgr.h"
 #include "WebConfig.h"
 #include "FileSystem.h"
@@ -204,13 +203,6 @@ void InitState::entry(StateMachine& sm)
     {
         LOG_FATAL("Failed to initialize system message handler.");
         errorId = ErrorState::ERROR_ID_SYS_MSG;
-        isError = true;
-    }
-    /* Initialize over-the-air update server */
-    else if (false == UpdateMgr::getInstance().init())
-    {
-        LOG_FATAL("Failed to initialize Arduino OTA.");
-        errorId = ErrorState::ERROR_ID_UPDATE_MGR;
         isError = true;
     }
     else
@@ -441,10 +433,6 @@ void InitState::exit(StateMachine& sm)
                     /* Save the plugin installation, so the user can configure it by its own in the web page settings. */
                     PluginMgr::getInstance().save();
                 }
-
-                /* Start over-the-air update server. */
-                UpdateMgr::getInstance().begin();
-                MDNS.enableArduino(WebConfig::ARDUINO_OTA_PORT, true); /* This typically set by ArduinoOTA, but is disabled there. */
             }
 
             /* Start webserver after the wifi access point is running.

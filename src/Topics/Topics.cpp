@@ -37,7 +37,7 @@
 #include <TopicHandlerService.h>
 #include <Util.h>
 #include "DisplayMgr.h"
-#include "UpdateMgr.h"
+#include "RestartMgr.h"
 #include "ButtonActions.h"
 
 /******************************************************************************
@@ -399,7 +399,7 @@ static bool restart(const String& topic, const JsonObjectConst& value)
     /* To ensure that a positive response will be sent before the device restarts,
      * a short delay is necessary.
      */
-    UpdateMgr::getInstance().reqRestart(RESTART_DELAY);
+    RestartMgr::getInstance().reqRestart(RESTART_DELAY);
 
     return true;
 }

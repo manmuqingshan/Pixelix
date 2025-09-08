@@ -35,7 +35,7 @@
 #include "RestartState.h"
 #include "DisplayMgr.h"
 #include "MyWebServer.h"
-#include "UpdateMgr.h"
+#include "RestartMgr.h"
 #include "FileSystem.h"
 #include "Services.h"
 #include "SensorDataProvider.h"
@@ -86,7 +86,7 @@ void RestartState::process(StateMachine& sm)
     UTIL_NOT_USED(sm);
 
     MyWebServer::process();
-    UpdateMgr::getInstance().process();
+    RestartMgr::getInstance().process();
 
     /* Wait a certain amount of time, because there may be still some pending tasks, which
      * need to be finished before the system is restarted.
@@ -115,14 +115,12 @@ void RestartState::process(StateMachine& sm)
         Display::getInstance().show();
 
         /* Wait till all physical pixels are cleared. */
-        while(false == Display::getInstance().isReady())
+        while (false == Display::getInstance().isReady())
         {
             /* Just wait ... */
             ;
         }
 
-        /* Avoid any external request. */
-        UpdateMgr::getInstance().end();
         Topics::end();
 
         /* Stop services.

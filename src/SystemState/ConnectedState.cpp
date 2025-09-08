@@ -34,7 +34,7 @@
  *****************************************************************************/
 #include "ConnectedState.h"
 #include "SysMsg.h"
-#include "UpdateMgr.h"
+#include "RestartMgr.h"
 #include "MyWebServer.h"
 #include "DisplayMgr.h"
 #include "Services.h"
@@ -145,13 +145,13 @@ void ConnectedState::process(StateMachine& sm)
     /* Handle webserver. */
     MyWebServer::process();
 
-    /* Handle update, there may be one in the background. */
-    UpdateMgr::getInstance().process();
+    /* Handle delayed restart request. */
+    RestartMgr::getInstance().process();
 
-    /* Restart requested by update manager? This may happen after a successful received
-     * new firmware or filesystem binary.
+    /* Restart requested by restart manager? This may happen after a user has requested 
+     * a change of partitions via the web interface.
      */
-    if (true == UpdateMgr::getInstance().isRestartRequested())
+    if (true == RestartMgr::getInstance().isRestartRequested())
     {
         sm.setState(RestartState::getInstance());
     }

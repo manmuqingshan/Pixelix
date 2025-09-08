@@ -21,8 +21,8 @@ menu.data = [{
     "title": "Settings",
     "hyperRef": "/settings.html"
 }, {
-    "title": "Update",
-    "hyperRef": "/update.html"
+    "title": "Configuration Backup",
+    "hyperRef": "/config_backup.html"
 }, {
     "title": "Development",
     "hyperRef": "#",
