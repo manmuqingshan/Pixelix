@@ -202,7 +202,7 @@ static void testColor888()
     TEST_ASSERT_EQUAL_UINT8(0x08u, myColorA.getRed());
     TEST_ASSERT_EQUAL_UINT8(0x04u, myColorA.getGreen());
     TEST_ASSERT_EQUAL_UINT8(0x08u, myColorA.getBlue());
-    TEST_ASSERT_EQUAL_UINT16(0x0821u, static_cast<uint16_t>(myColorA));
+    TEST_ASSERT_EQUAL_UINT16(0x0821u, myColorA.toRgb565());
 
     /* Does the color assignment via assignment operator works? */
     myColorA = myColorB;
@@ -264,13 +264,13 @@ static void testColor565()
     TEST_ASSERT_EQUAL_UINT8(0xf8u, myColorA.getRed());
     TEST_ASSERT_EQUAL_UINT8(0xfcu, myColorA.getGreen());
     TEST_ASSERT_EQUAL_UINT8(0xf8u, myColorA.getBlue());
-    TEST_ASSERT_EQUAL_UINT16(0xffffu, static_cast<uint16_t>(myColorA));
+    TEST_ASSERT_EQUAL_UINT16(0xffffu, myColorA.toRgb565());
 
     myColorA.set(0x00080408U);
     TEST_ASSERT_EQUAL_UINT8(0x08u, myColorA.getRed());
     TEST_ASSERT_EQUAL_UINT8(0x04u, myColorA.getGreen());
     TEST_ASSERT_EQUAL_UINT8(0x08u, myColorA.getBlue());
-    TEST_ASSERT_EQUAL_UINT16(0x0821u, static_cast<uint16_t>(myColorA));
+    TEST_ASSERT_EQUAL_UINT16(0x0821u, myColorA.toRgb565());
 
     /* Does the color assignment via assignment operator works? */
     myColorA = myColorB;

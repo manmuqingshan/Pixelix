@@ -189,14 +189,6 @@ public:
     }
 
     /**
-     * Convert to RGB565 uint16_t value with respect to current intensity.
-     */
-    operator uint16_t() const
-    {
-        return ColorUtil::to565(getRed(), getGreen(), getBlue());
-    }
-
-    /**
      * Get base color information with respect to current intensity.
      *
      * @param[out] red      Red value
@@ -336,6 +328,16 @@ public:
      * @param[in] wheelPos  Color wheel position
      */
     void turnColorWheel(uint8_t wheelPos);
+
+    /**
+     * Convert color information to RGB565 format.
+     *
+     * @return Color value (RGB) in 16 bit format
+     */
+    uint16_t toRgb565() const
+    {
+        return m_color565;
+    }
 
     /**
      * Set new color information by RGB565 value.

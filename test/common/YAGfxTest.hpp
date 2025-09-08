@@ -246,7 +246,7 @@ public:
         {
             for(x = 0U; x < WIDTH; ++x)
             {
-                if (0U == static_cast<uint32_t>(m_buffer[x + WIDTH * y]))
+                if (0U == m_buffer[x + WIDTH * y])
                 {
                     ::printf("_");
                 }

@@ -96,7 +96,6 @@ void Display::show()
             uint16_t intensity    = brightnessAdjustedColor.getIntensity();
             int32_t  xNative      = y * (PIXEL_HEIGHT + PiXEL_DISTANCE) + BORDER_Y;
             int32_t  yNative      = TFT_HEIGHT - (x * (PIXEL_WIDTH + PiXEL_DISTANCE) + BORDER_X) - 1;
-            uint16_t colorRGB565  = brightnessAdjustedColor;
 
             intensity            *= (static_cast<uint16_t>(m_brightness) + 1U);
             intensity            /= 256U;
@@ -107,7 +106,7 @@ void Display::show()
                 yNative,
                 PIXEL_HEIGHT,
                 PIXEL_WIDTH,
-                colorRGB565);
+                brightnessAdjustedColor.toRgb565());
         }
     }
 }
