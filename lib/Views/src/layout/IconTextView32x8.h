@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  View for 64x64 LED matrix with canvas and text for LED matrix
+ * @brief  View with icon and text for 32x8 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef CANVAS_TEXT_VIEW_64X64_H
-#define CANVAS_TEXT_VIEW_64X64_H
+#ifndef ICON_TEXT_VIEW_32X8_H
+#define ICON_TEXT_VIEW_32X8_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,10 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <ICanvasTextView.h>
-#include <CanvasWidget.h>
+#include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
+
+#include "../interface/IIconTextView.h"
 
 /******************************************************************************
  * Macros
@@ -58,28 +59,42 @@
  *****************************************************************************/
 
 /**
- * View for 64x64 LED matrix with canvas and text.
+ * View for 32x8 LED matrix with icon and text.
+ * 
+ * +-----------------------------------------------------------------+
+ * |                |                                                |
+ * |                |                                                |
+ * |                |                                                |
+ * |   Icon         |                   Text                         |
+ * |   8x8          |                   24x8                         |
+ * |                |                                                |
+ * |                |                                                |
+ * |                |                                                |
+ * +-----------------------------------------------------------------+
  */
-class CanvasTextView64x64 : public ICanvasTextView
+class IconTextView32x8 : public IIconTextView
 {
 public:
 
     /**
      * Construct the view.
      */
-    CanvasTextView64x64() :
-        ICanvasTextView(),
+    IconTextView32x8() :
+        IIconTextView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
-        m_canvasWidget(CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_X, CANVAS_Y),
+        m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
         m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
     {
+        m_bitmapWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
+        m_bitmapWidget.setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
+        
         m_textWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~CanvasTextView64x64()
+    virtual ~IconTextView32x8()
     {
     }
 
@@ -124,7 +139,7 @@ public:
     void update(YAGfx& gfx) override
     {
         gfx.fillScreen(ColorDef::BLACK);
-        m_canvasWidget.update(gfx);
+        m_bitmapWidget.update(gfx);
         m_textWidget.update(gfx);
     }
 
@@ -159,79 +174,85 @@ public:
     }
 
     /**
-     * Get canvas for drawing.
-     * 
-     * @return Canvas
+     * Load icon image from filesystem.
+     *
+     * @param[in] filename  Image filename
+     *
+     * @return If successul, it will return true otherwise false.
      */
-    YAGfx& getCanvasGfx() override
+    bool loadIcon(const String& filename) override;
+
+    /**
+     * Clear icon.
+     */
+    void clearIcon() override
     {
-        return m_canvasWidget;
+        m_bitmapWidget.clear(ColorDef::BLACK);
     }
 
 protected:
 
     /**
-     * Canvas size in pixels.
+     * Bitmap size in pixels.
      */
-    static const uint16_t   CANVAS_SIZE     = CONFIG_LED_MATRIX_HEIGHT / 2U;
+    static const uint16_t   BITMAP_SIZE     = 8U;
 
     /**
-     * Canvas width in pixels.
+     * Bitmap width in pixels.
      */
-    static const uint16_t   CANVAS_WIDTH    = CANVAS_SIZE;
+    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
 
     /**
-     * Canvas height in pixels.
+     * Bitmap height in pixels.
      */
-    static const uint16_t   CANVAS_HEIGHT   = CANVAS_SIZE;
+    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
 
     /**
-     * Canvas widget x-coordinate in pixels.
+     * Bitmap widget x-coordinate in pixels.
      * Left aligned.
      */
-    static const int16_t    CANVAS_X        = (CONFIG_LED_MATRIX_WIDTH - CANVAS_WIDTH) / 2;
+    static const int16_t    BITMAP_X        = 0;
 
     /**
-     * Canvas widget y-coordinate in pixels.
+     * Bitmap widget y-coordinate in pixels.
      * Top aligned.
      */
-    static const int16_t    CANVAS_Y        = 0;
+    static const int16_t    BITMAP_Y        = 0;
 
     /**
      * Text width in pixels.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT - CANVAS_HEIGHT;
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
-     * Left aligned.
      */
-    static const int16_t    TEXT_X          = 0;
+    static const int16_t    TEXT_X          = BITMAP_WIDTH;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = CANVAS_HEIGHT;
+    static const int16_t    TEXT_Y          = 0;
 
     Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
-    CanvasWidget    m_canvasWidget; /**< Canvas widget used to draw. */
+    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
     TextWidget      m_textWidget;   /**< Text widget used to show some text. */
 
 private:
-    CanvasTextView64x64(const CanvasTextView64x64& other);
-    CanvasTextView64x64& operator=(const CanvasTextView64x64& other);
+    IconTextView32x8(const IconTextView32x8& other);
+    IconTextView32x8& operator=(const IconTextView32x8& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* CANVAS_TEXT_VIEW_64X64_H */
+#endif  /* ICON_TEXT_VIEW_32X8_H */
 
 /** @} */

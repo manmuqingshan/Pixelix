@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view for LED matrix with date and time.
+ * @brief  View for 32x16 LED matrix with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef DATE_TIME_VIEW_GENERIC_H
-#define DATE_TIME_VIEW_GENERIC_H
+#ifndef DATE_TIME_VIEW_32X16_H
+#define DATE_TIME_VIEW_32X16_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,12 +43,13 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include <IDateTimeView.h>
 #include <Fonts.h>
 #include <LampWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
 #include <Logging.h>
+
+#include "../interface/IDateTimeView.h"
 
 /******************************************************************************
  * Macros
@@ -59,16 +60,16 @@
  *****************************************************************************/
 
 /**
- * Generic view for LED matrix with date and time.
+ * View for 32x16 LED matrix with date and time.
  */
-class DateTimeViewGeneric : public IDateTimeView
+class DateTimeView32x16 : public IDateTimeView
 {
 public:
 
     /**
      * Construct the view.
      */
-    DateTimeViewGeneric() :
+    DateTimeView32x16() :
         IDateTimeView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
@@ -81,19 +82,25 @@ public:
                       {LAMP_WIDTH, LAMP_HEIGHT, LAMP_6_X , LAMP_Y}},
         m_startOfWeek(START_OF_WEEK),
         m_dayOnColor(DAY_ON_COLOR),
-        m_dayOffColor(DAY_OFF_COLOR),
-        m_now()
+        m_dayOffColor(DAY_OFF_COLOR)
     {
         /* Disable fade effect in case the user required to show seconds,
          * which will continuously trigger the fading effect.
          */
         m_textWidget.disableFadeEffect();
+
+        /* Keep text (default font) in the middle, which means one empty
+         * pixel row at the top and one between the text and the day lamps.
+         * Don't use text widget alignment feature, because it will calculate
+         * a 0 as optimum.
+         */
+        m_textWidget.move(0, 1);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~DateTimeViewGeneric()
+    virtual ~DateTimeView32x16()
     {
     }
 
@@ -247,11 +254,11 @@ public:
     /**
      * Get the view mode (analog, digital or both).
      * 
-     * @return View mode 
+     * @return ViewMode 
      */
     ViewMode getViewMode() const override
     {
-        return ViewMode::DIGITAL_ONLY;  /* Generic layout can only do digital. */
+        return ViewMode::DIGITAL_ONLY;  /* 32X16 layout can only do digital. */
     }
 
     /**
@@ -259,7 +266,7 @@ public:
      * 
      * @param[in] mode  View mode
      * 
-     * @return ViewMode 
+     * @return View mode 
      */
     bool setViewMode(ViewMode mode) override
     {
@@ -267,7 +274,7 @@ public:
 
         if (ViewMode::DIGITAL_ONLY != mode)
         {
-            LOG_WARNING("Illegal DateTime view mode for generic: (%hhu)", mode);
+            LOG_WARNING("Illegal DateTime view mode for 32X16: (%hhu)", mode);
             isSuccessful = false;
         }
 
@@ -275,9 +282,9 @@ public:
     }
 
     /**
-     * @brief Update current time values in view
+     * @brief Update current time values in view.
      * 
-     * @param now current time
+     * @param[in] now current time
      */
     virtual void setCurrentTime(const tm& now) override;
 
@@ -288,7 +295,7 @@ public:
      */
     void getConfiguration(JsonObject& jsonCfg) const override
     {
-        (void)jsonCfg;  /* No configuration for generic. */
+        (void)jsonCfg;  /* No configuration for 32x16. */
     }
 
     /**
@@ -401,11 +408,10 @@ protected:
     uint8_t         m_startOfWeek;              /**< Start of week offset for the week bar (Sunday = 0). */
     Color           m_dayOnColor;               /**< Color of current day in the day of the week bar. */
     Color           m_dayOffColor;              /**< Color of the other days in the day of the week bar. */
-    tm              m_now;                      /**< Latest time update. */
 
 private:
-    DateTimeViewGeneric(const DateTimeViewGeneric& other);
-    DateTimeViewGeneric& operator=(const DateTimeViewGeneric& other);
+    DateTimeView32x16(const DateTimeView32x16& other);
+    DateTimeView32x16& operator=(const DateTimeView32x16& other);
 
     /**
      * Updates all colors of the lamp widgets.
@@ -417,6 +423,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif  /* DATE_TIME_VIEW_GENERIC_H */
+#endif  /* DATE_TIME_VIEW_32X16_H */
 
 /** @} */

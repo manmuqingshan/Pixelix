@@ -43,12 +43,12 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include "DateTimeViewGeneric.h"
-
 #include <Fonts.h>
 #include <LampWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
+
+#include "DateTimeViewGeneric.h"
 
 /******************************************************************************
  * Macros

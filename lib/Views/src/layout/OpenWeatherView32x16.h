@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  OpenWeather view with icon and text for 64x64 LED matrix
+ * @brief  OpenWeather view with icon and text for 32x16 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef OPEN_WEATHER_VIEW_64X64_H
-#define OPEN_WEATHER_VIEW_64X64_H
+#ifndef OPEN_WEATHER_VIEW_32X16_H
+#define OPEN_WEATHER_VIEW_32X16_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,10 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IOpenWeatherView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
+
+#include "../interface/IOpenWeatherView.h"
 
 /******************************************************************************
  * Macros
@@ -58,21 +59,21 @@
  *****************************************************************************/
 
 /**
- * OpenWeather view for 64x64 LED matrix with icon and text.
+ * OpenWeather view for 32x16 LED matrix with icon and text.
  */
-class OpenWeatherView64x64 : public IOpenWeatherView
+class OpenWeatherView32x16 : public IOpenWeatherView
 {
 public:
 
     /**
      * Construct the view.
      */
-    OpenWeatherView64x64();
+    OpenWeatherView32x16();
 
     /**
      * Destroy the view.
      */
-    virtual ~OpenWeatherView64x64()
+    virtual ~OpenWeatherView32x16()
     {
     }
 
@@ -105,7 +106,8 @@ public:
      */
     void setFontType(Fonts::FontType fontType) override
     {
-        /* Not supported. */
+        m_fontType = fontType;
+        m_weatherInfoCurrentText.setFont(Fonts::getFontByType(m_fontType));
     }
 
     /**
@@ -225,7 +227,10 @@ public:
      * @param[in] day   Weather information for the upcoming day [0; 4].
      * @param[in] info  Weather information
      */
-    void setWeatherInfoForecast(uint8_t day, const WeatherInfoForecast& info) override;
+    void setWeatherInfoForecast(uint8_t day, const WeatherInfoForecast& info) override
+    {
+        /* Not supported. */
+    }
 
     /**
      * Is the weather forecast feature supported by the view?
@@ -234,7 +239,7 @@ public:
      */
     static constexpr bool isWeatherForecastSupported()
     {
-        return true;
+        return false;
     }
 
 protected:
@@ -245,25 +250,19 @@ protected:
     static const char* STD_ICON;
 
     /**
-     * Standard icon file name for 16x16 pixel.
+     * UV index icon file name for 8x8 pixel.
      */
-    static const char* STD_ICON_16X16;
-
-
-    /**
-     * UV index icon file name for 16x16 pixel.
-     */
-    static const char* UVI_ICON_16X16;
+    static const char* UVI_ICON;
 
     /**
-     * Humidity icon file name for 16x16 pixel.
+     * Humidity icon file name for 8x8 pixel.
      */
-    static const char* HUMIDITY_ICON_16X16;
+    static const char* HUMIDITY_ICON;
 
     /**
-     * Windspeed icon file name for 16x16 pixel.
+     * Windspeed icon file name for 8x8 pixel.
      */
-    static const char* WIND_ICON_16X16;
+    static const char* WIND_ICON;
 
     /**
      * Default duration in ms used for the view.
@@ -276,30 +275,24 @@ protected:
      */
     static const uint32_t VIEW_DURATION_MIN     = SIMPLE_TIMER_SECONDS(4U);
 
-    Fonts::FontType       m_fontType;                                    /**< Font type which shall be used if there is no conflict with the layout. */
-    const char*           m_imagePath;                                   /**< Image path within the filesystem to weather condition icons. */
-    BitmapWidget          m_weatherIconCurrent;                          /**< Current weather icon. */
-    TextWidget            m_weatherInfoCurrentText;                      /**< Current weather info text. */
-    TextWidget            m_forecastDayNames[FORECAST_DAYS];             /**< Forecast day names */
-    BitmapWidget          m_forecastIcons[FORECAST_DAYS];                /**< Forecast weather icons. */
-    TextWidget            m_forecastTemperatures[FORECAST_DAYS];         /**< Forecast temperature (min. and max.) */
-    uint32_t              m_viewDuration;                                /**< The duration in ms, this view will be shown on the display. */
-    SimpleTimer           m_viewDurationTimer;                           /**< The timer used to determine which weather info to show on the display. */
-    String                m_temperatureUnit;                             /**< Temperature unit */
-    String                m_windSpeedUnit;                               /**< Wind speed unit */
-    uint8_t               m_weatherInfo;                                 /**< Use the bits to determine which weather info to show. */
-    uint8_t               m_weatherInfoId;                               /**< The weather info id is used to mask the weather info flag. Its the number of bit shifts. */
-    WeatherInfoCurrent    m_weatherInfoCurrent;                          /**< Current weather information. */
-    WeatherInfoForecast   m_weatherInfoForecast[FORECAST_DAYS];          /**< Forecast wheather information. */
-    bool                  m_isWeatherInfoCurrentUpdated;                 /**< Is current weather info updated? */
-    bool                  m_isWeatherIconCurrentUpdated;                 /**< Is the current weather icon updated in the weather info? */
-    bool                  m_isWeatherInfoForecastUpdated;                /**< Is forecast weather info updated? */
-    bool                  m_isWeatherIconForecastUpdated[FORECAST_DAYS]; /**< Is the forecast weather icon updated in the weather info? */
+    Fonts::FontType       m_fontType;                    /**< Font type which shall be used if there is no conflict with the layout. */
+    const char*           m_imagePath;                   /**< Image path within the filesystem to weather condition icons. */
+    BitmapWidget          m_weatherIconCurrent;          /**< Current weather icon. */
+    TextWidget            m_weatherInfoCurrentText;      /**< Current weather info text. */
+    uint32_t              m_viewDuration;                /**< The duration in ms, this view will be shown on the display. */
+    SimpleTimer           m_viewDurationTimer;           /**< The timer used to determine which weather info to show on the display. */
+    String                m_temperatureUnit;             /**< Temperature unit */
+    String                m_windSpeedUnit;               /**< Wind speed unit */
+    uint8_t               m_weatherInfo;                 /**< Use the bits to determine which weather info to show. */
+    uint8_t               m_weatherInfoId;               /**< The weather info id is used to mask the weather info flag. Its the number of bit shifts. */
+    WeatherInfoCurrent    m_weatherInfoCurrent;          /**< Current weather information. */
+    bool                  m_isWeatherInfoCurrentUpdated; /**< Is current weather info updated? */
+    bool                  m_isWeatherIconCurrentUpdated; /**< Is the current weather icon updated in the weather info? */
 
 private:
 
-    OpenWeatherView64x64(const OpenWeatherView64x64& other);
-    OpenWeatherView64x64& operator=(const OpenWeatherView64x64& other);
+    OpenWeatherView32x16(const OpenWeatherView32x16& other);
+    OpenWeatherView32x16& operator=(const OpenWeatherView32x16& other);
 
     /**
      * Get number of enabled weather infos.
@@ -325,11 +318,6 @@ private:
      * weather info.
      */
     void updateWeatherInfoCurrentOnView();
-
-    /**
-     * Update the forecast  weather info on the view.
-     */
-    void updateWeatherInfoForecastOnView();
 
     /**
      * Handle main weather info, which to show.
@@ -392,6 +380,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif /* OPEN_WEATHER_VIEW_64X64_H */
+#endif /* OPEN_WEATHER_VIEW_32X16_H */
 
 /** @} */

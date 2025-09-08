@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view with icon, text and progress bar for LED matrix
+ * @brief  Generic view with canvas and text for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef PLAYER_VIEW_GENERIC_H
-#define PLAYER_VIEW_GENERIC_H
+#ifndef CANVAS_TEXT_VIEW_GENERIC_H
+#define CANVAS_TEXT_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,11 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IPlayerView.h>
-#include <BitmapWidget.h>
+#include <CanvasWidget.h>
 #include <TextWidget.h>
-#include <ProgressBar.h>
 #include <Util.h>
+
+#include "../interface/ICanvasTextView.h"
 
 /******************************************************************************
  * Macros
@@ -59,28 +59,28 @@
  *****************************************************************************/
 
 /**
- * Generic view for LED matrix with icon, text and progress bar.
+ * Generic view for LED matrix with canvas and text.
  */
-class PlayerViewGeneric : public IPlayerView
+class CanvasTextViewGeneric : public ICanvasTextView
 {
 public:
 
     /**
      * Construct the view.
      */
-    PlayerViewGeneric() :
-        IPlayerView(),
+    CanvasTextViewGeneric() :
+        ICanvasTextView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
-        m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
-        m_progressBar(PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_X, PROGRESS_BAR_Y)
+        m_canvasWidget(CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_X, CANVAS_Y),
+        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
     {
+        m_textWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~PlayerViewGeneric()
+    virtual ~CanvasTextViewGeneric()
     {
     }
 
@@ -125,7 +125,7 @@ public:
     void update(YAGfx& gfx) override
     {
         gfx.fillScreen(ColorDef::BLACK);
-        m_bitmapWidget.update(gfx);
+        m_canvasWidget.update(gfx);
         m_textWidget.update(gfx);
     }
 
@@ -160,116 +160,74 @@ public:
     }
 
     /**
-     * Load icon image from filesystem.
-     *
-     * @param[in] filename  Image filename
-     *
-     * @return If successul, it will return true otherwise false.
-     */
-    bool loadIcon(const String& filename) override;
-
-    /**
-     * Clear icon.
-     */
-    void clearIcon() override
-    {
-        m_bitmapWidget.clear(ColorDef::BLACK);
-    }
-
-    /**
-     * Set progress in % [0; 100].
+     * Get canvas for drawing.
      * 
-     * @param[in] progress  Progress as number from 0 to 100.
+     * @return Canvas
      */
-    void setProgress(uint8_t progress) override
+    YAGfx& getCanvasGfx() override
     {
-        m_progressBar.setProgress(progress);
+        return m_canvasWidget;
     }
 
 protected:
 
     /**
-     * Bitmap size in pixels.
+     * Canvas width in pixels.
      */
-    static const uint16_t   BITMAP_SIZE         = 8U;
+    static const uint16_t   CANVAS_WIDTH    = 12U;
 
     /**
-     * Bitmap width in pixels.
+     * Canvas height in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH        = BITMAP_SIZE;
+    static const uint16_t   CANVAS_HEIGHT   = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
-     * Bitmap height in pixels.
-     */
-    static const uint16_t   BITMAP_HEIGHT       = BITMAP_SIZE;
-
-    /**
-     * Bitmap widget x-coordinate in pixels.
+     * Canvas widget x-coordinate in pixels.
      * Left aligned.
      */
-    static const int16_t    BITMAP_X            = 0;
+    static const int16_t    CANVAS_X        = 0;
 
     /**
-     * Bitmap widget y-coordinate in pixels.
+     * Canvas widget y-coordinate in pixels.
      * Top aligned.
      */
-    static const int16_t    BITMAP_Y            = 0;
+    static const int16_t    CANVAS_Y        = 0;
 
     /**
      * Text width in pixels.
      */
-    static const uint16_t   TEXT_WIDTH          = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - CANVAS_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT         = CONFIG_LED_MATRIX_HEIGHT;
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
      */
-    static const int16_t    TEXT_X              = BITMAP_WIDTH;
+    static const int16_t    TEXT_X          = CANVAS_WIDTH;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y              = 0;
-
-    /**
-     * Progress bar width in pixels.
-     */
-    static const uint16_t   PROGRESS_BAR_WIDTH  = TEXT_WIDTH;
-
-    /**
-     * Progress bar height in pixels.
-     */
-    static const uint16_t   PROGRESS_BAR_HEIGHT = 1U;
-
-    /**
-     * Progress bar x-coordinate in pixels.
-     */
-    static const int16_t    PROGRESS_BAR_X      = BITMAP_WIDTH;
-
-    /**
-     * Progress bar y-coordinate in pixels.
-     */
-    static const int16_t    PROGRESS_BAR_Y      = CONFIG_LED_MATRIX_HEIGHT - 1;
+    static const int16_t    TEXT_Y          = 0;
 
     Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
-    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
+    CanvasWidget    m_canvasWidget; /**< Canvas widget used to draw. */
     TextWidget      m_textWidget;   /**< Text widget used to show some text. */
-    ProgressBar     m_progressBar;  /**< Progress bar for the music. */
 
 private:
-    PlayerViewGeneric(const PlayerViewGeneric& other);
-    PlayerViewGeneric& operator=(const PlayerViewGeneric& other);
+    CanvasTextViewGeneric(const CanvasTextViewGeneric& other);
+    /** Assignment operator not allowed. */
+    CanvasTextViewGeneric& operator=(const CanvasTextViewGeneric& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* PLAYER_VIEW_GENERIC_H */
+#endif  /* CANVAS_TEXT_VIEW_GENERIC_H */
 
 /** @} */

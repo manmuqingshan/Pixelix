@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  View with icon and text for 64x64 LED matrix
+ * @brief  Generic view with icon and text for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef ICON_TEXT_VIEW_64x64_H
-#define ICON_TEXT_VIEW_64x64_H
+#ifndef ICON_TEXT_VIEW_GENERIC_H
+#define ICON_TEXT_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,10 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IIconTextView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
+
+#include "../interface/IIconTextView.h"
 
 /******************************************************************************
  * Macros
@@ -58,49 +59,27 @@
  *****************************************************************************/
 
 /**
- * View for 64x64 LED matrix with a icon and text.
- * 
- * +-----------------------------------------------------------------+
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * |                          Icon                                   |
- * |                          64x32                                  |
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * +-----------------------------------------------------------------+
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * |                          Text                                   |
- * |                          64x32                                  |
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * +-----------------------------------------------------------------+
+ * Generic view for LED matrix with icon and text.
  */
-class IconTextView64x64 : public IIconTextView
+class IconTextViewGeneric : public IIconTextView
 {
 public:
 
     /**
      * Construct the view.
      */
-    IconTextView64x64() :
+    IconTextViewGeneric() :
         IIconTextView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
         m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
     {
-        m_bitmapWidget.setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
-        m_bitmapWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~IconTextView64x64()
+    virtual ~IconTextViewGeneric()
     {
     }
 
@@ -201,7 +180,7 @@ protected:
     /**
      * Bitmap size in pixels.
      */
-    static const uint16_t   BITMAP_SIZE     = CONFIG_LED_MATRIX_HEIGHT / 2U;
+    static const uint16_t   BITMAP_SIZE     = 8U;
 
     /**
      * Bitmap width in pixels.
@@ -215,9 +194,9 @@ protected:
 
     /**
      * Bitmap widget x-coordinate in pixels.
-     * Center aligned.
+     * Left aligned.
      */
-    static const int16_t    BITMAP_X        = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH) / 2;
+    static const int16_t    BITMAP_X        = 0;
 
     /**
      * Bitmap widget y-coordinate in pixels.
@@ -228,38 +207,37 @@ protected:
     /**
      * Text width in pixels.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT - BITMAP_HEIGHT;
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
-     * Left aligned.
      */
-    static const int16_t    TEXT_X          = 0;
+    static const int16_t    TEXT_X          = BITMAP_WIDTH;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = BITMAP_HEIGHT;
+    static const int16_t    TEXT_Y          = 0;
 
     Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
     BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
     TextWidget      m_textWidget;   /**< Text widget used to show some text. */
 
 private:
-    IconTextView64x64(const IconTextView64x64& other);
-    IconTextView64x64& operator=(const IconTextView64x64& other);
+    IconTextViewGeneric(const IconTextViewGeneric& other);
+    IconTextViewGeneric& operator=(const IconTextViewGeneric& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_VIEW_64x64_H */
+#endif  /* ICON_TEXT_VIEW_GENERIC_H */
 
 /** @} */

@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  View for 32x8 LED matrix with date and time.
+ * @brief  Generic view for LED matrix with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef DATE_TIME_VIEW_32X8_H
-#define DATE_TIME_VIEW_32X8_H
+#ifndef DATE_TIME_VIEW_GENERIC_H
+#define DATE_TIME_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,12 +43,13 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include <IDateTimeView.h>
 #include <Fonts.h>
 #include <LampWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
 #include <Logging.h>
+
+#include "../interface/IDateTimeView.h"
 
 /******************************************************************************
  * Macros
@@ -59,53 +60,47 @@
  *****************************************************************************/
 
 /**
- * View for 32x8 LED matrix with date and time.
+ * Generic view for LED matrix with date and time.
  */
-class DateTimeView32x8 : public IDateTimeView
+class DateTimeViewGeneric : public IDateTimeView
 {
 public:
 
     /**
      * Construct the view.
      */
-    DateTimeView32x8() :
+    DateTimeViewGeneric() :
         IDateTimeView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
-        m_lampWidgets{ { LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_4_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_5_X, LAMP_Y },
-            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_6_X, LAMP_Y } },
+        m_lampWidgets{{LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_4_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_5_X , LAMP_Y},
+                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_6_X , LAMP_Y}},
         m_startOfWeek(START_OF_WEEK),
         m_dayOnColor(DAY_ON_COLOR),
-        m_dayOffColor(DAY_OFF_COLOR)
+        m_dayOffColor(DAY_OFF_COLOR),
+        m_now()
     {
         /* Disable fade effect in case the user required to show seconds,
          * which will continuously trigger the fading effect.
          */
         m_textWidget.disableFadeEffect();
-
-        /* Keep text (default font) in the middle, which means one empty
-         * pixel row at the top and one between the text and the day lamps.
-         * Don't use text widget alignment feature, because it will calculate
-         * a 0 as optimum.
-         */
-        m_textWidget.move(0, 1);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~DateTimeView32x8()
+    virtual ~DateTimeViewGeneric()
     {
     }
 
     /**
      * Initialize view, which will prepare the widgets and the default values.
-     *
+     * 
      * @param[in] width     Display width in pixel.
      * @param[in] height    Display height in pixel.
      */
@@ -120,7 +115,7 @@ public:
 
     /**
      * Get font type.
-     *
+     * 
      * @return The font type the view uses.
      */
     Fonts::FontType getFontType() const override
@@ -130,7 +125,7 @@ public:
 
     /**
      * Set font type.
-     *
+     * 
      * @param[in] fontType  The font type which the view shall use.
      */
     void setFontType(Fonts::FontType fontType) override
@@ -141,7 +136,7 @@ public:
 
     /**
      * Update the underlying canvas.
-     *
+     * 
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
     void update(YAGfx& gfx) override
@@ -151,7 +146,7 @@ public:
         gfx.fillScreen(ColorDef::BLACK);
         m_textWidget.update(gfx);
 
-        while (MAX_LAMPS > idx)
+        while(MAX_LAMPS > idx)
         {
             m_lampWidgets[idx].update(gfx);
 
@@ -161,7 +156,7 @@ public:
 
     /**
      * Get text (non-formatted).
-     *
+     * 
      * @return Text
      */
     String getText() const override
@@ -171,7 +166,7 @@ public:
 
     /**
      * Get text (formatted).
-     *
+     * 
      * @return Text
      */
     String getFormatText() const override
@@ -181,7 +176,7 @@ public:
 
     /**
      * Set text (formatted).
-     *
+     * 
      * @param[in] formatText    Formatted text to show.
      */
     void setFormatText(const String& formatText) override
@@ -210,7 +205,7 @@ public:
 
     /**
      * Get the color to show the actual day.
-     *
+     * 
      * @return Color
      */
     const Color& getDayOnColor() const override
@@ -220,7 +215,7 @@ public:
 
     /**
      * Set the color which is used for the actual day.
-     *
+     * 
      * @param[in] color Color for the actual day
      */
     void setDayOnColor(const Color& color) override
@@ -231,7 +226,7 @@ public:
 
     /**
      * Get the color to show the other days than the actual one.
-     *
+     * 
      * @return Color
      */
     const Color& getDayOffColor() const override
@@ -241,7 +236,7 @@ public:
 
     /**
      * Set the color which is used for the other days than the actual day.
-     *
+     * 
      * @param[in] color Color for the other days
      */
     void setDayOffColor(const Color& color) override
@@ -252,20 +247,20 @@ public:
 
     /**
      * Get the view mode (analog, digital or both).
-     *
-     * @return View mode
+     * 
+     * @return View mode 
      */
     ViewMode getViewMode() const override
     {
-        return ViewMode::DIGITAL_ONLY; /* 32X8 layout can only do digital. */
+        return ViewMode::DIGITAL_ONLY;  /* Generic layout can only do digital. */
     }
 
     /**
      * Set the view mode (analog, digital or both).
-     *
-     * @param[in] mode View mode
-     *
-     * @return ViewMode
+     * 
+     * @param[in] mode  View mode
+     * 
+     * @return ViewMode 
      */
     bool setViewMode(ViewMode mode) override
     {
@@ -273,7 +268,7 @@ public:
 
         if (ViewMode::DIGITAL_ONLY != mode)
         {
-            LOG_WARNING("Illegal DateTime view mode for 32X8: (%hhu)", mode);
+            LOG_WARNING("Illegal DateTime view mode for generic: (%hhu)", mode);
             isSuccessful = false;
         }
 
@@ -281,27 +276,27 @@ public:
     }
 
     /**
-     * @brief Update current time values in view.
-     *
-     * @param[in] now current time
+     * @brief Update current time values in view
+     * 
+     * @param now current time
      */
     virtual void setCurrentTime(const tm& now) override;
 
     /**
      * Get current active configuration in JSON format.
-     *
+     * 
      * @param[out] jsonCfg Configuration
      */
     void getConfiguration(JsonObject& jsonCfg) const override
     {
-        (void)jsonCfg; /* No configuration for 32x8. */
+        (void)jsonCfg;  /* No configuration for generic. */
     }
 
     /**
      * Apply configuration from JSON.
-     *
+     * 
      * @param[in] jsonCfg Configuration
-     *
+     * 
      * @return If successful set, it will return true otherwise false.
      */
     bool setConfiguration(const JsonObjectConst& jsonCfg) override
@@ -317,7 +312,7 @@ public:
      * The received configuration may not contain all single key/value pair.
      * Therefore create a complete internal configuration and overwrite it
      * with the received one.
-     *
+     *  
      * @param[out] jsonMerged  The complete config set with merge content from jsonSource.
      * @param[in]  jsonSource  The recevied congi set, which may not cover all keys.
      * @return     true        Keys needed merging.
@@ -332,86 +327,86 @@ public:
     }
 
     /** Max. number of lamps. One lamp per day in a week. */
-    static const uint8_t MAX_LAMPS = 7U;
+    static const uint8_t    MAX_LAMPS       = 7U;
 
 protected:
 
     /** Distance between two lamps in pixel. */
-    static const uint8_t LAMP_DISTANCE = 1U;
+    static const uint8_t    LAMP_DISTANCE   = 1U;
 
     /** Lamp width in pixel. */
-    static const uint8_t LAMP_WIDTH    = (CONFIG_LED_MATRIX_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
+    static const uint8_t    LAMP_WIDTH      = (CONFIG_LED_MATRIX_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
 
     /** Lamp distance to the canvas border in pixel. */
-    static const uint8_t LAMP_BORDER   = (CONFIG_LED_MATRIX_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
+    static const uint8_t    LAMP_BORDER     = (CONFIG_LED_MATRIX_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
 
     /** Lamp height in pixel. */
-    static const uint8_t LAMP_HEIGHT   = 1U;
+    static const uint8_t    LAMP_HEIGHT     = 1U;
 
     /** Lamp 0 x-coordinate in pixel. */
-    static const uint8_t LAMP_0_X      = LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_0_X        = LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 1 x-coordinate in pixel. */
-    static const uint8_t LAMP_1_X      = LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_1_X        = LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 2 x-coordinate in pixel. */
-    static const uint8_t LAMP_2_X      = LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_2_X        = LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 3 x-coordinate in pixel. */
-    static const uint8_t LAMP_3_X      = LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_3_X        = LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 4 x-coordinate in pixel. */
-    static const uint8_t LAMP_4_X      = LAMP_BORDER + (4 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_4_X        = LAMP_BORDER + (4 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 5 x-coordinate in pixel. */
-    static const uint8_t LAMP_5_X      = LAMP_BORDER + (5 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_5_X        = LAMP_BORDER + (5 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 6 x-coordinate in pixel. */
-    static const uint8_t LAMP_6_X      = LAMP_BORDER + (6 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t    LAMP_6_X        = LAMP_BORDER + (6 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp y-coordindate in pixel. */
-    static const uint8_t LAMP_Y        = CONFIG_LED_MATRIX_HEIGHT - 1U;
+    static const uint8_t    LAMP_Y          = CONFIG_LED_MATRIX_HEIGHT - 1U;
 
     /**
      * Text width in pixels.
      */
-    static const uint16_t TEXT_WIDTH   = CONFIG_LED_MATRIX_WIDTH;
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t TEXT_HEIGHT  = CONFIG_LED_MATRIX_HEIGHT - LAMP_HEIGHT;
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT - LAMP_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
      */
-    static const int16_t TEXT_X        = 0;
+    static const int16_t    TEXT_X          = 0;
 
     /**
      * Text widget y-coordinate in pixels.
      */
-    static const int16_t TEXT_Y        = 0;
+    static const int16_t    TEXT_Y          = 0;
 
     /** Start of week offset for the week bar (Sunday = 0). */
-    static const uint8_t START_OF_WEEK = 1U;
+    static const uint8_t    START_OF_WEEK   = 1U;
 
     /** Color of the current day shown in the day of the week bar. */
-    static const Color DAY_ON_COLOR;
+    static const Color      DAY_ON_COLOR;
 
     /** Color of the other days (not the current one) shown in the day of the week bar. */
-    static const Color DAY_OFF_COLOR;
+    static const Color      DAY_OFF_COLOR;
 
-    Fonts::FontType    m_fontType;               /**< Font type which shall be used if there is no conflict with the layout. */
-    TextWidget         m_textWidget;             /**< Text widget, used for showing the text. */
-    LampWidget         m_lampWidgets[MAX_LAMPS]; /**< Lamp widgets, used to signal the day of week. */
-    uint8_t            m_startOfWeek;            /**< Start of week offset for the week bar (Sunday = 0). */
-    Color              m_dayOnColor;             /**< Color of current day in the day of the week bar. */
-    Color              m_dayOffColor;            /**< Color of the other days in the day of the week bar. */
+    Fonts::FontType m_fontType;                 /**< Font type which shall be used if there is no conflict with the layout. */
+    TextWidget      m_textWidget;               /**< Text widget, used for showing the text. */
+    LampWidget      m_lampWidgets[MAX_LAMPS];   /**< Lamp widgets, used to signal the day of week. */
+    uint8_t         m_startOfWeek;              /**< Start of week offset for the week bar (Sunday = 0). */
+    Color           m_dayOnColor;               /**< Color of current day in the day of the week bar. */
+    Color           m_dayOffColor;              /**< Color of the other days in the day of the week bar. */
+    tm              m_now;                      /**< Latest time update. */
 
 private:
-
-    DateTimeView32x8(const DateTimeView32x8& other);
-    DateTimeView32x8& operator=(const DateTimeView32x8& other);
+    DateTimeViewGeneric(const DateTimeViewGeneric& other);
+    DateTimeViewGeneric& operator=(const DateTimeViewGeneric& other);
 
     /**
      * Updates all colors of the lamp widgets.
@@ -423,6 +418,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif /* DATE_TIME_VIEW_32X8_H */
+#endif  /* DATE_TIME_VIEW_GENERIC_H */
 
 /** @} */

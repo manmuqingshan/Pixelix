@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  View with multiple icons for 32x16 LED matrix
+ * @brief  Generic view with text for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef MULTI_ICON_VIEW_32X16_H
-#define MULTI_ICON_VIEW_32X16_H
+#ifndef TEXT_VIEW_GENERIC_H
+#define TEXT_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,10 +43,11 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include <IMultiIconView.h>
-#include <BitmapWidget.h>
+#include <Fonts.h>
+#include <TextWidget.h>
 #include <Util.h>
-#include <FileSystem.h>
+
+#include "../interface/ITextView.h"
 
 /******************************************************************************
  * Macros
@@ -57,39 +58,26 @@
  *****************************************************************************/
 
 /**
- * View for 32x16 LED matrix with multiple icons.
+ * Generic view for LED matrix with text.
  */
-class MultiIconView32x16 : public IMultiIconView
+class TextViewGeneric : public ITextView
 {
 public:
 
     /**
      * Construct the view.
      */
-    MultiIconView32x16() :
-        IMultiIconView(),
-        m_bitmapWidgets{
-            { 0U, 0U, 0, 0 },
-            { 0U, 0U, 0, 0 },
-            { 0U, 0U, 0, 0 },
-            { 0U, 0U, 0, 0 }
-        }
+    TextViewGeneric() :
+        ITextView(),
+        m_fontType(Fonts::FONT_TYPE_DEFAULT),
+        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
     {
-        uint8_t slot = 0U;
-
-        while (MAX_ICON_SLOTS > slot)
-        {
-            m_bitmapWidgets[slot].setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
-            m_bitmapWidgets[slot].setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
-
-            ++slot;
-        }
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~MultiIconView32x16()
+    virtual ~TextViewGeneric()
     {
     }
 
@@ -106,116 +94,102 @@ public:
     }
 
     /**
+     * Get font type.
+     * 
+     * @return The font type the view uses.
+     */
+    Fonts::FontType getFontType() const override
+    {
+        return m_fontType;
+    }
+
+    /**
+     * Set font type.
+     * 
+     * @param[in] fontType  The font type which the view shall use.
+     */
+    void setFontType(Fonts::FontType fontType) override
+    {
+        m_fontType = fontType;
+        m_textWidget.setFont(Fonts::getFontByType(m_fontType));
+    }
+
+    /**
      * Update the underlying canvas.
-     *
+     * 
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
     void update(YAGfx& gfx) override
     {
-        uint8_t idx = 0U;
-
         gfx.fillScreen(ColorDef::BLACK);
-
-        while (MAX_ICON_SLOTS > idx)
-        {
-            m_bitmapWidgets[idx].update(gfx);
-            ++idx;
-        }
+        m_textWidget.update(gfx);
     }
 
     /**
-     * Load icon image from filesystem and show in the slot with the given id.
-     *
-     * @param[in] slotId    The id of the slot.
-     * @param[in] filename  Image filename
-     *
-     * @return If successul, it will return true otherwise false.
+     * Get text (non-formatted).
+     * 
+     * @return Text
      */
-    bool loadIcon(uint8_t slotId, const String& filename) override
+    String getText() const override
     {
-        bool isSuccessful = false;
-
-        if (MAX_ICON_SLOTS <= slotId)
-        {
-            slotId = 0U;
-        }
-
-        isSuccessful = m_bitmapWidgets[slotId].load(FILESYSTEM, filename);
-
-        if (true == isSuccessful)
-        {
-            reorder();
-        }
-
-        return isSuccessful;
+        return m_textWidget.getStr();
     }
 
     /**
-     * Clear icon in the slot with the given id.
-     *
-     * @param[in] slotId    The id of the slot.
+     * Get text (formatted).
+     * 
+     * @return Text
      */
-    void clearIcon(uint8_t slotId) override
+    String getFormatText() const override
     {
-        if (MAX_ICON_SLOTS <= slotId)
-        {
-            slotId = 0U;
-        }
-
-        m_bitmapWidgets[slotId].clear(ColorDef::BLACK);
-        reorder();
+        return m_textWidget.getFormatStr();
     }
 
     /**
-     * Max. number of icons.
+     * Set text (formatted).
+     * 
+     * @param[in] formatText    Formatted text to show.
      */
-    static const uint8_t MAX_ICON_SLOTS = 4U;
+    void setFormatText(const String& formatText) override
+    {
+        m_textWidget.setFormatStr(formatText);
+    }
 
 protected:
 
-    BitmapWidget m_bitmapWidgets[MAX_ICON_SLOTS]; /**< Bitmap widgets used to show the icons. */
+    /**
+     * Text width in pixels.
+     */
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
+
+    /**
+     * Text height in pixels.
+     */
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
+
+    /**
+     * Text widget x-coordinate in pixels.
+     */
+    static const int16_t    TEXT_X          = 0;
+
+    /**
+     * Text widget y-coordinate in pixels.
+     * Top aligned, below bitmap.
+     */
+    static const int16_t    TEXT_Y          = 0;
+
+    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
+    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
 
 private:
-    MultiIconView32x16(const MultiIconView32x16& other);
-    MultiIconView32x16& operator=(const MultiIconView32x16& other);
-
-    /**
-     * Get the active number of icon slosts.
-     *
-     * @return Number of active icon slots
-     */
-    uint8_t getActiveIconSlots();
-
-    /**
-     * Re-order the icons, depended on the number of active icon slots.
-     */
-    void reorder();
-
-    /**
-     * Apply layout with just one icon.
-     */
-    void applyLayout1();
-
-    /**
-     * Apply layout with two icons.
-     */
-    void applyLayout2();
-
-    /**
-     * Apply layout with three icons.
-     */
-    void applyLayout3();
-
-    /**
-     * Apply layout with four icons.
-     */
-    void applyLayout4();
+    TextViewGeneric(const TextViewGeneric& other);
+    TextViewGeneric& operator=(const TextViewGeneric& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* MULTI_ICON_VIEW_32X16_H */
+#endif  /* TEXT_VIEW_GENERIC_H */
 
 /** @} */

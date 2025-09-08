@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view with icon, text and lamps for LED matrix
+ * @brief  Generic view with icon, text and progress bar for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef ICON_TEXT_LAMP_VIEW_GENERIC_H
-#define ICON_TEXT_LAMP_VIEW_GENERIC_H
+#ifndef PLAYER_VIEW_GENERIC_H
+#define PLAYER_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,11 +44,12 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IIconTextLampView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
-#include <LampWidget.h>
+#include <ProgressBar.h>
 #include <Util.h>
+
+#include "../interface/IPlayerView.h"
 
 /******************************************************************************
  * Macros
@@ -59,31 +60,28 @@
  *****************************************************************************/
 
 /**
- * Generic view for LED matrix with icon and text.
+ * Generic view for LED matrix with icon, text and progress bar.
  */
-class IconTextLampViewGeneric : public IIconTextLampView
+class PlayerViewGeneric : public IPlayerView
 {
 public:
 
     /**
      * Construct the view.
      */
-    IconTextLampViewGeneric() :
-        IIconTextLampView(),
+    PlayerViewGeneric() :
+        IPlayerView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
         m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
-        m_lampWidgets{{LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X , LAMP_Y}}
+        m_progressBar(PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_X, PROGRESS_BAR_Y)
     {
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~IconTextLampViewGeneric()
+    virtual ~PlayerViewGeneric()
     {
     }
 
@@ -180,118 +178,99 @@ public:
     }
 
     /**
-     * Get lamp state (true = on / false = off).
+     * Set progress in % [0; 100].
      * 
-     * @param[in] lampId    Lamp id
-     * 
-     * @return Lamp state
+     * @param[in] progress  Progress as number from 0 to 100.
      */
-    bool getLamp(uint8_t lampId) const override;
-
-    /**
-     * Set lamp state.
-     *
-     * @param[in] lampId    Lamp id
-     * @param[in] state     Lamp state (true = on / false = off)
-     */
-    void setLamp(uint8_t lampId, bool state) override;
-
-    /**
-     * Max. number of lamps.
-     */
-    static const uint8_t    MAX_LAMPS       = 4U;
+    void setProgress(uint8_t progress) override
+    {
+        m_progressBar.setProgress(progress);
+    }
 
 protected:
 
     /**
      * Bitmap size in pixels.
      */
-    static const uint16_t   BITMAP_SIZE     = 8U;
+    static const uint16_t   BITMAP_SIZE         = 8U;
 
     /**
      * Bitmap width in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
+    static const uint16_t   BITMAP_WIDTH        = BITMAP_SIZE;
 
     /**
      * Bitmap height in pixels.
      */
-    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
+    static const uint16_t   BITMAP_HEIGHT       = BITMAP_SIZE;
 
     /**
      * Bitmap widget x-coordinate in pixels.
      * Left aligned.
      */
-    static const int16_t    BITMAP_X        = 0;
+    static const int16_t    BITMAP_X            = 0;
 
     /**
      * Bitmap widget y-coordinate in pixels.
      * Top aligned.
      */
-    static const int16_t    BITMAP_Y        = 0;
+    static const int16_t    BITMAP_Y            = 0;
 
     /**
      * Text width in pixels.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+    static const uint16_t   TEXT_WIDTH          = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
+    static const uint16_t   TEXT_HEIGHT         = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
      */
-    static const int16_t    TEXT_X          = BITMAP_WIDTH;
-
-    /** Distance between two lamps in pixel. */
-    static const uint8_t    LAMP_DISTANCE   = 1U;
-
-    /** Lamp width in pixel. */
-    static const uint8_t    LAMP_WIDTH      = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
-
-    /** Lamp distance to the canvas border in pixel. */
-    static const uint8_t    LAMP_BORDER     = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
-
-    /** Lamp height in pixel. */
-    static const uint8_t    LAMP_HEIGHT     = 1U;
-
-    /** Lamp 0 x-coordinate in pixel. */
-    static const uint8_t    LAMP_0_X        = BITMAP_WIDTH + LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 1 x-coordinate in pixel. */
-    static const uint8_t    LAMP_1_X        = BITMAP_WIDTH + LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 2 x-coordinate in pixel. */
-    static const uint8_t    LAMP_2_X        = BITMAP_WIDTH + LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 3 x-coordinate in pixel. */
-    static const uint8_t    LAMP_3_X        = BITMAP_WIDTH + LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp y-coordindate in pixel. */
-    static const uint8_t    LAMP_Y          = CONFIG_LED_MATRIX_HEIGHT - 1;
+    static const int16_t    TEXT_X              = BITMAP_WIDTH;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = 0;
+    static const int16_t    TEXT_Y              = 0;
 
-    Fonts::FontType m_fontType;                 /**< Font type which shall be used if there is no conflict with the layout. */
-    BitmapWidget    m_bitmapWidget;             /**< Bitmap widget used to show a icon. */
-    TextWidget      m_textWidget;               /**< Text widget used to show some text. */
-    LampWidget      m_lampWidgets[MAX_LAMPS];   /**< Lamp widgets, used to signal different things. */
+    /**
+     * Progress bar width in pixels.
+     */
+    static const uint16_t   PROGRESS_BAR_WIDTH  = TEXT_WIDTH;
+
+    /**
+     * Progress bar height in pixels.
+     */
+    static const uint16_t   PROGRESS_BAR_HEIGHT = 1U;
+
+    /**
+     * Progress bar x-coordinate in pixels.
+     */
+    static const int16_t    PROGRESS_BAR_X      = BITMAP_WIDTH;
+
+    /**
+     * Progress bar y-coordinate in pixels.
+     */
+    static const int16_t    PROGRESS_BAR_Y      = CONFIG_LED_MATRIX_HEIGHT - 1;
+
+    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
+    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
+    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
+    ProgressBar     m_progressBar;  /**< Progress bar for the music. */
 
 private:
-    IconTextLampViewGeneric(const IconTextLampViewGeneric& other);
-    IconTextLampViewGeneric& operator=(const IconTextLampViewGeneric& other);
+    PlayerViewGeneric(const PlayerViewGeneric& other);
+    PlayerViewGeneric& operator=(const PlayerViewGeneric& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_LAMP_VIEW_GENERIC_H */
+#endif  /* PLAYER_VIEW_GENERIC_H */
 
 /** @} */

@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view with text for LED matrix
+ * @brief  View with multiple icons for 32x8 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef TEXT_VIEW_GENERIC_H
-#define TEXT_VIEW_GENERIC_H
+#ifndef MULTI_ICON_VIEW_32X8_H
+#define MULTI_ICON_VIEW_32X8_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,10 +43,11 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include <Fonts.h>
-#include <ITextView.h>
-#include <TextWidget.h>
+#include <BitmapWidget.h>
 #include <Util.h>
+#include <FileSystem.h>
+
+#include "../interface/IMultiIconView.h"
 
 /******************************************************************************
  * Macros
@@ -57,26 +58,39 @@
  *****************************************************************************/
 
 /**
- * Generic view for LED matrix with text.
+ * View for 32x8 LED matrix with multiple icons.
  */
-class TextViewGeneric : public ITextView
+class MultiIconView32x8 : public IMultiIconView
 {
 public:
 
     /**
      * Construct the view.
      */
-    TextViewGeneric() :
-        ITextView(),
-        m_fontType(Fonts::FONT_TYPE_DEFAULT),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
+    MultiIconView32x8() :
+        IMultiIconView(),
+        m_bitmapWidgets{
+            { 0U, 0U, 0, 0 },
+            { 0U, 0U, 0, 0 },
+            { 0U, 0U, 0, 0 },
+            { 0U, 0U, 0, 0 }
+        }
     {
+        uint8_t slot = 0U;
+
+        while (MAX_ICON_SLOTS > slot)
+        {
+            m_bitmapWidgets[slot].setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
+            m_bitmapWidgets[slot].setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
+
+            ++slot;
+        }
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~TextViewGeneric()
+    virtual ~MultiIconView32x8()
     {
     }
 
@@ -93,102 +107,103 @@ public:
     }
 
     /**
-     * Get font type.
-     * 
-     * @return The font type the view uses.
-     */
-    Fonts::FontType getFontType() const override
-    {
-        return m_fontType;
-    }
-
-    /**
-     * Set font type.
-     * 
-     * @param[in] fontType  The font type which the view shall use.
-     */
-    void setFontType(Fonts::FontType fontType) override
-    {
-        m_fontType = fontType;
-        m_textWidget.setFont(Fonts::getFontByType(m_fontType));
-    }
-
-    /**
      * Update the underlying canvas.
-     * 
+     *
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
     void update(YAGfx& gfx) override
     {
+        uint8_t idx = 0U;
+
         gfx.fillScreen(ColorDef::BLACK);
-        m_textWidget.update(gfx);
+
+        while (MAX_ICON_SLOTS > idx)
+        {
+            m_bitmapWidgets[idx].update(gfx);
+            ++idx;
+        }
     }
 
     /**
-     * Get text (non-formatted).
-     * 
-     * @return Text
+     * Load icon image from filesystem and show in the slot with the given id.
+     *
+     * @param[in] slotId    The id of the slot.
+     * @param[in] filename  Image filename
+     *
+     * @return If successul, it will return true otherwise false.
      */
-    String getText() const override
+    bool loadIcon(uint8_t slotId, const String& filename) override
     {
-        return m_textWidget.getStr();
+        bool isSuccessful = false;
+
+        if (MAX_ICON_SLOTS <= slotId)
+        {
+            slotId = 0U;
+        }
+
+        isSuccessful = m_bitmapWidgets[slotId].load(FILESYSTEM, filename);
+
+        if (true == isSuccessful)
+        {
+            reorder();
+        }
+
+        return isSuccessful;
     }
 
     /**
-     * Get text (formatted).
-     * 
-     * @return Text
+     * Clear icon in the slot with the given id.
+     *
+     * @param[in] slotId    The id of the slot.
      */
-    String getFormatText() const override
+    void clearIcon(uint8_t slotId) override
     {
-        return m_textWidget.getFormatStr();
+        if (MAX_ICON_SLOTS <= slotId)
+        {
+            slotId = 0U;
+        }
+
+        m_bitmapWidgets[slotId].clear(ColorDef::BLACK);
+        reorder();
     }
 
     /**
-     * Set text (formatted).
-     * 
-     * @param[in] formatText    Formatted text to show.
+     * Max. number of icons.
      */
-    void setFormatText(const String& formatText) override
-    {
-        m_textWidget.setFormatStr(formatText);
-    }
+    static const uint8_t MAX_ICON_SLOTS = 4U;
 
 protected:
 
-    /**
-     * Text width in pixels.
-     */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
-
-    /**
-     * Text height in pixels.
-     */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
-
-    /**
-     * Text widget x-coordinate in pixels.
-     */
-    static const int16_t    TEXT_X          = 0;
-
-    /**
-     * Text widget y-coordinate in pixels.
-     * Top aligned, below bitmap.
-     */
-    static const int16_t    TEXT_Y          = 0;
-
-    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
-    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
+    BitmapWidget m_bitmapWidgets[MAX_ICON_SLOTS]; /**< Bitmap widgets used to show the icons. */
 
 private:
-    TextViewGeneric(const TextViewGeneric& other);
-    TextViewGeneric& operator=(const TextViewGeneric& other);
+    MultiIconView32x8(const MultiIconView32x8& other);
+    MultiIconView32x8& operator=(const MultiIconView32x8& other);
+
+    /**
+     * Get the active number of icon slosts.
+     *
+     * @return Number of active icon slots
+     */
+    uint8_t getActiveIconSlots();
+
+    /**
+     * Re-order the icons, depended on the number of active icon slots.
+     */
+    void reorder();
+
+    /**
+     * Apply layout with four icons.
+     *
+     * @param[in] widgetCnt Number of active icons.
+     */
+    void applyLayout(uint8_t widgetCnt);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* TEXT_VIEW_GENERIC_H */
+#endif /* MULTI_ICON_VIEW_32X8_H */
 
 /** @} */

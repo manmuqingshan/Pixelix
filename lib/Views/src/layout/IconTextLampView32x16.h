@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view with icon, text and lamps for 32x8 LED matrix
+ * @brief  Generic view with icon, text and lamps for 32x16 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef ICON_TEXT_LAMP_VIEW_32X8_H
-#define ICON_TEXT_LAMP_VIEW_32X8_H
+#ifndef ICON_TEXT_LAMP_VIEW_32X16_H
+#define ICON_TEXT_LAMP_VIEW_32X16_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,11 +44,12 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IIconTextLampView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <LampWidget.h>
 #include <Util.h>
+
+#include "../interface/IIconTextLampView.h"
 
 /******************************************************************************
  * Macros
@@ -59,27 +60,27 @@
  *****************************************************************************/
 
 /**
- * View for 32x8 LED matrix with icon and text.
+ * View for 32x16 LED matrix with icon and text.
  * 
  * +-----------------------------------------------------------------+
  * |                |                                                |
  * |                |                                                |
  * |                |                                                |
  * |   Icon         |                   Text                         |
- * |   8x8          |                   24x8                         |
+ * |   8x16         |                   24x16                        |
  * |                |                                                |
  * |                +------------------------------------------------+
  * |                |                  Lamps 24x1                    |
  * +----------------+------------------------------------------------+
  */
-class IconTextLampView32x8 : public IIconTextLampView
+class IconTextLampView32x16 : public IIconTextLampView
 {
 public:
 
     /**
      * Construct the view.
      */
-    IconTextLampView32x8() :
+    IconTextLampView32x16() :
         IIconTextLampView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
@@ -96,7 +97,7 @@ public:
     /**
      * Destroy the view.
      */
-    virtual ~IconTextLampView32x8()
+    virtual ~IconTextLampView32x16()
     {
     }
 
@@ -217,19 +218,14 @@ public:
 protected:
 
     /**
-     * Bitmap size in pixels.
-     */
-    static const uint16_t   BITMAP_SIZE     = 8U;
-
-    /**
      * Bitmap width in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
+    static const uint16_t   BITMAP_WIDTH    = 8U;
 
     /**
      * Bitmap height in pixels.
      */
-    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
+    static const uint16_t   BITMAP_HEIGHT   = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Bitmap widget x-coordinate in pixels.
@@ -297,14 +293,14 @@ protected:
     LampWidget      m_lampWidgets[MAX_LAMPS];   /**< Lamp widgets, used to signal different things. */
 
 private:
-    IconTextLampView32x8(const IconTextLampView32x8& other);
-    IconTextLampView32x8& operator=(const IconTextLampView32x8& other);
+    IconTextLampView32x16(const IconTextLampView32x16& other);
+    IconTextLampView32x16& operator=(const IconTextLampView32x16& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_LAMP_VIEW_32X8_H */
+#endif  /* ICON_TEXT_LAMP_VIEW_32X16_H */
 
 /** @} */

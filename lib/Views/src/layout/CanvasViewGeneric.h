@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  View for 32x8 LED matrix with canvas and text for LED matrix
+ * @brief  Generic view with bitmap and canvas for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef CANVAS_TEXT_VIEW_32X8_H
-#define CANVAS_TEXT_VIEW_32X8_H
+#ifndef CANVAS_VIEW_GENERIC_H
+#define CANVAS_VIEW_GENERIC_H
 
 /******************************************************************************
  * Compile Switches
@@ -43,11 +43,11 @@
  * Includes
  *****************************************************************************/
 #include <YAGfx.h>
-#include <Fonts.h>
-#include <ICanvasTextView.h>
+#include <BitmapWidget.h>
 #include <CanvasWidget.h>
-#include <TextWidget.h>
 #include <Util.h>
+
+#include "../interface/ICanvasView.h"
 
 /******************************************************************************
  * Macros
@@ -58,28 +58,26 @@
  *****************************************************************************/
 
 /**
- * View for 32x8 LED matrix with canvas and text.
+ * Generic view for LED matrix with bitmap and canvas.
  */
-class CanvasTextView32x8 : public ICanvasTextView
+class CanvasViewGeneric : public ICanvasView
 {
 public:
 
     /**
      * Construct the view.
      */
-    CanvasTextView32x8() :
-        ICanvasTextView(),
-        m_fontType(Fonts::FONT_TYPE_DEFAULT),
-        m_canvasWidget(CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_X, CANVAS_Y),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
+    CanvasViewGeneric() :
+        ICanvasView(),
+        m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
+        m_canvasWidget(CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_X, CANVAS_Y)
     {
-        m_textWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~CanvasTextView32x8()
+    virtual ~CanvasViewGeneric()
     {
     }
 
@@ -96,27 +94,6 @@ public:
     }
 
     /**
-     * Get font type.
-     * 
-     * @return The font type the view uses.
-     */
-    Fonts::FontType getFontType() const override
-    {
-        return m_fontType;
-    }
-
-    /**
-     * Set font type.
-     * 
-     * @param[in] fontType  The font type which the view shall use.
-     */
-    void setFontType(Fonts::FontType fontType) override
-    {
-        m_fontType = fontType;
-        m_textWidget.setFont(Fonts::getFontByType(m_fontType));
-    }
-
-    /**
      * Update the underlying canvas.
      * 
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
@@ -124,56 +101,55 @@ public:
     void update(YAGfx& gfx) override
     {
         gfx.fillScreen(ColorDef::BLACK);
+        m_bitmapWidget.update(gfx);
         m_canvasWidget.update(gfx);
-        m_textWidget.update(gfx);
     }
 
     /**
-     * Get text (non-formatted).
-     * 
-     * @return Text
+     * Load icon image from filesystem.
+     *
+     * @param[in] filename  Image filename
+     *
+     * @return If successul, it will return true otherwise false.
      */
-    String getText() const override
-    {
-        return m_textWidget.getStr();
-    }
+    bool loadIcon(const String& filename) override;
 
     /**
-     * Get text (formatted).
-     * 
-     * @return Text
+     * Clear icon.
      */
-    String getFormatText() const override
+    void clearIcon() override
     {
-        return m_textWidget.getFormatStr();
-    }
-
-    /**
-     * Set text (formatted).
-     * 
-     * @param[in] formatText    Formatted text to show.
-     */
-    void setFormatText(const String& formatText) override
-    {
-        m_textWidget.setFormatStr(formatText);
-    }
-
-    /**
-     * Get canvas for drawing.
-     * 
-     * @return Canvas
-     */
-    YAGfx& getCanvasGfx() override
-    {
-        return m_canvasWidget;
+        m_bitmapWidget.clear(ColorDef::BLACK);
     }
 
 protected:
 
     /**
+     * Bitmap width in pixels.
+     */
+    static const uint16_t   BITMAP_WIDTH    = CONFIG_LED_MATRIX_WIDTH;
+
+    /**
+     * Bitmap height in pixels.
+     */
+    static const uint16_t   BITMAP_HEIGHT   = CONFIG_LED_MATRIX_HEIGHT;
+
+    /**
+     * Bitmap widget x-coordinate in pixels.
+     * Left aligned.
+     */
+    static const int16_t    BITMAP_X        = 0;
+
+    /**
+     * Bitmap widget y-coordinate in pixels.
+     * Top aligned.
+     */
+    static const int16_t    BITMAP_Y        = 0;
+
+    /**
      * Canvas width in pixels.
      */
-    static const uint16_t   CANVAS_WIDTH    = 12U;
+    static const uint16_t   CANVAS_WIDTH    = CONFIG_LED_MATRIX_WIDTH;
 
     /**
      * Canvas height in pixels.
@@ -192,40 +168,18 @@ protected:
      */
     static const int16_t    CANVAS_Y        = 0;
 
-    /**
-     * Text width in pixels.
-     */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - CANVAS_WIDTH;
-
-    /**
-     * Text height in pixels.
-     */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
-
-    /**
-     * Text widget x-coordinate in pixels.
-     */
-    static const int16_t    TEXT_X          = CANVAS_WIDTH;
-
-    /**
-     * Text widget y-coordinate in pixels.
-     * Top aligned, below bitmap.
-     */
-    static const int16_t    TEXT_Y          = 0;
-
-    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
-    CanvasWidget    m_canvasWidget; /**< Canvas widget used to draw. */
-    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
+    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
+    CanvasWidget    m_canvasWidget; /**< Canvas used for drawing. */
 
 private:
-    CanvasTextView32x8(const CanvasTextView32x8& other);
-    CanvasTextView32x8& operator=(const CanvasTextView32x8& other);
+    CanvasViewGeneric(const CanvasViewGeneric& other);
+    CanvasViewGeneric& operator=(const CanvasViewGeneric& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* CANVAS_TEXT_VIEW_32X8_H */
+#endif  /* CANVAS_VIEW_GENERIC_H */
 
 /** @} */

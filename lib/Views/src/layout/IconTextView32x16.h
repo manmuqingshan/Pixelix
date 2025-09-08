@@ -25,15 +25,15 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Generic view with icon, text and lamps for 64x64 LED matrix
+ * @brief  View with icon and text for 32x16 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
  *
  * @{
  */
 
-#ifndef ICON_TEXT_LAMP_VIEW_64X64_H
-#define ICON_TEXT_LAMP_VIEW_64X64_H
+#ifndef ICON_TEXT_VIEW_32X16_H
+#define ICON_TEXT_VIEW_32X16_H
 
 /******************************************************************************
  * Compile Switches
@@ -44,11 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IIconTextLampView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
-#include <LampWidget.h>
 #include <Util.h>
+
+#include "../interface/IIconTextView.h"
 
 /******************************************************************************
  * Macros
@@ -59,54 +59,42 @@
  *****************************************************************************/
 
 /**
- * View for 64x64 LED matrix with icon and text.
+ * View for 32x16 LED matrix with icon and text.
  * 
  * +-----------------------------------------------------------------+
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * |                          Icon                                   |
- * |                          64x32                                  |
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
- * +-----------------------------------------------------------------+
- * |                          Lamps                                  |
- * |                          62x2                                   |
- * +-----------------------------------------------------------------+
- * |                                                                 |
- * |                          Text                                   |
- * |                          64x30                                  |
- * |                                                                 |
- * |                                                                 |
- * |                                                                 |
+ * |                |                                                |
+ * |                |                                                |
+ * |                |                                                |
+ * |   Icon         |                   Text                         |
+ * |   8x16         |                   24x16                        |
+ * |                |                                                |
+ * |                |                                                |
+ * |                |                                                |
  * +-----------------------------------------------------------------+
  */
-class IconTextLampView64x64 : public IIconTextLampView
+class IconTextView32x16 : public IIconTextView
 {
 public:
 
     /**
      * Construct the view.
      */
-    IconTextLampView64x64() :
-        IIconTextLampView(),
+    IconTextView32x16() :
+        IIconTextView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
-        m_lampWidgets{{LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X , LAMP_Y}}
+        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
     {
-        m_bitmapWidget.setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
         m_bitmapWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
+        m_bitmapWidget.setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
+        
+        m_textWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
     }
 
     /**
      * Destroy the view.
      */
-    virtual ~IconTextLampView64x64()
+    virtual ~IconTextView32x16()
     {
     }
 
@@ -202,50 +190,23 @@ public:
         m_bitmapWidget.clear(ColorDef::BLACK);
     }
 
-    /**
-     * Get lamp state (true = on / false = off).
-     * 
-     * @param[in] lampId    Lamp id
-     * 
-     * @return Lamp state
-     */
-    bool getLamp(uint8_t lampId) const override;
-
-    /**
-     * Set lamp state.
-     *
-     * @param[in] lampId    Lamp id
-     * @param[in] state     Lamp state (true = on / false = off)
-     */
-    void setLamp(uint8_t lampId, bool state) override;
-
-    /**
-     * Max. number of lamps.
-     */
-    static const uint8_t    MAX_LAMPS       = 4U;
-
 protected:
-
-    /**
-     * Bitmap size in pixels.
-     */
-    static const uint16_t   BITMAP_SIZE     = CONFIG_LED_MATRIX_HEIGHT / 2U;
 
     /**
      * Bitmap width in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
+    static const uint16_t   BITMAP_WIDTH    = 8U;
 
     /**
      * Bitmap height in pixels.
      */
-    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
+    static const uint16_t   BITMAP_HEIGHT   = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Bitmap widget x-coordinate in pixels.
-     * Center aligned.
+     * Left aligned.
      */
-    static const int16_t    BITMAP_X        = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH) / 2;
+    static const int16_t    BITMAP_X        = 0;
 
     /**
      * Bitmap widget y-coordinate in pixels.
@@ -256,66 +217,37 @@ protected:
     /**
      * Text width in pixels.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH;
+    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT - BITMAP_HEIGHT - 2U;
+    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
      * Text widget x-coordinate in pixels.
-     * Left aligned.
      */
-    static const int16_t    TEXT_X          = 0;
+    static const int16_t    TEXT_X          = BITMAP_WIDTH;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = BITMAP_HEIGHT;
+    static const int16_t    TEXT_Y          = 0;
 
-    /** Distance between two lamps in pixel. */
-    static const uint8_t    LAMP_DISTANCE   = 1U;
-
-    /** Lamp width in pixel. */
-    static const uint8_t    LAMP_WIDTH      = (CONFIG_LED_MATRIX_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
-
-    /** Lamp distance to the canvas border in pixel. */
-    static const uint8_t    LAMP_BORDER     = (CONFIG_LED_MATRIX_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
-
-    /** Lamp height in pixel. */
-    static const uint8_t    LAMP_HEIGHT     = 2U;
-
-    /** Lamp 0 x-coordinate in pixel. */
-    static const uint8_t    LAMP_0_X        = LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 1 x-coordinate in pixel. */
-    static const uint8_t    LAMP_1_X        = LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 2 x-coordinate in pixel. */
-    static const uint8_t    LAMP_2_X        = LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp 3 x-coordinate in pixel. */
-    static const uint8_t    LAMP_3_X        = LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
-
-    /** Lamp y-coordindate in pixel. */
-    static const uint8_t    LAMP_Y          = BITMAP_HEIGHT;
-
-    Fonts::FontType m_fontType;                 /**< Font type which shall be used if there is no conflict with the layout. */
-    BitmapWidget    m_bitmapWidget;             /**< Bitmap widget used to show a icon. */
-    TextWidget      m_textWidget;               /**< Text widget used to show some text. */
-    LampWidget      m_lampWidgets[MAX_LAMPS];   /**< Lamp widgets, used to signal different things. */
+    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
+    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
+    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
 
 private:
-    IconTextLampView64x64(const IconTextLampView64x64& other);
-    IconTextLampView64x64& operator=(const IconTextLampView64x64& other);
+    IconTextView32x16(const IconTextView32x16& other);
+    IconTextView32x16& operator=(const IconTextView32x16& other);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_LAMP_VIEW_64X64_H */
+#endif  /* ICON_TEXT_VIEW_32X16_H */
 
 /** @} */

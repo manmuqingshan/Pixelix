@@ -44,10 +44,11 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IOpenWeatherView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <Util.h>
+
+#include "../interface/IOpenWeatherView.h"
 
 /******************************************************************************
  * Macros

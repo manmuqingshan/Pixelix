@@ -44,11 +44,12 @@
  *****************************************************************************/
 #include <YAGfx.h>
 #include <Fonts.h>
-#include <IPlayerView.h>
 #include <BitmapWidget.h>
 #include <TextWidget.h>
 #include <ProgressBar.h>
 #include <Util.h>
+
+#include "../interface/IPlayerView.h"
 
 /******************************************************************************
  * Macros
