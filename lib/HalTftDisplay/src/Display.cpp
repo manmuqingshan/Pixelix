@@ -84,28 +84,30 @@ void Display::show()
     int32_t x;
     int32_t y;
 
-    for(y = 0; y < MATRIX_HEIGHT; ++y)
+    for (y = 0; y < MATRIX_HEIGHT; ++y)
     {
-        for(x = 0; x < MATRIX_WIDTH; ++x)
+        for (x = 0; x < MATRIX_WIDTH; ++x)
         {
 #if CONFIG_DISPLAY_ROTATE180 != 0
-            Color       brightnessAdjustedColor = m_ledMatrix.getColor(MATRIX_WIDTH - x - 1, MATRIX_HEIGHT - y - 1);
+            Color brightnessAdjustedColor = m_ledMatrix.getColor(MATRIX_WIDTH - x - 1, MATRIX_HEIGHT - y - 1);
 #else
-            Color       brightnessAdjustedColor = m_ledMatrix.getColor(x, y);
-#endif           
-            uint16_t    intensity               = brightnessAdjustedColor.getIntensity();
-            int32_t     xNative                 = y * (PIXEL_HEIGHT + PiXEL_DISTANCE) + BORDER_Y;
-            int32_t     yNative                 = TFT_HEIGHT - (x * (PIXEL_WIDTH  + PiXEL_DISTANCE) + BORDER_X) - 1;
+            Color brightnessAdjustedColor = m_ledMatrix.getColor(x, y);
+#endif
+            uint16_t intensity    = brightnessAdjustedColor.getIntensity();
+            int32_t  xNative      = y * (PIXEL_HEIGHT + PiXEL_DISTANCE) + BORDER_Y;
+            int32_t  yNative      = TFT_HEIGHT - (x * (PIXEL_WIDTH + PiXEL_DISTANCE) + BORDER_X) - 1;
+            uint16_t colorRGB565  = brightnessAdjustedColor;
 
-            intensity *= (static_cast<uint16_t>(m_brightness) + 1U);
-            intensity /= 256U;
+            intensity            *= (static_cast<uint16_t>(m_brightness) + 1U);
+            intensity            /= 256U;
             brightnessAdjustedColor.setIntensity(static_cast<uint8_t>(intensity));
 
-            m_tft.fillRect( xNative,
-                            yNative,
-                            PIXEL_HEIGHT,
-                            PIXEL_WIDTH,
-                            brightnessAdjustedColor.to565());
+            m_tft.fillRect(
+                xNative,
+                yNative,
+                PIXEL_HEIGHT,
+                PIXEL_WIDTH,
+                colorRGB565);
         }
     }
 }
@@ -114,19 +116,19 @@ void Display::off()
 {
     m_tft.writecommand(TFT_DISPOFF);
 
-#if defined (TFT_BL) && defined (TFT_BACKLIGHT_ON)
+#if defined(TFT_BL) && defined(TFT_BACKLIGHT_ON)
 
 #if (LOW == TFT_BACKLIGHT_ON)
 
     /* Turn off the back-light LED */
     Board::tftBackLightOut.write(HIGH);
 
-#else   /* (LOW == TFT_BACKLIGHT_ON) */
+#else /* (LOW == TFT_BACKLIGHT_ON) */
 
     /* Turn off the back-light LED */
     Board::tftBackLightOut.write(LOW);
 
-#endif  /* (LOW == TFT_BACKLIGHT_ON) */
+#endif /* (LOW == TFT_BACKLIGHT_ON) */
 
 #endif /* defined (TFT_BL) && defined (TFT_BACKLIGHT_ON) */
 
@@ -137,7 +139,7 @@ void Display::on()
 {
     m_tft.writecommand(TFT_DISPON);
 
-#if defined (TFT_BL) && defined (TFT_BACKLIGHT_ON)
+#if defined(TFT_BL) && defined(TFT_BACKLIGHT_ON)
 
     /* Turn off the back-light LED */
     Board::tftBackLightOut.write(TFT_BACKLIGHT_ON);
