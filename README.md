@@ -60,11 +60,11 @@ The PIXELIX firmware is for ESP32 boards that controls a RGB LED matrix. It can 
 
 ## Features
 
-* Supports 32x8 LED matrix size out of the box. Its possible to cascade another matrix to have a longer display.
-* Can display static or scrolling text, as well as static (BMP and GIF) or animated icons (GIF).
-* Includes a web interface for configuring and controlling the LED matrix.
-* Supports REST API and MQTT for remote control and integration with other systems, like [Home Assistant](https://www.home-assistant.io/).
-* Can be extended with custom effects and animations. See list of [plugins](./doc/PLUGINS.md).
+- Supports 32x8 LED matrix size out of the box. Its possible to cascade another matrix to have a longer display.
+- Can display static or scrolling text, as well as static (BMP and GIF) or animated icons (GIF).
+- Includes a web interface for configuring and controlling the LED matrix.
+- Supports REST API and MQTT for remote control and integration with other systems, like [Home Assistant](https://www.home-assistant.io/).
+- Can be extended with custom effects and animations. See list of [plugins](./doc/PLUGINS.md).
 
 Please note, that not every feature might be available for all kind of development boards. E.g. for MQTT support you need a development board with 8 MB flash or more. See the `config<variant>.ini` configuration files in [./config](./config) folder.
 
@@ -78,9 +78,9 @@ Please note, that not every feature might be available for all kind of developme
 
 The original setup for development and the first release was:
 
-* [ESP32 DevKitV1](https://github.com/playelek/pinout-doit-32devkitv1)
-* WS2812B 5050 8x32 RGB Flexible LED Matrix Panel
-* Power supply 5 V / 4 A
+- [ESP32 DevKitV1](https://github.com/playelek/pinout-doit-32devkitv1)
+- WS2812B 5050 8x32 RGB Flexible LED Matrix Panel
+- Power supply 5 V / 4 A
 
 The following shows the absolute minimal wiring setup e.g. for the ESP32 DevKitV1. It may differ depended on your development board.
 
@@ -107,15 +107,15 @@ If you assemble your own Pixelix hardware, its recommended to use a development 
 
 Additional supported variants, which were original not in focus:
 
-* [LILYGO&reg; TTGO T-Display ESP32 WiFi and Bluetooth Module Development Board For Arduino 1.14 Inch LCD](http://www.lilygo.cn/prod_view.aspx?TypeId=50033&Id=1126&FId=t3:50033:3)
-* [LILYGO&reg; T-Display ESP32-S3 1.9 inch ST7789 LCD Display Touch Screen Development Board](https://www.lilygo.cc/products/t-display-s3)
-* Limited HUB75 panel support, configured as an example for the ESP32-DoIt DevKit v1 development board.
+- [LILYGO&reg; TTGO T-Display ESP32 WiFi and Bluetooth Module Development Board For Arduino 1.14 Inch LCD](http://www.lilygo.cn/prod_view.aspx?TypeId=50033&Id=1126&FId=t3:50033:3)
+- [LILYGO&reg; T-Display ESP32-S3 1.9 inch ST7789 LCD Display Touch Screen Development Board](https://www.lilygo.cc/products/t-display-s3)
+- Limited HUB75 panel support, configured as an example for the ESP32-DoIt DevKit v1 development board.
 
 Although PIXELIX was designed to show information, that is pushed or pulled via REST API, the following sensors can be directly connected and evaluated:
 
-* Temperature and humidity sensors DHTx
-* Temperature and humidity sensors SHT3x
-* Digitial microphone INMP441 for some sound reactive stuff.
+- Temperature and humidity sensors DHTx
+- Temperature and humidity sensors SHT3x
+- Digitial microphone INMP441 for some sound reactive stuff.
 
 ## Installation
 
@@ -126,7 +126,7 @@ The following steps are necessary for the first time and to get PIXELIX initial 
 3. [Upload/Update the software and firmware](./doc/config/SW-UPDATE.md) to the target.
 4. Verify that the LED panel topology is correct and you see the "Hello World" on the display.
 
-Note, that the LED panel topology and the display width/height can currently not be changed in the web interface. If its necessary, adapt first in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects
+Note, that the LED panel topology and the display width/height can currently not be changed in the web interface. If its necessary, adapt first in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: [https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects]( https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects)
 
 ## Very First Startup
 
@@ -139,27 +139,27 @@ If the device starts the very first time, the wifi station SSID and passphrase s
 
 Restart the device and **keep the button pressed** until it shows the SSID of the wifi access point, spawned by PIXELIX. Search for it with your mobile device and connect.
 
-* SSID: **pixelix-&lt;DEVICE-ID&gt;**
-* Passphrase: **Luke, I am your father.**
+- SSID: **pixelix-&lt;DEVICE-ID&gt;**
+- Passphrase: **Luke, I am your father.**
 
-Depended on the type of device you are using for connecting to PIXELIX, you may get a notification that further information is necessary and automatically routed to the captive portal. In any other case enter the URL http://192.169.4.1 in the browser address field.
+Depended on the type of device you are using for connecting to PIXELIX, you may get a notification that further information is necessary and automatically routed to the captive portal. In any other case enter the URL `http://192.169.4.1` in the browser address field.
 
 Use the following default credentials to get access to the PIXELIX web interface:
 
-* User: **luke**
-* Password: **skywalker**
+- User: **luke**
+- Password: **skywalker**
 
 ### Variant 2: Configure wifi station SSID and passphrase with the terminal
 
 Connect PIXELIX with your PC via usb and start a terminal. Use the following commands to set the wifi SSID and passphrase of your home wifi network:
 
-* Write wifi passphrase: ```write wifi passphrase <your-passphrase>```
-* Write wifi SSID: ```write wifi ssid <your-ssid>```
-* Restart PIXELIX: ```restart```
-* Get IP-address: ```get ip```
-* Get status: ```get status```
-  * A status of 0 means everything is ok.
-  * Other than 0, see their meaning in the low [low level error code table](#the-display-only-shows-a-error-code-like-e4-what-does-that-mean). Note, the status of 1 is equal to E1 in the error code table and etc.
+- Write wifi passphrase: ```write wifi passphrase <your-passphrase>```
+- Write wifi SSID: ```write wifi ssid <your-ssid>```
+- Restart PIXELIX: ```restart```
+- Get IP-address: ```get ip```
+- Get status: ```get status```
+  - A status of 0 means everything is ok.
+  - Other than 0, see their meaning in the low [low level error code table](#the-display-only-shows-a-error-code-like-e4-what-does-that-mean). Note, the status of 1 is equal to E1 in the error code table and etc.
 
 Enter ```help``` to get a list of all supported commands.
 
@@ -171,39 +171,39 @@ For changing whats displayed, go to its web interface. Use the same credentials 
 
 ## User Interface
 
-* Pixelix can be controlled with buttons. Most of the development boards are supported with just one user button.
-  * One button control:
-    * 1 short pulse: Activates the next slot.
-    * 2 short pulses: Activates the previous slot.
-    * 3 short pulses: Activates next fade effect.
-    * 4 short pulses: IP address is shown.
-    * 5 short pulses: Toggle display power on/off.
-    * Long pressed: Increases the display brightness until maximum and then decreases until minimum. After that it will again increases it and so on.
-  * Two button control (LILYGO&reg; T-Display ESP32-S3):
-    * Left button:
-      * 1 short pulses: Activates the previous slot.
-      * 2 short pulses: Toggle display power on/off.
-      * Long pressed: Decreases the display brightness until minimum. 
-    * Right button
-      * 1 short pulse: Activates the next slot.
-      * 2 short pulses: Activates next fade effect.
-      * 3 short pulses: IP address is shown.
-      * Long pressed: Increases the display brightness until maximum. 
-  * Three button control (Ulanzi TC001):
-    * Left button:
-      * 1 short pulses: Activates the previous slot.
-      * Long pressed: Decreases the display brightness until minimum.
-    * Ok button:
-      * 1 short pulses: Activates next fade effect.
-      * 2 short pulses: IP address is shown.
-      * Long pressed: Toggle display power on/off.
-    * Right button
-      * 1 short pulse: Activates the next slot.
-      * Long pressed: Increases the display brightness until maximum. 
-* If the display's location is hard to reach, the virtual user button can be used. It is controllable via REST API and perfect for remote buttons like the [Shelly Button 1](https://shelly.cloud/products/shelly-button-1-smart-home-automation-device/).
-* If a ambilight sensor (LDR) is connected, the display brightness is automatically adapted.
-* The web interface provides the possibility to install plugins, control their duration in the slots and etc.
-* Some plugin's spawn a dedicated REST API, see the web page of the plugin or have a look to the REST API documentation.
+- Pixelix can be controlled with buttons. Most of the development boards are supported with just one user button.
+  - One button control:
+    - 1 short pulse: Activates the next slot.
+    - 2 short pulses: Activates the previous slot.
+    - 3 short pulses: Activates next fade effect.
+    - 4 short pulses: IP address is shown.
+    - 5 short pulses: Toggle display power on/off.
+    - Long pressed: Increases the display brightness until maximum and then decreases until minimum. After that it will again increases it and so on.
+  - Two button control (LILYGO&reg; T-Display ESP32-S3):
+    - Left button:
+      - 1 short pulses: Activates the previous slot.
+      - 2 short pulses: Toggle display power on/off.
+      - Long pressed: Decreases the display brightness until minimum.
+    - Right button
+      - 1 short pulse: Activates the next slot.
+      - 2 short pulses: Activates next fade effect.
+      - 3 short pulses: IP address is shown.
+      - Long pressed: Increases the display brightness until maximum.
+  - Three button control (Ulanzi TC001):
+    - Left button:
+      - 1 short pulses: Activates the previous slot.
+      - Long pressed: Decreases the display brightness until minimum.
+    - Ok button:
+      - 1 short pulses: Activates next fade effect.
+      - 2 short pulses: IP address is shown.
+      - Long pressed: Toggle display power on/off.
+    - Right button
+      - 1 short pulse: Activates the next slot.
+      - Long pressed: Increases the display brightness until maximum.
+- If the display's location is hard to reach, the virtual user button can be used. It is controllable via REST API and perfect for remote buttons like the [Shelly Button 1](https://shelly.cloud/products/shelly-button-1-smart-home-automation-device/).
+- If a ambilight sensor (LDR) is connected, the display brightness is automatically adapted.
+- The web interface provides the possibility to install plugins, control their duration in the slots and etc.
+- Some plugin's spawn a dedicated REST API, see the web page of the plugin or have a look to the REST API documentation.
 
 Note, the websocket interface is currently only used as a service in the web interface.
 
@@ -215,7 +215,7 @@ For more detailed information, see the [documentation](./doc/README.md).
 
 ### Where to change panel topology of the LED matrix?
 
-Adapt in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects
+Adapt in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: [https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects](https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects)
 
 ### How to change text properties?
 
@@ -224,28 +224,34 @@ In order to be able to use these keywords, they must be inside curly braces, oth
 
 The following keywords are available:
 
-| Keyword   | Description                       |
-|-----------|-----------------------------------|
-| {#RRGGBB} | Change text color (RRGGBB in hex) |
-| {hl}      | Horizontal alignment left         |
-| {hc}      | Horizontal alignment right        |
-| {hr}      | Horizontal alignment center       |
-| {vt}      | Vertical alignment top            |
-| {vc}      | Vertical alignment center         |
-| {vb}      | Vertical alignment bottom         |
+| Keyword                                 | Description                                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `{#RRGGBB}`                             | Set solid text color (`RRGGBB` in hex)                                                   |
+| `{lgv #RRGGBB,#RRGGBB,OFFSET,LENGTH}`   | Set linear vertical gradient text color (`RRGGBB` in hex, `OFFSET`/`LENGTH` in pixels)   |
+| `{lgh #RRGGBB,#RRGGBB,OFFSET,LENGTH}`   | Set linear horizontal gradient text color (`RRGGBB` in hex, `OFFSET`/`LENGTH` in pixels) |
+| `{stc}`                                 | Activate solid text color                                                                |
+| `{lgtc}`                                | Activate linear gradient text color                                                      |
+| `{hl}`                                  | Horizontal alignment left                                                                |
+| `{hc}`                                  | Horizontal alignment right                                                               |
+| `{hr}`                                  | Horizontal alignment center                                                              |
+| `{vt}`                                  | Vertical alignment top                                                                   |
+| `{vc}`                                  | Vertical alignment center                                                                |
+| `{vb}`                                  | Vertical alignment bottom                                                                |
+| `{0xCC}`                                | Special character code (CC in hex)                                                       |
 
-**Notes**
+**Notes**:
 
 - If these keywords are used via the [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0) all unsafe ASCII characters must be replaced by the respective percent encoding (see also [ASCII Encoding Reference](https://www.w3schools.com/tags/ref_urlencode.ASP)).
-- The keywords can be combined.  
+- The keywords can be combined.
+- Don't add additional spaces, e.g. after a comma. Write them exactly as the format is specified.
 
-**Examples**
+**Examples**:
 
-| Sourcecode       | URL               | Result                                                                             |
-|------------------|-------------------|------------------------------------------------------------------------------------|
-| {hl}{#ff0000}Hi! | %7Bcl%7Dff0000Hi! | <span style="color:red">Hi!</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |
-| {hc}{#ff0000}Hi! | %7Bhc%7Dff0000Hi! | &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red">Hi!</span>&nbsp;&nbsp;&nbsp;&nbsp; |
-| {hr}{#ff0000}Hi! | %7Bhr%7Dff0000Hi! | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red">Hi!</span> |
+| Sourcecode         | URL                 | Result                                                                             |
+| ------------------ | ------------------- | ---------------------------------------------------------------------------------- |
+| `{hl}{#ff0000}Hi!` | `%7Bcl%7Dff0000Hi!` | <span style="color:red">Hi!</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |
+| `{hc}{#ff0000}Hi!` | `%7Bhc%7Dff0000Hi!` | &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red">Hi!</span>&nbsp;&nbsp;&nbsp;&nbsp; |
+| `{hr}{#ff0000}Hi!` | `%7Bhr%7Dff0000Hi!` | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red">Hi!</span> |
 
 ### The display only shows a error code, like "E4". What does that mean?
 
@@ -279,15 +285,15 @@ The LDR pin is configured as input (ADC) and it seems that the pin is floating, 
 
 ### How can I use alternative icons?
 
-Find details [here](./doc/ICONS.md).
+Find details in the [icon page](./doc/ICONS.md).
 
 ### Is it possible to use a font with 8px height?
 
 There are three font types defined:
 
-* default (6px height)
-* normal (6px height)
-* large (8px height)
+- default (6px height)
+- normal (6px height)
+- large (8px height)
 
 Note, the default font type is "normal".
 
@@ -313,11 +319,11 @@ The date/time format used by plugins, e.g. the DateTimePlugin or the SunrisePlug
 
 Examples:
 
-* ```%I:%M %p```: 02:30 PM
-* ```%H:%M```: 14:30
-* ```%m/%d```: 11/12
-* ```%d.%m.```: 11.12.
-* ```%d - %b```: 11 - Nov
+- `%I:%M %p`: 02:30 PM
+- `%H:%M`: 14:30
+- `%m/%d`: 11/12
+- `%d.%m.`: 11.12.
+- `%d - %b`: 11 - Nov
 
 You can colorize it by using the [text properties](#how-to-change-text-properties).
 
@@ -327,9 +333,9 @@ The list of plugins which are available depend on the development board you use.
 
 To handle there are several .ini files in the ```./config``` folder:
 
-* configSmall.ini: Used for boards with 4 MB flash.
-* configNormal.ini: Used for boards with 8 MB flash or more.
-* configSmallNoI2s.ini: Used for boards with 4 MB flash and less mcu power.
+- configSmall.ini: Used for boards with 4 MB flash.
+- configNormal.ini: Used for boards with 8 MB flash or more.
+- configSmallNoI2s.ini: Used for boards with 4 MB flash and less mcu power.
 
 Update the one you use for your needs by commenting in or out.
 

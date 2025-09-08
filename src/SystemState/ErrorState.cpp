@@ -70,7 +70,7 @@
 
 void ErrorState::entry(StateMachine& sm)
 {
-    Display&    display = Display::getInstance();
+    Display& display = Display::getInstance();
 
     UTIL_NOT_USED(sm);
 
@@ -105,22 +105,22 @@ void ErrorState::entry(StateMachine& sm)
         }
         else
         {
-            YAFont  font(&TomThumb);
-            int16_t cursorX     = 0;
-            int16_t cursorY     = display.getHeight() - 1;
-            Color   fontColor(ColorDef::RED);
-            String  errorIdStr;
-            uint8_t idx         = 0U;
-            
-            errorIdStr = m_errorId;
+            YAFont          font(&TomThumb);
+            int16_t         cursorX = 0;
+            int16_t         cursorY = display.getHeight() - 1;
+            YAGfxSolidBrush brush(ColorDef::RED);
+            String          errorIdStr;
+            uint8_t         idx = 0U;
+
+            errorIdStr          = m_errorId;
 
             /* The 'E' in front is the error prefix. */
-            font.drawChar(display, cursorX, cursorY, 'E', fontColor);
+            font.drawChar(display, cursorX, cursorY, 'E', brush);
 
             /* Show the error id. */
-            for(idx = 0U; idx < errorIdStr.length(); ++idx)
+            for (idx = 0U; idx < errorIdStr.length(); ++idx)
             {
-                font.drawChar(display, cursorX, cursorY, errorIdStr.c_str()[idx], fontColor);
+                font.drawChar(display, cursorX, cursorY, errorIdStr.c_str()[idx], brush);
             }
 
             display.show();
