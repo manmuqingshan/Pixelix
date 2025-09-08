@@ -48,6 +48,7 @@
 #include <Util.h>
 
 #include "../interface/ITextView.h"
+#include "ViewConfig.h"
 
 /******************************************************************************
  * Macros
@@ -91,6 +92,8 @@ public:
     {
         UTIL_NOT_USED(width);
         UTIL_NOT_USED(height);
+
+        m_textWidget.setBrush(ViewConfig::getInstance().getBrush());
     }
 
     /**

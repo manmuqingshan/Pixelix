@@ -128,6 +128,27 @@ static const char*  KEY_QUIET_MODE                  = "quiet_mode";
 /** Fade effect key */
 static const char*  KEY_FADE_EFFECT                 = "fade_effect";
 
+/** Brush key */
+static const char*  KEY_BRUSH                       = "brush";
+
+/** Solid brush color key */
+static const char*  KEY_SOLID_BRUSH_COLOR           = "sb_color";
+
+/** Linear gradient color 1 key */
+static const char*  KEY_LINEAR_GRADIENT_COLOR1      = "lg_color1";
+
+/** Linear gradient color 2 key */
+static const char*  KEY_LINEAR_GRADIENT_COLOR2      = "lg_color2";
+
+/** Linear gradient offset key */
+static const char*  KEY_LINEAR_GRADIENT_OFFSET      = "lg_offset";
+
+/** Linear gradient length key */
+static const char*  KEY_LINEAR_GRADIENT_LENGTH      = "lg_length";
+
+/** Linear gradient vertical key */
+static const char*  KEY_LINEAR_GRADIENT_VERTICAL     = "lg_vertical";
+
 /* ---------- Key value pair names ---------- */
 
 /** SettingsService version name */
@@ -187,164 +208,226 @@ static const char*  NAME_QUIET_MODE                 = "Quiet mode (skip unnecess
 /** Fade effect name */
 static const char*  NAME_FADE_EFFECT                = "Fade effect (0: no, 1: linear, 2: move x, 3: move y)";
 
+/** Brush name */
+static const char*  NAME_BRUSH                      = "Text brush (0: solid color, 1: linear gradient color)";
+
+/** Solid brush color name */
+static const char*  NAME_SOLID_BRUSH_COLOR          = "Solid brush color (RRGGBB in hex)";
+
+/** Linear gradient color 1 name */
+static const char*  NAME_LINEAR_GRADIENT_COLOR1     = "Linear gradient color 1 (RRGGBB in hex)";
+
+/** Linear gradient color 2 name */
+static const char*  NAME_LINEAR_GRADIENT_COLOR2     = "Linear gradient color 2 (RRGGBB in hex)";
+
+/** Linear gradient offset name */
+static const char*  NAME_LINEAR_GRADIENT_OFFSET      = "Linear gradient offset in pixels";
+
+/** Linear gradient length name */
+static const char*  NAME_LINEAR_GRADIENT_LENGTH      = "Linear gradient length in pixels";
+
+/** Linear gradient vertical name */
+static const char*  NAME_LINEAR_GRADIENT_VERTICAL    = "Linear gradient vertical (checked) or horizontal (unchecked)";
+
 /* ---------- Default values ---------- */
 
 /** SettingsService version default value */
-static const uint32_t   DEFAULT_VERSION                 = 0U; /* 0 is important to detect whether the version is not stored yet. */
+static const uint32_t   DEFAULT_VERSION                     = 0U; /* 0 is important to detect whether the version is not stored yet. */
 
 /** Wifi network default value */
-static const char*      DEFAULT_WIFI_SSID               = "";
+static const char*      DEFAULT_WIFI_SSID                   = "";
 
 /** Wifi network passphrase default value */
-static const char*      DEFAULT_WIFI_PASSPHRASE         = "";
+static const char*      DEFAULT_WIFI_PASSPHRASE             = "";
 
 /** Wifi access point network default value */
-static const char*      DEFAULT_WIFI_AP_SSID            = "pixelix";
+static const char*      DEFAULT_WIFI_AP_SSID                = "pixelix";
 
 /** Wifi access point network passphrase default value */
-static const char*      DEFAULT_WIFI_AP_PASSPHRASE      = "Luke, I am your father.";
+static const char*      DEFAULT_WIFI_AP_PASSPHRASE          = "Luke, I am your father.";
 
 /** Website login user account default value */
-static const char*      DEFAULT_WEB_LOGIN_USER          = "luke";
+static const char*      DEFAULT_WEB_LOGIN_USER              = "luke";
 
 /** Website login user password default value */
-static const char*      DEFAULT_WEB_LOGIN_PASSWORD      = "skywalker";
+static const char*      DEFAULT_WEB_LOGIN_PASSWORD          = "skywalker";
 
 /** Hostname default value */
-static const char*      DEFAULT_HOSTNAME                = "pixelix";
+static const char*      DEFAULT_HOSTNAME                    = "pixelix";
 
 /** Brightness default value in % */
-static const uint8_t    DEFAULT_BRIGHTNESS              = 25U; /* If powered via USB, keep this at 25% to avoid damage. */
+static const uint8_t    DEFAULT_BRIGHTNESS                  = 25U; /* If powered via USB, keep this at 25% to avoid damage. */
 
 /** Min. brightness soft limit default value in % */
-static const uint8_t    DEFAULT_MIN_BRIGHTNESS_SL       = 10U;
+static const uint8_t    DEFAULT_MIN_BRIGHTNESS_SL           = 10U;
 
 /** Max. brightness soft limit default value in % */
-static const uint8_t    DEFAULT_MAX_BRIGHTNESS_SL       = 100U;
+static const uint8_t    DEFAULT_MAX_BRIGHTNESS_SL           = 100U;
 
 /** Automatic brightness control default value */
-static const bool       DEFAULT_AUTO_BRIGHTNESS_CTRL    = false;
+static const bool       DEFAULT_AUTO_BRIGHTNESS_CTRL        = false;
 
 /** POSIX time zone string default value */
-static const char*      DEFAULT_TIMEZONE                = "WEST-1DWEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
+static const char*      DEFAULT_TIMEZONE                    = "WEST-1DWEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
 
 /** NTP server default value */
-static const char*      DEFAULT_NTP_SERVER              = "pool.ntp.org";
+static const char*      DEFAULT_NTP_SERVER                  = "pool.ntp.org";
 
 /** Max. number of display slots default value */
-static const uint8_t    DEFAULT_MAX_SLOTS               = 8U;
+static const uint8_t    DEFAULT_MAX_SLOTS                   = 8U;
 
 /** Scroll pause default value in ms */
-static const uint32_t   DEFAULT_SCROLL_PAUSE            = 80U;
+static const uint32_t   DEFAULT_SCROLL_PAUSE                = 80U;
 
 /** NotifyURL default value */
-static const char*      DEFAULT_NOTIFY_URL              = "";
+static const char*      DEFAULT_NOTIFY_URL                  = "";
 
 /** Quiet mode default value */
-static const bool       DEFAULT_QUIET_MODE              = false;
+static const bool       DEFAULT_QUIET_MODE                  = false;
 
 /** Fade effect default value */
-static const uint8_t    DEFAULT_FADE_EFFECT             = 1U;
+static const uint8_t    DEFAULT_FADE_EFFECT                 = 1U;
+
+/** Brush default value */
+static const uint8_t    DEFAULT_BRUSH                       = 0U; /* Solid brush */
+
+/** Solid brush color default value */
+static const char*      DEFAULT_SOLID_BRUSH_COLOR           = "FFFFFF"; /* RGB888 - White */
+
+/** Linear gradient color 1 default value */
+static const char*      DEFAULT_LINEAR_GRADIENT_COLOR1      = "FF0000"; /* RGB888 - Red */
+
+/** Linear gradient color 2 default value */
+static const char*      DEFAULT_LINEAR_GRADIENT_COLOR2      = "0000FF"; /* RGB888 - Blue */
+
+/** Linear gradient offset default value */
+static const int32_t    DEFAULT_LINEAR_GRADIENT_OFFSET      = 0;
+
+/** Linear gradient length default value */
+static const uint16_t   DEFAULT_LINEAR_GRADIENT_LENGTH      = 32U;
+
+/** Linear gradient vertical default value */
+static const bool       DEFAULT_LINEAR_GRADIENT_VERTICAL    = false;
 
 /* ---------- Minimum values ---------- */
 
 /** SettingsService version min. value */
-static const uint32_t   MIN_VALUE_VERSION               = 0;
+static const uint32_t   MIN_VALUE_VERSION                   = 0;
 
 /** Wifi network SSID min. length. Section 7.3.2.1 of the 802.11-2007 specification. */
-static const size_t     MIN_VALUE_WIFI_SSID             = 0;
+static const size_t     MIN_VALUE_WIFI_SSID                 = 0;
 
 /** Wifi network passphrase min. length */
-static const size_t     MIN_VALUE_WIFI_PASSPHRASE       = 8U;
+static const size_t     MIN_VALUE_WIFI_PASSPHRASE           = 8U;
 
 /** Wifi access point network SSID min. length. Section 7.3.2.1 of the 802.11-2007 specification. */
-static const size_t     MIN_VALUE_WIFI_AP_SSID          = 0;
+static const size_t     MIN_VALUE_WIFI_AP_SSID              = 0;
 
 /** Wifi access point network passphrase min. length */
-static const size_t     MIN_VALUE_WIFI_AP_PASSPHRASE    = 8U;
+static const size_t     MIN_VALUE_WIFI_AP_PASSPHRASE        = 8U;
 
 /** Website login user account min. length */
-static const size_t     MIN_VALUE_WEB_LOGIN_USER        = 4U;
+static const size_t     MIN_VALUE_WEB_LOGIN_USER            = 4U;
 
 /** Website login user password min. length */
-static const size_t     MIN_VALUE_WEB_LOGIN_PASSWORD    = 4U;
+static const size_t     MIN_VALUE_WEB_LOGIN_PASSWORD        = 4U;
 
 /** Hostname min. length */
-static const size_t     MIN_VALUE_HOSTNAME              = 1U;
+static const size_t     MIN_VALUE_HOSTNAME                  = 1U;
 
 /** Brightness min. value in %. Its a hard limit. The soft limit can be adjusted by the user. */
-static const uint8_t    MIN_VALUE_BRIGHTNESS            = 10U;
+static const uint8_t    MIN_VALUE_BRIGHTNESS                = 10U;
 
 /** Min. brightness soft limit min. value in %. */
-static const uint8_t    MIN_VALUE_MIN_BRIGHTNESS_SL     = MIN_VALUE_BRIGHTNESS;
+static const uint8_t    MIN_VALUE_MIN_BRIGHTNESS_SL         = MIN_VALUE_BRIGHTNESS;
 
 /** Max. brightness soft limit min. value in %. */
-static const uint8_t    MIN_VALUE_MAX_BRIGHTNESS_SL     = MIN_VALUE_BRIGHTNESS;
+static const uint8_t    MIN_VALUE_MAX_BRIGHTNESS_SL         = MIN_VALUE_BRIGHTNESS;
 
 /*                      MIN_VALUE_AUTO_BRIGHTNESS_CTRL */
 
 /** POSIX time zone min. length */
-static const size_t     MIN_VALUE_TIMEZONE              = 4U;
+static const size_t     MIN_VALUE_TIMEZONE                  = 4U;
 
 /** NTP server address min. length */
-static const size_t     MIN_VALUE_NTP_SERVER            = 12U;
+static const size_t     MIN_VALUE_NTP_SERVER                = 12U;
 
 /** Max. number of display slots minimum value */
-static const uint8_t    MIN_MAX_SLOTS                   = 2U;
+static const uint8_t    MIN_MAX_SLOTS                       = 2U;
 
 /** Scroll pause minimum value in ms */
-static const uint32_t   MIN_VALUE_SCROLL_PAUSE          = 20U;
+static const uint32_t   MIN_VALUE_SCROLL_PAUSE              = 20U;
 
 /** NotifyURL min. length */
-static const size_t     MIN_VALUE_NOTIFY_URL            = 0U;
+static const size_t     MIN_VALUE_NOTIFY_URL                = 0U;
 
 /*                      MIN_VALUE_QUIET_MODE */
 
 /** Fade effect min. value */
-static const uint8_t    MIN_VALUE_FADE_EFFECT           = 0U;
+static const uint8_t    MIN_VALUE_FADE_EFFECT               = 0U;
+
+/** Brush minimum value */
+static const uint8_t    MIN_VALUE_BRUSH                     = 0U;
+
+/** Solid brush color minimum length */
+static const size_t     MIN_VALUE_SOLID_BRUSH_COLOR         = 6U;
+
+/** Linear gradient color 1 minimum length */
+static const size_t     MIN_VALUE_LINEAR_GRADIENT_COLOR1    = 6U;
+
+/** Linear gradient color 2 minimum length */
+static const size_t     MIN_VALUE_LINEAR_GRADIENT_COLOR2    = 6U;
+
+/** Linear gradient offset minimum value */
+static const int32_t    MIN_VALUE_LINEAR_GRADIENT_OFFSET    = 0;
+
+/** Linear gradient length minimum value */
+static const uint32_t   MIN_VALUE_LINEAR_GRADIENT_LENGTH    = 0U;
+
+/*                      MIN_VALUE_LINEAR_GRADIENT_VERTICAL */
 
 /* ---------- Maximum values ---------- */
 
 /** SettingsService version max. value */
-static const uint32_t   MAX_VALUE_VERSION               = UINT32_MAX;
+static const uint32_t   MAX_VALUE_VERSION                   = UINT32_MAX;
 
 /** Wifi network SSID max. length. Section 7.3.2.1 of the 802.11-2007 specification. */
-static const size_t     MAX_VALUE_WIFI_SSID             = 32U;
+static const size_t     MAX_VALUE_WIFI_SSID                 = 32U;
 
 /** Wifi network passphrase max. length */
-static const size_t     MAX_VALUE_WIFI_PASSPHRASE       = 64U;
+static const size_t     MAX_VALUE_WIFI_PASSPHRASE           = 64U;
 
 /** Wifi access point network SSID max. length. Section 7.3.2.1 of the 802.11-2007 specification. */
-static const size_t     MAX_VALUE_WIFI_AP_SSID          = 32U;
+static const size_t     MAX_VALUE_WIFI_AP_SSID              = 32U;
 
 /** Wifi access point network passphrase max. length */
-static const size_t     MAX_VALUE_WIFI_AP_PASSPHRASE    = 64U;
+static const size_t     MAX_VALUE_WIFI_AP_PASSPHRASE        = 64U;
 
 /** Website login user account max. length */
-static const size_t     MAX_VALUE_WEB_LOGIN_USER        = 16U;
+static const size_t     MAX_VALUE_WEB_LOGIN_USER            = 16U;
 
 /** Website login user password max. length */
-static const size_t     MAX_VALUE_WEB_LOGIN_PASSWORD    = 32U;
+static const size_t     MAX_VALUE_WEB_LOGIN_PASSWORD        = 32U;
 
 /** Hostname max. length */
-static const size_t     MAX_VALUE_HOSTNAME              = 63U;
+static const size_t     MAX_VALUE_HOSTNAME                  = 63U;
 
 /** Brightness max. value in %. Its a hard limit. The soft limit can be adjusted by the user. */
-static const uint8_t    MAX_VALUE_BRIGHTNESS            = 100U;
+static const uint8_t    MAX_VALUE_BRIGHTNESS                = 100U;
 
 /** Min. brightness soft limit max. value in %. */
-static const uint8_t    MAX_VALUE_MIN_BRIGHTNESS_SL     = MAX_VALUE_BRIGHTNESS;
+static const uint8_t    MAX_VALUE_MIN_BRIGHTNESS_SL         = MAX_VALUE_BRIGHTNESS;
 
 /** Max. brightness soft limit max. value in %. */
-static const uint8_t    MAX_VALUE_MAX_BRIGHTNESS_SL     = MAX_VALUE_BRIGHTNESS;
+static const uint8_t    MAX_VALUE_MAX_BRIGHTNESS_SL         = MAX_VALUE_BRIGHTNESS;
 
 /*                      MAX_VALUE_AUTO_BRIGHTNESS_CTRL */
 
 /** POSIX time zone max. length */
-static const size_t     MAX_VALUE_TIMEZONE              = 128U;
+static const size_t     MAX_VALUE_TIMEZONE                  = 128U;
 
 /** NTP server address max. length */
-static const size_t     MAX_VALUE_NTP_SERVER            = 30U;
+static const size_t     MAX_VALUE_NTP_SERVER                = 30U;
 
 /**
  * Max. number of display slots maximum value.
@@ -353,18 +436,38 @@ static const size_t     MAX_VALUE_NTP_SERVER            = 30U;
  *      not easy determined. E.g. the network stack needs heap to handle requests, the REST
  *      API needs it to handle JSON documents, etc.
  */
-static const uint8_t    MAX_MAX_SLOTS                   = 16U;
+static const uint8_t    MAX_MAX_SLOTS                       = 16U;
 
 /** Scroll pause maximum value in ms */
-static const uint32_t   MAX_VALUE_SCROLL_PAUSE          = 500U;
+static const uint32_t   MAX_VALUE_SCROLL_PAUSE              = 500U;
 
 /** NotifyURL max. length */
-static const size_t     MAX_VALUE_NOTIFY_URL            = 64U;
+static const size_t     MAX_VALUE_NOTIFY_URL                = 64U;
 
 /*                      MAX_VALUE_QUIET_MODE */
 
 /** Fade effect max. value */
-static const uint8_t    MAX_VALUE_FADE_EFFECT           = 3U;
+static const uint8_t    MAX_VALUE_FADE_EFFECT               = 3U;
+
+/** Brush maximum value */
+static const uint8_t    MAX_VALUE_BRUSH                     = 1U;
+
+/** Solid brush color maximum length */
+static const size_t     MAX_VALUE_SOLID_BRUSH_COLOR         = 6U;
+
+/** Linear gradient color 1 maximum length */
+static const size_t     MAX_VALUE_LINEAR_GRADIENT_COLOR1    = 6U;
+
+/** Linear gradient color 2 maximum length */
+static const size_t     MAX_VALUE_LINEAR_GRADIENT_COLOR2    = 6U;
+
+/** Linear gradient offset maximum value */
+static const int32_t    MAX_VALUE_LINEAR_GRADIENT_OFFSET    = INT16_MAX;
+
+/** Linear gradient length maximum value */
+static const uint32_t   MAX_VALUE_LINEAR_GRADIENT_LENGTH    = UINT16_MAX;
+
+/*                      MIN_VALUE_LINEAR_GRADIENT_VERTICAL */
 
 /* clang-format on */
 
@@ -528,25 +631,32 @@ void SettingsService::unregisterSetting(KeyValue* setting)
 SettingsService::SettingsService() :
     m_preferences(),
     m_keyValueList(),
-    m_version                   (m_preferences, KEY_VERSION,                NAME_VERSION,               DEFAULT_VERSION,                MIN_VALUE_VERSION,              MAX_VALUE_VERSION),
-    m_wifiSSID                  (m_preferences, KEY_WIFI_SSID,              NAME_WIFI_SSID,             DEFAULT_WIFI_SSID,              MIN_VALUE_WIFI_SSID,            MAX_VALUE_WIFI_SSID),
-    m_wifiPassphrase            (m_preferences, KEY_WIFI_PASSPHRASE,        NAME_WIFI_PASSPHRASE,       DEFAULT_WIFI_PASSPHRASE,        MIN_VALUE_WIFI_PASSPHRASE,      MAX_VALUE_WIFI_PASSPHRASE,      true),
-    m_apSSID                    (m_preferences, KEY_WIFI_AP_SSID,           NAME_WIFI_AP_SSID,          DEFAULT_WIFI_AP_SSID,           MIN_VALUE_WIFI_AP_SSID,         MAX_VALUE_WIFI_AP_SSID),
-    m_apPassphrase              (m_preferences, KEY_WIFI_AP_PASSPHRASE,     NAME_WIFI_AP_PASSPHRASE,    DEFAULT_WIFI_AP_PASSPHRASE,     MIN_VALUE_WIFI_AP_PASSPHRASE,   MAX_VALUE_WIFI_AP_PASSPHRASE,   true),
-    m_webLoginUser              (m_preferences, KEY_WEB_LOGIN_USER,         NAME_WEB_LOGIN_USER,        DEFAULT_WEB_LOGIN_USER,         MIN_VALUE_WEB_LOGIN_USER,       MAX_VALUE_WEB_LOGIN_USER),
-    m_webLoginPassword          (m_preferences, KEY_WEB_LOGIN_PASSWORD,     NAME_WEB_LOGIN_PASSWORD,    DEFAULT_WEB_LOGIN_PASSWORD,     MIN_VALUE_WEB_LOGIN_PASSWORD,   MAX_VALUE_WEB_LOGIN_PASSWORD,   true),
-    m_hostname                  (m_preferences, KEY_HOSTNAME,               NAME_HOSTNAME,              DEFAULT_HOSTNAME,               MIN_VALUE_HOSTNAME,             MAX_VALUE_HOSTNAME),
-    m_brightness                (m_preferences, KEY_BRIGHTNESS,             NAME_BRIGHTNESS,            DEFAULT_BRIGHTNESS,             MIN_VALUE_BRIGHTNESS,           MAX_VALUE_BRIGHTNESS),
-    m_minBrightnessSoftLimit    (m_preferences, KEY_MIN_BRIGHTNESS_SL,      NAME_MIN_BRIGHTNESS_SL,     DEFAULT_MIN_BRIGHTNESS_SL,      MIN_VALUE_MIN_BRIGHTNESS_SL,    MAX_VALUE_MIN_BRIGHTNESS_SL),
-    m_maxBrightnessSoftLimit    (m_preferences, KEY_MAX_BRIGHTNESS_SL,      NAME_MAX_BRIGHTNESS_SL,     DEFAULT_MAX_BRIGHTNESS_SL,      MIN_VALUE_MAX_BRIGHTNESS_SL,    MAX_VALUE_MAX_BRIGHTNESS_SL),
-    m_autoBrightnessCtrl        (m_preferences, KEY_AUTO_BRIGHTNESS_CTRL,   NAME_AUTO_BRIGHTNESS_CTRL,  DEFAULT_AUTO_BRIGHTNESS_CTRL),
-    m_timezone                  (m_preferences, KEY_TIMEZONE,               NAME_TIMEZONE,              DEFAULT_TIMEZONE,               MIN_VALUE_TIMEZONE,             MAX_VALUE_TIMEZONE),
-    m_ntpServer                 (m_preferences, KEY_NTP_SERVER,             NAME_NTP_SERVER,            DEFAULT_NTP_SERVER,             MIN_VALUE_NTP_SERVER,           MAX_VALUE_NTP_SERVER),
-    m_maxSlots                  (m_preferences, KEY_MAX_SLOTS,              NAME_MAX_SLOTS,             DEFAULT_MAX_SLOTS,              MIN_MAX_SLOTS,                  MAX_MAX_SLOTS),
-    m_scrollPause               (m_preferences, KEY_SCROLL_PAUSE,           NAME_SCROLL_PAUSE,          DEFAULT_SCROLL_PAUSE,           MIN_VALUE_SCROLL_PAUSE,         MAX_VALUE_SCROLL_PAUSE),
-    m_notifyURL                 (m_preferences, KEY_NOTIFY_URL,             NAME_NOTIFY_URL,            DEFAULT_NOTIFY_URL,             MIN_VALUE_NOTIFY_URL,           MAX_VALUE_NOTIFY_URL),
-    m_quietMode                 (m_preferences, KEY_QUIET_MODE,             NAME_QUIET_MODE,            DEFAULT_QUIET_MODE),
-    m_fadeEffect                (m_preferences, KEY_FADE_EFFECT,            NAME_FADE_EFFECT,           DEFAULT_FADE_EFFECT,            MIN_VALUE_FADE_EFFECT,          MAX_VALUE_FADE_EFFECT)
+    m_version                   (m_preferences, KEY_VERSION,                    NAME_VERSION,                   DEFAULT_VERSION,                MIN_VALUE_VERSION,                  MAX_VALUE_VERSION),
+    m_wifiSSID                  (m_preferences, KEY_WIFI_SSID,                  NAME_WIFI_SSID,                 DEFAULT_WIFI_SSID,              MIN_VALUE_WIFI_SSID,                MAX_VALUE_WIFI_SSID),
+    m_wifiPassphrase            (m_preferences, KEY_WIFI_PASSPHRASE,            NAME_WIFI_PASSPHRASE,           DEFAULT_WIFI_PASSPHRASE,        MIN_VALUE_WIFI_PASSPHRASE,          MAX_VALUE_WIFI_PASSPHRASE,      true),
+    m_apSSID                    (m_preferences, KEY_WIFI_AP_SSID,               NAME_WIFI_AP_SSID,              DEFAULT_WIFI_AP_SSID,           MIN_VALUE_WIFI_AP_SSID,             MAX_VALUE_WIFI_AP_SSID),
+    m_apPassphrase              (m_preferences, KEY_WIFI_AP_PASSPHRASE,         NAME_WIFI_AP_PASSPHRASE,        DEFAULT_WIFI_AP_PASSPHRASE,     MIN_VALUE_WIFI_AP_PASSPHRASE,       MAX_VALUE_WIFI_AP_PASSPHRASE,   true),
+    m_webLoginUser              (m_preferences, KEY_WEB_LOGIN_USER,             NAME_WEB_LOGIN_USER,            DEFAULT_WEB_LOGIN_USER,         MIN_VALUE_WEB_LOGIN_USER,           MAX_VALUE_WEB_LOGIN_USER),
+    m_webLoginPassword          (m_preferences, KEY_WEB_LOGIN_PASSWORD,         NAME_WEB_LOGIN_PASSWORD,        DEFAULT_WEB_LOGIN_PASSWORD,     MIN_VALUE_WEB_LOGIN_PASSWORD,       MAX_VALUE_WEB_LOGIN_PASSWORD,   true),
+    m_hostname                  (m_preferences, KEY_HOSTNAME,                   NAME_HOSTNAME,                  DEFAULT_HOSTNAME,               MIN_VALUE_HOSTNAME,                 MAX_VALUE_HOSTNAME),
+    m_brightness                (m_preferences, KEY_BRIGHTNESS,                 NAME_BRIGHTNESS,                DEFAULT_BRIGHTNESS,             MIN_VALUE_BRIGHTNESS,               MAX_VALUE_BRIGHTNESS),
+    m_minBrightnessSoftLimit    (m_preferences, KEY_MIN_BRIGHTNESS_SL,          NAME_MIN_BRIGHTNESS_SL,         DEFAULT_MIN_BRIGHTNESS_SL,      MIN_VALUE_MIN_BRIGHTNESS_SL,        MAX_VALUE_MIN_BRIGHTNESS_SL),
+    m_maxBrightnessSoftLimit    (m_preferences, KEY_MAX_BRIGHTNESS_SL,          NAME_MAX_BRIGHTNESS_SL,         DEFAULT_MAX_BRIGHTNESS_SL,      MIN_VALUE_MAX_BRIGHTNESS_SL,        MAX_VALUE_MAX_BRIGHTNESS_SL),
+    m_autoBrightnessCtrl        (m_preferences, KEY_AUTO_BRIGHTNESS_CTRL,       NAME_AUTO_BRIGHTNESS_CTRL,      DEFAULT_AUTO_BRIGHTNESS_CTRL),
+    m_timezone                  (m_preferences, KEY_TIMEZONE,                   NAME_TIMEZONE,                  DEFAULT_TIMEZONE,               MIN_VALUE_TIMEZONE,                 MAX_VALUE_TIMEZONE),
+    m_ntpServer                 (m_preferences, KEY_NTP_SERVER,                 NAME_NTP_SERVER,                DEFAULT_NTP_SERVER,             MIN_VALUE_NTP_SERVER,               MAX_VALUE_NTP_SERVER),
+    m_maxSlots                  (m_preferences, KEY_MAX_SLOTS,                  NAME_MAX_SLOTS,                 DEFAULT_MAX_SLOTS,              MIN_MAX_SLOTS,                      MAX_MAX_SLOTS),
+    m_scrollPause               (m_preferences, KEY_SCROLL_PAUSE,               NAME_SCROLL_PAUSE,              DEFAULT_SCROLL_PAUSE,           MIN_VALUE_SCROLL_PAUSE,             MAX_VALUE_SCROLL_PAUSE),
+    m_notifyURL                 (m_preferences, KEY_NOTIFY_URL,                 NAME_NOTIFY_URL,                DEFAULT_NOTIFY_URL,             MIN_VALUE_NOTIFY_URL,               MAX_VALUE_NOTIFY_URL),
+    m_quietMode                 (m_preferences, KEY_QUIET_MODE,                 NAME_QUIET_MODE,                DEFAULT_QUIET_MODE),
+    m_fadeEffect                (m_preferences, KEY_FADE_EFFECT,                NAME_FADE_EFFECT,               DEFAULT_FADE_EFFECT,            MIN_VALUE_FADE_EFFECT,              MAX_VALUE_FADE_EFFECT),
+    m_brush                     (m_preferences, KEY_BRUSH,                      NAME_BRUSH,                     DEFAULT_BRUSH,                  MIN_VALUE_BRUSH,                    MAX_VALUE_BRUSH),
+    m_solidBrushColor           (m_preferences, KEY_SOLID_BRUSH_COLOR,          NAME_SOLID_BRUSH_COLOR,         DEFAULT_SOLID_BRUSH_COLOR,      MIN_VALUE_SOLID_BRUSH_COLOR,        MAX_VALUE_SOLID_BRUSH_COLOR),
+    m_linearGradientColor1      (m_preferences, KEY_LINEAR_GRADIENT_COLOR1,     NAME_LINEAR_GRADIENT_COLOR1,    DEFAULT_LINEAR_GRADIENT_COLOR1, MIN_VALUE_LINEAR_GRADIENT_COLOR1,   MAX_VALUE_LINEAR_GRADIENT_COLOR1),
+    m_linearGradientColor2      (m_preferences, KEY_LINEAR_GRADIENT_COLOR2,     NAME_LINEAR_GRADIENT_COLOR2,    DEFAULT_LINEAR_GRADIENT_COLOR2, MIN_VALUE_LINEAR_GRADIENT_COLOR2,   MAX_VALUE_LINEAR_GRADIENT_COLOR2),
+    m_linearGradientOffset      (m_preferences, KEY_LINEAR_GRADIENT_OFFSET,     NAME_LINEAR_GRADIENT_OFFSET,    DEFAULT_LINEAR_GRADIENT_OFFSET, MIN_VALUE_LINEAR_GRADIENT_OFFSET,   MAX_VALUE_LINEAR_GRADIENT_OFFSET),
+    m_linearGradientLength      (m_preferences, KEY_LINEAR_GRADIENT_LENGTH,     NAME_LINEAR_GRADIENT_LENGTH,    DEFAULT_LINEAR_GRADIENT_LENGTH, MIN_VALUE_LINEAR_GRADIENT_LENGTH,   MAX_VALUE_LINEAR_GRADIENT_LENGTH),
+    m_linearGradientVertical    (m_preferences, KEY_LINEAR_GRADIENT_VERTICAL,   NAME_LINEAR_GRADIENT_VERTICAL,  DEFAULT_LINEAR_GRADIENT_VERTICAL)
 {
     /* Skip m_version, because it shall not be modified by the user. */
     m_keyValueList.push_back(&m_wifiSSID);
@@ -567,6 +677,13 @@ SettingsService::SettingsService() :
     m_keyValueList.push_back(&m_notifyURL);
     m_keyValueList.push_back(&m_quietMode);
     m_keyValueList.push_back(&m_fadeEffect);
+    m_keyValueList.push_back(&m_brush);
+    m_keyValueList.push_back(&m_solidBrushColor);
+    m_keyValueList.push_back(&m_linearGradientColor1);
+    m_keyValueList.push_back(&m_linearGradientColor2);
+    m_keyValueList.push_back(&m_linearGradientOffset);
+    m_keyValueList.push_back(&m_linearGradientLength);
+    m_keyValueList.push_back(&m_linearGradientVertical);
 }
 /* clang-format on */
 

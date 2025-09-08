@@ -50,6 +50,7 @@
 #include <Logging.h>
 
 #include "../interface/IDateTimeView.h"
+#include "ViewConfig.h"
 
 /******************************************************************************
  * Macros
@@ -109,6 +110,7 @@ public:
         UTIL_NOT_USED(width);
         UTIL_NOT_USED(height);
 
+        m_textWidget.setBrush(ViewConfig::getInstance().getBrush());
         m_textWidget.setFormatStr("{hc}No NTP");
         updateLampWidgetsColors();
     }
@@ -132,6 +134,15 @@ public:
     {
         m_fontType = fontType;
         m_textWidget.setFont(Fonts::getFontByType(m_fontType));
+
+        if (Fonts::FONT_TYPE_LARGE == m_fontType)
+        {
+            /* Disable all lamp widgets to avoid overlapping. */
+            for (auto& lamp : m_lampWidgets)
+            {
+                lamp.disable();
+            }
+        }
     }
 
     /**

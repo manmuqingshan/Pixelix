@@ -356,6 +356,76 @@ public:
     }
 
     /**
+     * Get brush.
+     *
+     * @return Key value pair
+     */
+    KeyValueUInt8& getBrush()
+    {
+        return m_brush;
+    }
+
+    /**
+     * Get solid brush color.
+     *
+     * @return Key value pair
+     */
+    KeyValueString& getSolidBrushColor()
+    {
+        return m_solidBrushColor;
+    }
+
+    /**
+     * Get linear gradient color 1.
+     *
+     * @return Key value pair
+     */
+    KeyValueString& getLinearGradientColor1()
+    {
+        return m_linearGradientColor1;
+    }
+
+    /**
+     * Get linear gradient color 2.
+     *
+     * @return Key value pair
+     */
+    KeyValueString& getLinearGradientColor2()
+    {
+        return m_linearGradientColor2;
+    }
+
+    /**
+     * Get linear gradient offset.
+     *
+     * @return Key value pair
+     */
+    KeyValueInt32& getLinearGradientOffset()
+    {
+        return m_linearGradientOffset;
+    }
+
+    /**
+     * Get linear gradient length.
+     *
+     * @return Key value pair
+     */
+    KeyValueUInt32& getLinearGradientLength()
+    {
+        return m_linearGradientLength;
+    }
+
+    /**
+     * Get linear gradient vertical state.
+     *
+     * @return Key value pair
+     */
+    KeyValueBool& getLinearGradientVertical()
+    {
+        return m_linearGradientVertical;
+    }
+
+    /**
      * Settings version
      * The version number shall be increased by 1 after:
      * - a new setting was added or
@@ -388,6 +458,13 @@ private:
     KeyValueString         m_notifyURL;              /**< URL to be triggered when PIXELIX has connected to a remote network. */
     KeyValueBool           m_quietMode;              /**< Quiet mode (skip unnecessary system messages) */
     KeyValueUInt8          m_fadeEffect;             /**< Fade effect */
+    KeyValueUInt8          m_brush;                  /**< Brush */
+    KeyValueString         m_solidBrushColor;        /**< Solid brush color */
+    KeyValueString         m_linearGradientColor1;   /**< Linear gradient color 1 */
+    KeyValueString         m_linearGradientColor2;   /**< Linear gradient color 2 */
+    KeyValueInt32          m_linearGradientOffset;   /**< Linear gradient offset */
+    KeyValueUInt32         m_linearGradientLength;   /**< Linear gradient length */
+    KeyValueBool           m_linearGradientVertical; /**< Linear gradient vertical */
 
     /**
      * Constructs the settings service instance.
