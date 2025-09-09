@@ -356,13 +356,13 @@ public:
     }
 
     /**
-     * Get brush.
+     * Get brush type.
      *
      * @return Key value pair
      */
-    KeyValueUInt8& getBrush()
+    KeyValueUInt8& getBrushType()
     {
-        return m_brush;
+        return m_brushType;
     }
 
     /**
@@ -458,7 +458,7 @@ private:
     KeyValueString         m_notifyURL;              /**< URL to be triggered when PIXELIX has connected to a remote network. */
     KeyValueBool           m_quietMode;              /**< Quiet mode (skip unnecessary system messages) */
     KeyValueUInt8          m_fadeEffect;             /**< Fade effect */
-    KeyValueUInt8          m_brush;                  /**< Brush */
+    KeyValueUInt8          m_brushType;              /**< Brush type */
     KeyValueString         m_solidBrushColor;        /**< Solid brush color */
     KeyValueString         m_linearGradientColor1;   /**< Linear gradient color 1 */
     KeyValueString         m_linearGradientColor2;   /**< Linear gradient color 2 */

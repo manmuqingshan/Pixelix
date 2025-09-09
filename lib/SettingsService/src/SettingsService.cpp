@@ -128,8 +128,8 @@ static const char*  KEY_QUIET_MODE                  = "quiet_mode";
 /** Fade effect key */
 static const char*  KEY_FADE_EFFECT                 = "fade_effect";
 
-/** Brush key */
-static const char*  KEY_BRUSH                       = "brush";
+/** Brush type key */
+static const char*  KEY_BRUSH_TYPE                   = "brush_type";
 
 /** Solid brush color key */
 static const char*  KEY_SOLID_BRUSH_COLOR           = "sb_color";
@@ -208,8 +208,8 @@ static const char*  NAME_QUIET_MODE                 = "Quiet mode (skip unnecess
 /** Fade effect name */
 static const char*  NAME_FADE_EFFECT                = "Fade effect (0: no, 1: linear, 2: move x, 3: move y)";
 
-/** Brush name */
-static const char*  NAME_BRUSH                      = "Text brush (0: solid color, 1: linear gradient color)";
+/** Brush type name */
+static const char*  NAME_BRUSH_TYPE                 = "Text brush type (0: solid color, 1: linear gradient color)";
 
 /** Solid brush color name */
 static const char*  NAME_SOLID_BRUSH_COLOR          = "Solid brush color (RRGGBB in hex)";
@@ -288,8 +288,8 @@ static const bool       DEFAULT_QUIET_MODE                  = false;
 /** Fade effect default value */
 static const uint8_t    DEFAULT_FADE_EFFECT                 = 1U;
 
-/** Brush default value */
-static const uint8_t    DEFAULT_BRUSH                       = 0U; /* Solid brush */
+/** Brush type default value */
+static const uint8_t    DEFAULT_BRUSH_TYPE                  = 0U; /* Solid brush */
 
 /** Solid brush color default value */
 static const char*      DEFAULT_SOLID_BRUSH_COLOR           = "FFFFFF"; /* RGB888 - White */
@@ -366,8 +366,8 @@ static const size_t     MIN_VALUE_NOTIFY_URL                = 0U;
 /** Fade effect min. value */
 static const uint8_t    MIN_VALUE_FADE_EFFECT               = 0U;
 
-/** Brush minimum value */
-static const uint8_t    MIN_VALUE_BRUSH                     = 0U;
+/** Brush type minimum value */
+static const uint8_t    MIN_VALUE_BRUSH_TYPE                = 0U;
 
 /** Solid brush color minimum length */
 static const size_t     MIN_VALUE_SOLID_BRUSH_COLOR         = 6U;
@@ -449,8 +449,8 @@ static const size_t     MAX_VALUE_NOTIFY_URL                = 64U;
 /** Fade effect max. value */
 static const uint8_t    MAX_VALUE_FADE_EFFECT               = 3U;
 
-/** Brush maximum value */
-static const uint8_t    MAX_VALUE_BRUSH                     = 1U;
+/** Brush type maximum value */
+static const uint8_t    MAX_VALUE_BRUSH_TYPE                = 1U;
 
 /** Solid brush color maximum length */
 static const size_t     MAX_VALUE_SOLID_BRUSH_COLOR         = 6U;
@@ -650,7 +650,7 @@ SettingsService::SettingsService() :
     m_notifyURL                 (m_preferences, KEY_NOTIFY_URL,                 NAME_NOTIFY_URL,                DEFAULT_NOTIFY_URL,             MIN_VALUE_NOTIFY_URL,               MAX_VALUE_NOTIFY_URL),
     m_quietMode                 (m_preferences, KEY_QUIET_MODE,                 NAME_QUIET_MODE,                DEFAULT_QUIET_MODE),
     m_fadeEffect                (m_preferences, KEY_FADE_EFFECT,                NAME_FADE_EFFECT,               DEFAULT_FADE_EFFECT,            MIN_VALUE_FADE_EFFECT,              MAX_VALUE_FADE_EFFECT),
-    m_brush                     (m_preferences, KEY_BRUSH,                      NAME_BRUSH,                     DEFAULT_BRUSH,                  MIN_VALUE_BRUSH,                    MAX_VALUE_BRUSH),
+    m_brushType                 (m_preferences, KEY_BRUSH_TYPE,                 NAME_BRUSH_TYPE,                DEFAULT_BRUSH_TYPE,             MIN_VALUE_BRUSH_TYPE,               MAX_VALUE_BRUSH_TYPE),
     m_solidBrushColor           (m_preferences, KEY_SOLID_BRUSH_COLOR,          NAME_SOLID_BRUSH_COLOR,         DEFAULT_SOLID_BRUSH_COLOR,      MIN_VALUE_SOLID_BRUSH_COLOR,        MAX_VALUE_SOLID_BRUSH_COLOR),
     m_linearGradientColor1      (m_preferences, KEY_LINEAR_GRADIENT_COLOR1,     NAME_LINEAR_GRADIENT_COLOR1,    DEFAULT_LINEAR_GRADIENT_COLOR1, MIN_VALUE_LINEAR_GRADIENT_COLOR1,   MAX_VALUE_LINEAR_GRADIENT_COLOR1),
     m_linearGradientColor2      (m_preferences, KEY_LINEAR_GRADIENT_COLOR2,     NAME_LINEAR_GRADIENT_COLOR2,    DEFAULT_LINEAR_GRADIENT_COLOR2, MIN_VALUE_LINEAR_GRADIENT_COLOR2,   MAX_VALUE_LINEAR_GRADIENT_COLOR2),
@@ -677,7 +677,7 @@ SettingsService::SettingsService() :
     m_keyValueList.push_back(&m_notifyURL);
     m_keyValueList.push_back(&m_quietMode);
     m_keyValueList.push_back(&m_fadeEffect);
-    m_keyValueList.push_back(&m_brush);
+    m_keyValueList.push_back(&m_brushType);
     m_keyValueList.push_back(&m_solidBrushColor);
     m_keyValueList.push_back(&m_linearGradientColor1);
     m_keyValueList.push_back(&m_linearGradientColor2);

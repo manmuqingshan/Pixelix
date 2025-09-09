@@ -216,18 +216,6 @@ void InitState::entry(StateMachine& sm)
     }
     else
     {
-        ViewConfig& viewConfig              = ViewConfig::getInstance();
-        uint8_t     brush                   = settings.getBrush().getDefault();
-        String      solidBrushColorStr      = "0x" + settings.getSolidBrushColor().getDefault();
-        String      linearGradientColor1Str = "0x" + settings.getLinearGradientColor1().getDefault();
-        String      linearGradientColor2Str = "0x" + settings.getLinearGradientColor2().getDefault();
-        int16_t     linearGradientOffset    = settings.getLinearGradientOffset().getDefault();
-        uint16_t    linearGradientLength    = settings.getLinearGradientLength().getDefault();
-        bool        linearGradientVertical  = settings.getLinearGradientVertical().getDefault();
-        uint32_t    solidBrushColor;
-        uint32_t    linearGradientColor1;
-        uint32_t    linearGradientColor2;
-
         /* Clean up settings first! Important step after a firmware update to
          * keep the settings up-to-date and prevent the persistency will
          * silently growing up with unused stuff.
@@ -260,14 +248,7 @@ void InitState::entry(StateMachine& sm)
                 LOG_WARNING("Scroll pause %u ms couldn't be set.", scrollPause);
             }
 
-            m_isQuiet               = settings.getQuietMode().getValue();
-            brush                   = settings.getBrush().getValue();
-            solidBrushColorStr      = "0x" + settings.getSolidBrushColor().getValue();
-            linearGradientColor1Str = "0x" + settings.getLinearGradientColor1().getValue();
-            linearGradientColor2Str = "0x" + settings.getLinearGradientColor2().getValue();
-            linearGradientOffset    = settings.getLinearGradientOffset().getValue();
-            linearGradientLength    = settings.getLinearGradientLength().getValue();
-            linearGradientVertical  = settings.getLinearGradientVertical().getValue();
+            m_isQuiet = settings.getQuietMode().getValue();
 
             settings.close();
         }
@@ -276,22 +257,7 @@ void InitState::entry(StateMachine& sm)
             m_isQuiet = settings.getQuietMode().getDefault();
         }
 
-        /* Set general view configuration. */
-        if (1U == brush)
-        {
-            viewConfig.setLinearGradientBrush();
-        }
-        else
-        {
-            viewConfig.setSolidBrush();
-        }
-
-        (void)Util::strToUInt32(solidBrushColorStr, solidBrushColor);
-        (void)Util::strToUInt32(linearGradientColor1Str, linearGradientColor1);
-        (void)Util::strToUInt32(linearGradientColor2Str, linearGradientColor2);
-
-        viewConfig.setSolidBrush(solidBrushColor);
-        viewConfig.setLinearGradientBrush(linearGradientColor1, linearGradientColor2, linearGradientOffset, linearGradientLength, linearGradientVertical);
+        configureViews();
 
         /* Don't store the wifi configuration in the NVS.
          * This seems to cause a reset after a client connected to the access point.
@@ -633,6 +599,71 @@ void InitState::getDeviceUniqueId(String& deviceUniqueId)
 
     deviceUniqueId += "-";
     deviceUniqueId += chipId.substring(4U);
+}
+
+void InitState::configureViews()
+{
+    SettingsService& settings                   = SettingsService::getInstance();
+    ViewConfig&      viewConfig                 = ViewConfig::getInstance();
+    uint8_t          brushType                  = settings.getBrushType().getDefault();
+    const uint8_t    BRUSH_TYPE_LINEAR_GRADIENT = 1U;
+    String           solidBrushColorStr         = "0x" + settings.getSolidBrushColor().getDefault();
+    String           linearGradientColor1Str    = "0x" + settings.getLinearGradientColor1().getDefault();
+    String           linearGradientColor2Str    = "0x" + settings.getLinearGradientColor2().getDefault();
+    int16_t          linearGradientOffset       = settings.getLinearGradientOffset().getDefault();
+    uint16_t         linearGradientLength       = settings.getLinearGradientLength().getDefault();
+    bool             linearGradientVertical     = settings.getLinearGradientVertical().getDefault();
+    uint32_t         solidBrushColor;
+    uint32_t         linearGradientColor1;
+    uint32_t         linearGradientColor2;
+    bool             solidBrushColorStatus      = false;
+    bool             linearGradientColor1Status = false;
+    bool             linearGradientColor2Status = false;
+
+    if (true == settings.open(true))
+    {
+        brushType               = settings.getBrushType().getValue();
+        solidBrushColorStr      = "0x" + settings.getSolidBrushColor().getValue();
+        linearGradientColor1Str = "0x" + settings.getLinearGradientColor1().getValue();
+        linearGradientColor2Str = "0x" + settings.getLinearGradientColor2().getValue();
+        linearGradientOffset    = settings.getLinearGradientOffset().getValue();
+        linearGradientLength    = settings.getLinearGradientLength().getValue();
+        linearGradientVertical  = settings.getLinearGradientVertical().getValue();
+
+        settings.close();
+    }
+
+    solidBrushColorStatus      = Util::strToUInt32(solidBrushColorStr, solidBrushColor);
+    linearGradientColor1Status = Util::strToUInt32(linearGradientColor1Str, linearGradientColor1);
+    linearGradientColor2Status = Util::strToUInt32(linearGradientColor2Str, linearGradientColor2);
+
+    if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush(solidBrushColor);
+    }
+
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status))
+    {
+        viewConfig.setLinearGradientBrush(linearGradientColor1, linearGradientColor2, linearGradientOffset, linearGradientLength, linearGradientVertical);
+    }
+
+    /* Set general view configuration. */
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status) &&
+        (BRUSH_TYPE_LINEAR_GRADIENT == brushType))
+    {
+        viewConfig.setLinearGradientBrush();
+    }
+    else if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush();
+    }
+    else
+    {
+        /* Default brush is already set in the constructor. */
+        ;
+    }
 }
 
 /******************************************************************************
