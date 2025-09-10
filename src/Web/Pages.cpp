@@ -87,12 +87,20 @@ struct HtmlPageRoute
     WebRequestMethodComposite reqMethodComposite; /**< Request method composite */
 };
 
+typedef enum
+{
+    BOOT_SUCCESS,
+    BOOT_PARTITION_NOT_FOUND,
+    BOOT_SET_FAILED
+
+} BootPartitionResult;
+
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
-static bool   setFactoryPartitionActive();
-static String tmplPageProcessor(const String& var);
-static void   htmlPage(AsyncWebServerRequest* request);
+static BootPartitionResult setFactoryPartitionActive();
+static String              tmplPageProcessor(const String& var);
+static void                htmlPage(AsyncWebServerRequest* request);
 
 namespace tmpl
 {
@@ -261,12 +269,9 @@ void Pages::init(AsyncWebServer& srv)
     }
 
     (void)srv.on("/change-partition", HTTP_GET, [](AsyncWebServerRequest* request) {
-        if (false == setFactoryPartitionActive())
+        switch (setFactoryPartitionActive())
         {
-            request->send(500, "text/plain", "Failed to switch partition.");
-        }
-        else
-        {
+        case BOOT_SUCCESS:
             const uint32_t RESTART_DELAY = 100U; /* ms */
 
             request->send(200, "text/plain", "Partition switched. Restarting...");
@@ -275,6 +280,13 @@ void Pages::init(AsyncWebServer& srv)
              * a short delay is necessary.
              */
             RestartMgr::getInstance().reqRestart(RESTART_DELAY);
+            break;
+        case BOOT_PARTITION_NOT_FOUND:
+            request->send(500, "text/plain", "Factory partition not found!");
+            break;
+        case BOOT_SET_FAILED:
+            request->send(500, "text/plain", "Failed to set factory partition as boot partition!");
+            break;
         }
     });
 
@@ -354,14 +366,16 @@ void Pages::error(AsyncWebServerRequest* request)
  *****************************************************************************/
 
 /**
- * Set the factory partition active to be considered as the boot partition.
+ * Set the factory partition active to be the next boot partition.
  *
- * @return True if factory partition was set active successfully, otherwise false.
+ * @return BootPartitionResult indicating wether factory was set as boot partition successfully or not.
  */
-static bool setFactoryPartitionActive()
+static BootPartitionResult setFactoryAsBootPartition()
 {
-    bool                   isSuccessful = false;
-    const esp_partition_t* partition    = esp_partition_find_first(
+    BootPartitionResult    result;
+    const esp_partition_t* partition = nullptr;
+
+    partition                        = esp_partition_find_first(
         esp_partition_type_t::ESP_PARTITION_TYPE_APP,
         esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_FACTORY,
         nullptr);
@@ -371,16 +385,24 @@ static bool setFactoryPartitionActive()
         esp_err_t err = esp_ota_set_boot_partition(partition);
 
         LOG_INFO("Setting factory partition '%s' as boot partition", partition->label);
-        isSuccessful = true;
 
         if (ESP_OK != err)
         {
             LOG_ERROR("Failed to set factory partition '%s' as boot partition: %d", partition->label, err);
-            isSuccessful = false;
+            result = BOOT_SET_FAILED;
+        }
+        else
+        {
+            result = BOOT_SUCCESS;
         }
     }
+    else
+    {
+        LOG_ERROR("Factory partition '%s' not found!", partition->label);
+        result = BOOT_PARTITION_NOT_FOUND;
+    }
 
-    return isSuccessful;
+    return result;
 }
 
 /**
