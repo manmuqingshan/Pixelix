@@ -138,6 +138,15 @@ Pixelix provides with the following link such an automation blueprint to your Ho
 
 As an alternative copy the [pixelix_send_sensor_data.yaml](./homeassistant/blueprint/pixelix_send_sensor_data.yaml) file to  `/config/blueprints/automation/homeassistant/`.
 
+Only for communicate via REST API with Pixelix, the following REST command needs to be added to the `configuration.yaml`:
+
+```yaml
+rest_command:
+  pixelix_plugin_command:
+    url: "http://{{ hostname }}{{ endpoint }}?{{ url_parameter }}"
+    method: POST
+```
+
 ## Issues, Ideas And Bugs
 
 If you have further ideas or you found some bugs, great! Create a [issue](https://github.com/BlueAndi/Pixelix/issues) or if you are able and willing to fix it by yourself, clone the repository and create a pull request.
