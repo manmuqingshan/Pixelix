@@ -70,6 +70,8 @@ bool IconTextView64x64::loadIcon(const String& filename)
     }
     else
     {
+        setTextWidgetFullHeight();
+
         isSuccessful = true;
     }
 

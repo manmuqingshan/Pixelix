@@ -70,6 +70,8 @@ bool IconTextView32x16::loadIcon(const String& filename)
     }
     else
     {
+        setTextWidgetReducedWidth();
+
         isSuccessful = true;
     }
 

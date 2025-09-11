@@ -69,7 +69,7 @@ This ensures clear communication and control over the topics.
 
 The complete topic name can be derived from the REST API documentation.
 
-Example: JustTextPlugin
+Example: IconTextPlugin
 
 The REST API URL looks like the following: http://&lt;HOSTNAME&gt;/rest/api/v1/display/uid/&lt;PLUGIN-UID&gt;/&lt;TOPIC&gt;?text=&lt;TEXT&gt;
 

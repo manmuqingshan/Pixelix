@@ -5,6 +5,7 @@
 Full RGB LED matrix, based on an ESP32 and WS2812B LEDs.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](http://choosealicense.com/licenses/mit/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Supported-41BDF5?logo=home-assistant&logoColor=white)](https://www.home-assistant.io/integrations/mqtt)
 [![Repo Status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Release](https://img.shields.io/github/release/BlueAndi/Pixelix.svg)](https://github.com/BlueAndi/Pixelix/releases)
 [![Build Status](https://github.com/BlueAndi/Pixelix/actions/workflows/main.yml/badge.svg)](https://github.com/BlueAndi/Pixelix/actions/workflows/main.yml)
@@ -32,6 +33,10 @@ ___
   - [Variant 2: Configure wifi station SSID and passphrase with the terminal](#variant-2-configure-wifi-station-ssid-and-passphrase-with-the-terminal)
   - [PIXELIX Is Ready](#pixelix-is-ready)
 - [User Interface](#user-interface)
+  - [One button control](#one-button-control)
+  - [Two button control (LILYGO® T-Display ESP32-S3)](#two-button-control-lilygo-t-display-esp32-s3)
+  - [Three button control (Ulanzi TC001)](#three-button-control-ulanzi-tc001)
+  - [Remote button](#remote-button)
 - [Details](#details)
 - [FAQ](#faq)
   - [Where to change panel topology of the LED matrix?](#where-to-change-panel-topology-of-the-led-matrix)
@@ -52,21 +57,24 @@ ___
 
 ## Motivation
 
-My initial goal was to have a remote display that would show multiple kind of information and run reliably 24/7. Can be connected to the local network via WiFi and controlled via REST API or Websocket. PIXELIX was born! :-)
+My initial goal was to have a remote display that would show multiple kind of information and run reliably 24/7. Can be connected to the local network via WiFi and controlled via REST API or Websocket. PIXELIX was born!
 
 ## Introduction
 
-The PIXELIX firmware is for ESP32 boards that controls a RGB LED matrix. It can be used to display text and animations.
+The PIXELIX firmware is for ESP32 boards that controls a RGB LED matrix or a TFT display. It can be used to display time, date, weather, text, animations and etc.
+It doesn't require any cloud connection, even its not required to have a smarthome system. But with its REST and MQTT API it fits perfect with [Home Assistant](https://www.home-assistant.io/) or any other smarthome system.
 
 ## Features
 
 - Supports 32x8 LED matrix size out of the box. Its possible to cascade another matrix to have a longer display.
-- Can display static or scrolling text, as well as static (BMP and GIF) or animated icons (GIF).
-- Includes a web interface for configuring and controlling the LED matrix.
-- Supports REST API and MQTT for remote control and integration with other systems, like [Home Assistant](https://www.home-assistant.io/).
-- Can be extended with custom effects and animations. See list of [plugins](./doc/PLUGINS.md).
+- Supports some small TFT displays to simulate a LED matrix in retro style.
+- Display static or scrolling text, as well as static (BMP and GIF) or animated icons (GIF).
+- Includes a web interface for configuration and control.
+- Supports REST and MQTT API for remote control and integration with other systems, like [Home Assistant](https://www.home-assistant.io/).
+- Extendable with custom effects and animations by plugins. See list of [plugins](./doc/PLUGINS.md).
+- Its plugin concept allows to scale for different development boards.
 
-Please note, that not every feature might be available for all kind of development boards. E.g. for MQTT support you need a development board with 8 MB flash or more. See the `config<variant>.ini` configuration files in [./config](./config) folder.
+Please note, that not every feature might be available for all kind of development boards. E.g. for MQTT support you need a development board with 8 MB flash or more, except for the Ulanzi TC001. See the `config<variant>.ini` configuration files in [./config](./config) folder.
 
 | Some impressions |   |
 | - | - |
@@ -109,7 +117,7 @@ Additional supported variants, which were original not in focus:
 
 - [LILYGO&reg; TTGO T-Display ESP32 WiFi and Bluetooth Module Development Board For Arduino 1.14 Inch LCD](http://www.lilygo.cn/prod_view.aspx?TypeId=50033&Id=1126&FId=t3:50033:3)
 - [LILYGO&reg; T-Display ESP32-S3 1.9 inch ST7789 LCD Display Touch Screen Development Board](https://www.lilygo.cc/products/t-display-s3)
-- Limited HUB75 panel support, configured as an example for the ESP32-DoIt DevKit v1 development board.
+- Limited HUB75 panel support, configured for the ESP32-DoIt DevKit v1 and the Adafruit MatrixPortal S3 development board.
 
 Although PIXELIX was designed to show information, that is pushed or pulled via REST API, the following sensors can be directly connected and evaluated:
 
@@ -126,7 +134,7 @@ The following steps are necessary for the first time and to get PIXELIX initial 
 3. [Upload/Update the software and firmware](./doc/config/SW-UPDATE.md) to the target.
 4. Verify that the LED panel topology is correct and you see the "Hello World" on the display.
 
-Note, that the LED panel topology and the display width/height can currently not be changed in the web interface. If its necessary, adapt first in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: [https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects]( https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects)
+Note, that the LED panel topology and the display width/height can not be changed in the web interface. If its necessary, adapt first in ```./config/display.ini``` the _CONFIG_LED_MATRIX_WIDTH_ and _CONFIG_LED_MATRIX_HEIGHT_ according your LED matrix and change _CONFIG_LED_TOPO_ according to your physical panel topology. Take a look how your pixels are wired on the pcb and use the following page to choose the right one: [https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects]( https://github.com/Makuna/NeoPixelBus/wiki/Layout-objects)
 
 ## Very First Startup
 
@@ -171,45 +179,52 @@ For changing whats displayed, go to its web interface. Use the same credentials 
 
 ## User Interface
 
-- Pixelix can be controlled with buttons. Most of the development boards are supported with just one user button.
-  - One button control:
-    - 1 short pulse: Activates the next slot.
-    - 2 short pulses: Activates the previous slot.
-    - 3 short pulses: Activates next fade effect.
-    - 4 short pulses: IP address is shown.
-    - 5 short pulses: Toggle display power on/off.
-    - Long pressed: Increases the display brightness until maximum and then decreases until minimum. After that it will again increases it and so on.
-  - Two button control (LILYGO&reg; T-Display ESP32-S3):
-    - Left button:
-      - 1 short pulses: Activates the previous slot.
-      - 2 short pulses: Toggle display power on/off.
-      - Long pressed: Decreases the display brightness until minimum.
-    - Right button
-      - 1 short pulse: Activates the next slot.
-      - 2 short pulses: Activates next fade effect.
-      - 3 short pulses: IP address is shown.
-      - Long pressed: Increases the display brightness until maximum.
-  - Three button control (Ulanzi TC001):
-    - Left button:
-      - 1 short pulses: Activates the previous slot.
-      - Long pressed: Decreases the display brightness until minimum.
-    - Ok button:
-      - 1 short pulses: Activates next fade effect.
-      - 2 short pulses: IP address is shown.
-      - Long pressed: Toggle display power on/off.
-    - Right button
-      - 1 short pulse: Activates the next slot.
-      - Long pressed: Increases the display brightness until maximum.
-- If the display's location is hard to reach, the virtual user button can be used. It is controllable via REST API and perfect for remote buttons like the [Shelly Button 1](https://shelly.cloud/products/shelly-button-1-smart-home-automation-device/).
-- If a ambilight sensor (LDR) is connected, the display brightness is automatically adapted.
-- The web interface provides the possibility to install plugins, control their duration in the slots and etc.
-- Some plugin's spawn a dedicated REST API, see the web page of the plugin or have a look to the REST API documentation.
+Pixelix can be controlled with buttons. Most of the development boards are supported with just one user button.
 
-Note, the websocket interface is currently only used as a service in the web interface.
+### One button control
+
+- 1 short pulse: Activates the next slot.
+- 2 short pulses: Activates the previous slot.
+- 3 short pulses: Activates next fade effect.
+- 4 short pulses: IP address is shown.
+- 5 short pulses: Toggle display power on/off.
+- Long pressed: Increases the display brightness until maximum and then decreases until minimum. After that it will again increases it and so on.
+
+### Two button control (LILYGO&reg; T-Display ESP32-S3)
+
+- Left button:
+  - 1 short pulses: Activates the previous slot.
+  - 2 short pulses: Toggle display power on/off.
+  - Long pressed: Decreases the display brightness until minimum.
+- Right button
+  - 1 short pulse: Activates the next slot.
+  - 2 short pulses: Activates next fade effect.
+  - 3 short pulses: IP address is shown.
+  - Long pressed: Increases the display brightness until maximum.
+
+### Three button control (Ulanzi TC001)
+
+- Left button:
+  - 1 short pulses: Activates the previous slot.
+  - Long pressed: Decreases the display brightness until minimum.
+- Ok button:
+  - 1 short pulses: Activates next fade effect.
+  - 2 short pulses: IP address is shown.
+  - Long pressed: Toggle display power on/off.
+- Right button
+  - 1 short pulse: Activates the next slot.
+  - Long pressed: Increases the display brightness until maximum.
+
+### Remote button
+
+If the display's location is hard to reach, the remote user button feature can be used. It is controllable via REST API and perfect for remote buttons like the [Shelly Button 1](https://shelly.cloud/products/shelly-button-1-smart-home-automation-device/).
 
 ## Details
 
-For more detailed information, see the [documentation](./doc/README.md).
+- [Home Assistant](./doc/HOMEASSISTANT.md)
+- [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0)
+- [MQTT API](./doc/MQTT.md)
+- More information is in the [documentation](./doc/README.md) folder.
 
 ## FAQ
 
@@ -303,7 +318,7 @@ Example:
 
 ```json
 {
-    "name": "JustTextPlugin",
+    "name": "IconTextPlugin",
     "uid": 32690,
     "alias": "",
     "fontType": "large"

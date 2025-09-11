@@ -70,6 +70,8 @@ bool IconTextLampView32x8::loadIcon(const String& filename)
     }
     else
     {
+        setTextWidgetReducedWidth();
+
         isSuccessful = true;
     }
 

@@ -70,6 +70,8 @@ bool IconTextLampViewGeneric::loadIcon(const String& filename)
     }
     else
     {
+        setTextWidgetFullWidth();
+
         isSuccessful = true;
     }
 

@@ -61,6 +61,7 @@
 
 /**
  * Generic view for LED matrix with icon and text.
+ * If no icon is displayed, the text uses the full width of the display.
  */
 class IconTextViewGeneric : public IIconTextView
 {
@@ -73,7 +74,7 @@ public:
         IIconTextView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y)
+        m_textWidget(TEXT_WIDTH_FULL, TEXT_HEIGHT, TEXT_X_FULL, TEXT_Y) /* Use full width. */
     {
     }
 
@@ -86,7 +87,7 @@ public:
 
     /**
      * Initialize view, which will prepare the widgets and the default values.
-     * 
+     *
      * @param[in] width     Display width in pixel.
      * @param[in] height    Display height in pixel.
      */
@@ -100,7 +101,7 @@ public:
 
     /**
      * Get font type.
-     * 
+     *
      * @return The font type the view uses.
      */
     Fonts::FontType getFontType() const override
@@ -110,7 +111,7 @@ public:
 
     /**
      * Set font type.
-     * 
+     *
      * @param[in] fontType  The font type which the view shall use.
      */
     void setFontType(Fonts::FontType fontType) override
@@ -121,7 +122,7 @@ public:
 
     /**
      * Update the underlying canvas.
-     * 
+     *
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
     void update(YAGfx& gfx) override
@@ -133,7 +134,7 @@ public:
 
     /**
      * Get text (non-formatted).
-     * 
+     *
      * @return Text
      */
     String getText() const override
@@ -143,7 +144,7 @@ public:
 
     /**
      * Get text (formatted).
-     * 
+     *
      * @return Text
      */
     String getFormatText() const override
@@ -153,7 +154,7 @@ public:
 
     /**
      * Set text (formatted).
-     * 
+     *
      * @param[in] formatText    Formatted text to show.
      */
     void setFormatText(const String& formatText) override
@@ -176,6 +177,7 @@ public:
     void clearIcon() override
     {
         m_bitmapWidget.clear(ColorDef::BLACK);
+        setTextWidgetFullWidth();
     }
 
 protected:
@@ -183,64 +185,93 @@ protected:
     /**
      * Bitmap size in pixels.
      */
-    static const uint16_t   BITMAP_SIZE     = 8U;
+    static const uint16_t BITMAP_SIZE     = 8U;
 
     /**
      * Bitmap width in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
+    static const uint16_t BITMAP_WIDTH    = BITMAP_SIZE;
 
     /**
      * Bitmap height in pixels.
      */
-    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
+    static const uint16_t BITMAP_HEIGHT   = BITMAP_SIZE;
 
     /**
      * Bitmap widget x-coordinate in pixels.
      * Left aligned.
      */
-    static const int16_t    BITMAP_X        = 0;
+    static const int16_t BITMAP_X         = 0;
 
     /**
      * Bitmap widget y-coordinate in pixels.
      * Top aligned.
      */
-    static const int16_t    BITMAP_Y        = 0;
+    static const int16_t BITMAP_Y         = 0;
 
     /**
-     * Text width in pixels.
+     * Text width in pixels, applied if the bitmap is displayed.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+    static const uint16_t TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+
+    /**
+     * Text width in pixels, applied if no bitmap is displayed.
+     */
+    static const uint16_t TEXT_WIDTH_FULL = CONFIG_LED_MATRIX_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
+    static const uint16_t TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
-     * Text widget x-coordinate in pixels.
+     * Text widget x-coordinate in pixels, applied if the bitmap is displayed.
      */
-    static const int16_t    TEXT_X          = BITMAP_WIDTH;
+    static const int16_t TEXT_X           = BITMAP_WIDTH;
+
+    /**
+     * Text widget x-coordinate in pixels, applied if no bitmap is displayed.
+     */
+    static const int16_t TEXT_X_FULL      = 0;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = 0;
+    static const int16_t TEXT_Y           = 0;
 
-    Fonts::FontType m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
-    BitmapWidget    m_bitmapWidget; /**< Bitmap widget used to show a icon. */
-    TextWidget      m_textWidget;   /**< Text widget used to show some text. */
+    Fonts::FontType      m_fontType;     /**< Font type which shall be used if there is no conflict with the layout. */
+    BitmapWidget         m_bitmapWidget; /**< Bitmap widget used to show a icon. */
+    TextWidget           m_textWidget;   /**< Text widget used to show some text. */
 
 private:
+
     IconTextViewGeneric(const IconTextViewGeneric& other);
     IconTextViewGeneric& operator=(const IconTextViewGeneric& other);
+
+    /**
+     * Set text widget to full width.
+     */
+    inline void setTextWidgetFullWidth()
+    {
+        m_textWidget.setWidth(TEXT_WIDTH_FULL);
+        m_textWidget.move(TEXT_X_FULL, TEXT_Y);
+    }
+
+    /**
+     * Set text widget to reduced width.
+     */
+    inline void setTextWidgetReducedWidth()
+    {
+        m_textWidget.setWidth(TEXT_WIDTH);
+        m_textWidget.move(TEXT_X, TEXT_Y);
+    }
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_VIEW_GENERIC_H */
+#endif /* ICON_TEXT_VIEW_GENERIC_H */
 
 /** @} */

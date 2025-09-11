@@ -62,7 +62,8 @@
 
 /**
  * View for 32x8 LED matrix with icon and text.
- * 
+ * If no icon is displayed, the text uses the full width of the display.
+ *
  * +-----------------------------------------------------------------+
  * |                |                                                |
  * |                |                                                |
@@ -85,11 +86,11 @@ public:
         IIconTextLampView(),
         m_fontType(Fonts::FONT_TYPE_DEFAULT),
         m_bitmapWidget(BITMAP_WIDTH, BITMAP_HEIGHT, BITMAP_X, BITMAP_Y),
-        m_textWidget(TEXT_WIDTH, TEXT_HEIGHT, TEXT_X, TEXT_Y),
-        m_lampWidgets{{LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X , LAMP_Y},
-                      {LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X , LAMP_Y}}
+        m_textWidget(TEXT_WIDTH_FULL, TEXT_HEIGHT, TEXT_X_FULL, TEXT_Y),    /* Use full width. */
+        m_lampWidgets{ { LAMP_WIDTH, LAMP_HEIGHT, LAMP_0_X, LAMP_Y },
+            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_1_X, LAMP_Y },
+            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_2_X, LAMP_Y },
+            { LAMP_WIDTH, LAMP_HEIGHT, LAMP_3_X, LAMP_Y } }
     {
         m_bitmapWidget.setVerticalAlignment(Alignment::Vertical::VERTICAL_CENTER);
         m_bitmapWidget.setHorizontalAlignment(Alignment::Horizontal::HORIZONTAL_CENTER);
@@ -104,7 +105,7 @@ public:
 
     /**
      * Initialize view, which will prepare the widgets and the default values.
-     * 
+     *
      * @param[in] width     Display width in pixel.
      * @param[in] height    Display height in pixel.
      */
@@ -118,7 +119,7 @@ public:
 
     /**
      * Get font type.
-     * 
+     *
      * @return The font type the view uses.
      */
     Fonts::FontType getFontType() const override
@@ -128,7 +129,7 @@ public:
 
     /**
      * Set font type.
-     * 
+     *
      * @param[in] fontType  The font type which the view shall use.
      */
     void setFontType(Fonts::FontType fontType) override
@@ -139,7 +140,7 @@ public:
 
     /**
      * Update the underlying canvas.
-     * 
+     *
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
     void update(YAGfx& gfx) override
@@ -151,7 +152,7 @@ public:
 
     /**
      * Get text (non-formatted).
-     * 
+     *
      * @return Text
      */
     String getText() const override
@@ -161,7 +162,7 @@ public:
 
     /**
      * Get text (formatted).
-     * 
+     *
      * @return Text
      */
     String getFormatText() const override
@@ -171,7 +172,7 @@ public:
 
     /**
      * Set text (formatted).
-     * 
+     *
      * @param[in] formatText    Formatted text to show.
      */
     void setFormatText(const String& formatText) override
@@ -194,13 +195,14 @@ public:
     void clearIcon() override
     {
         m_bitmapWidget.clear(ColorDef::BLACK);
+        setTextWidgetFullWidth();
     }
 
     /**
      * Get lamp state (true = on / false = off).
-     * 
+     *
      * @param[in] lampId    Lamp id
-     * 
+     *
      * @return Lamp state
      */
     bool getLamp(uint8_t lampId) const override;
@@ -216,99 +218,128 @@ public:
     /**
      * Max. number of lamps.
      */
-    static const uint8_t    MAX_LAMPS       = 4U;
+    static const uint8_t MAX_LAMPS = 4U;
 
 protected:
 
     /**
      * Bitmap size in pixels.
      */
-    static const uint16_t   BITMAP_SIZE     = 8U;
+    static const uint16_t BITMAP_SIZE     = 8U;
 
     /**
      * Bitmap width in pixels.
      */
-    static const uint16_t   BITMAP_WIDTH    = BITMAP_SIZE;
+    static const uint16_t BITMAP_WIDTH    = BITMAP_SIZE;
 
     /**
      * Bitmap height in pixels.
      */
-    static const uint16_t   BITMAP_HEIGHT   = BITMAP_SIZE;
+    static const uint16_t BITMAP_HEIGHT   = BITMAP_SIZE;
 
     /**
      * Bitmap widget x-coordinate in pixels.
      * Left aligned.
      */
-    static const int16_t    BITMAP_X        = 0;
+    static const int16_t BITMAP_X         = 0;
 
     /**
      * Bitmap widget y-coordinate in pixels.
      * Top aligned.
      */
-    static const int16_t    BITMAP_Y        = 0;
+    static const int16_t BITMAP_Y         = 0;
 
     /**
-     * Text width in pixels.
+     * Text width in pixels, applied if bitmap is displayed.
      */
-    static const uint16_t   TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+    static const uint16_t TEXT_WIDTH      = CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH;
+
+    /**
+     * Text width in pixels, applied if no bitmap is displayed.
+     */
+    static const uint16_t TEXT_WIDTH_FULL = CONFIG_LED_MATRIX_WIDTH;
 
     /**
      * Text height in pixels.
      */
-    static const uint16_t   TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
+    static const uint16_t TEXT_HEIGHT     = CONFIG_LED_MATRIX_HEIGHT;
 
     /**
-     * Text widget x-coordinate in pixels.
+     * Text widget x-coordinate in pixels, if bitmap is displayed.
      */
-    static const int16_t    TEXT_X          = BITMAP_WIDTH;
+    static const int16_t TEXT_X           = BITMAP_WIDTH;
+
+    /**
+     * Text widget x-coordinate in pixels, if no bitmap is displayed.
+     */
+    static const int16_t TEXT_X_FULL      = 0;
 
     /** Distance between two lamps in pixel. */
-    static const uint8_t    LAMP_DISTANCE   = 1U;
+    static const uint8_t LAMP_DISTANCE    = 1U;
 
     /** Lamp width in pixel. */
-    static const uint8_t    LAMP_WIDTH      = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
+    static const uint8_t LAMP_WIDTH       = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - ((MAX_LAMPS + 1U) * LAMP_DISTANCE)) / MAX_LAMPS;
 
     /** Lamp distance to the canvas border in pixel. */
-    static const uint8_t    LAMP_BORDER     = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
+    static const uint8_t LAMP_BORDER      = (CONFIG_LED_MATRIX_WIDTH - BITMAP_WIDTH - (MAX_LAMPS * LAMP_WIDTH) - ((MAX_LAMPS - 1U) * LAMP_DISTANCE)) / 2U;
 
     /** Lamp height in pixel. */
-    static const uint8_t    LAMP_HEIGHT     = 1U;
+    static const uint8_t LAMP_HEIGHT      = 1U;
 
     /** Lamp 0 x-coordinate in pixel. */
-    static const uint8_t    LAMP_0_X        = BITMAP_WIDTH + LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t LAMP_0_X         = BITMAP_WIDTH + LAMP_BORDER + (0 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 1 x-coordinate in pixel. */
-    static const uint8_t    LAMP_1_X        = BITMAP_WIDTH + LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t LAMP_1_X         = BITMAP_WIDTH + LAMP_BORDER + (1 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 2 x-coordinate in pixel. */
-    static const uint8_t    LAMP_2_X        = BITMAP_WIDTH + LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t LAMP_2_X         = BITMAP_WIDTH + LAMP_BORDER + (2 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp 3 x-coordinate in pixel. */
-    static const uint8_t    LAMP_3_X        = BITMAP_WIDTH + LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
+    static const uint8_t LAMP_3_X         = BITMAP_WIDTH + LAMP_BORDER + (3 * (LAMP_WIDTH + LAMP_DISTANCE));
 
     /** Lamp y-coordindate in pixel. */
-    static const uint8_t    LAMP_Y          = CONFIG_LED_MATRIX_HEIGHT - 1;
+    static const uint8_t LAMP_Y           = CONFIG_LED_MATRIX_HEIGHT - 1;
 
     /**
      * Text widget y-coordinate in pixels.
      * Top aligned, below bitmap.
      */
-    static const int16_t    TEXT_Y          = 0;
+    static const int16_t TEXT_Y           = 0;
 
-    Fonts::FontType m_fontType;                 /**< Font type which shall be used if there is no conflict with the layout. */
-    BitmapWidget    m_bitmapWidget;             /**< Bitmap widget used to show a icon. */
-    TextWidget      m_textWidget;               /**< Text widget used to show some text. */
-    LampWidget      m_lampWidgets[MAX_LAMPS];   /**< Lamp widgets, used to signal different things. */
+    Fonts::FontType      m_fontType;               /**< Font type which shall be used if there is no conflict with the layout. */
+    BitmapWidget         m_bitmapWidget;           /**< Bitmap widget used to show a icon. */
+    TextWidget           m_textWidget;             /**< Text widget used to show some text. */
+    LampWidget           m_lampWidgets[MAX_LAMPS]; /**< Lamp widgets, used to signal different things. */
 
 private:
+
     IconTextLampView32x8(const IconTextLampView32x8& other);
     IconTextLampView32x8& operator=(const IconTextLampView32x8& other);
+
+    /**
+     * Set text widget to full width.
+     */
+    inline void setTextWidgetFullWidth()
+    {
+        m_textWidget.setWidth(TEXT_WIDTH_FULL);
+        m_textWidget.move(TEXT_X_FULL, TEXT_Y);
+    }
+
+    /**
+     * Set text widget to reduced width.
+     */
+    inline void setTextWidgetReducedWidth()
+    {
+        m_textWidget.setWidth(TEXT_WIDTH);
+        m_textWidget.move(TEXT_X, TEXT_Y);
+    }
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ICON_TEXT_LAMP_VIEW_32X8_H */
+#endif /* ICON_TEXT_LAMP_VIEW_32X8_H */
 
 /** @} */

@@ -70,6 +70,8 @@ bool IconTextViewGeneric::loadIcon(const String& filename)
     }
     else
     {
+        setTextWidgetReducedWidth();
+
         isSuccessful = true;
     }
 

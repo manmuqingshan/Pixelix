@@ -14,7 +14,6 @@ Each plugin is identified by its unique UID.
   - [GrabViaRestPlugin](#grabviarestplugin)
   - [IconTextPlugin](#icontextplugin)
   - [IconTextLampPlugin](#icontextlampplugin)
-  - [JustTextPlugin](#justtextplugin)
   - [MultiIconPlugin](#multiiconplugin)
 - [Dedicated plugins](#dedicated-plugins)
   - [BatteryPlugin](#batteryplugin)
@@ -69,13 +68,6 @@ If MQTT is built in and enabled, it will support Home Assistant MQTT discovery.
 
 The IconTextLampPlugin shows an icon on left side, text on right side and lamps at the bottom.\
 Each part can be set separately via the [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0#/IconTextLampPlugin).
-
-If MQTT is built in and enabled, it will support Home Assistant MQTT discovery.
-
-### JustTextPlugin
-
-The JustTextPlugin shows only text on the whole display. If no text is set, the plugin will be skipped in the slot.\
-The text to be displayed can be set via the [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0#/JustTextPlugin).
 
 If MQTT is built in and enabled, it will support Home Assistant MQTT discovery.
 
