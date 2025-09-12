@@ -87,6 +87,9 @@ struct HtmlPageRoute
     WebRequestMethodComposite reqMethodComposite; /**< Request method composite */
 };
 
+/**
+ * Result of setting boot partition.
+ */
 typedef enum
 {
     BOOT_SUCCESS,
