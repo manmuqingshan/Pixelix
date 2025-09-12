@@ -91,7 +91,8 @@ typedef enum
 {
     BOOT_SUCCESS,
     BOOT_PARTITION_NOT_FOUND,
-    BOOT_SET_FAILED
+    BOOT_SET_FAILED,
+    BOOT_UNKNOWN_ERROR
 
 } BootPartitionResult;
 
@@ -287,6 +288,9 @@ void Pages::init(AsyncWebServer& srv)
         case BOOT_SET_FAILED:
             request->send(500, "text/plain", "Failed to set factory partition as boot partition!");
             break;
+        case BOOT_UNKNOWN_ERROR:
+            request->send(500, "text/plain", "Cannot switch to factory partition. Error unknown!");
+            break;
         }
     });
 
@@ -372,7 +376,7 @@ void Pages::error(AsyncWebServerRequest* request)
  */
 static BootPartitionResult setFactoryAsBootPartition()
 {
-    BootPartitionResult    result;
+    BootPartitionResult    result    = BOOT_UNKNOWN_ERROR;
     const esp_partition_t* partition = nullptr;
 
     partition                        = esp_partition_find_first(
