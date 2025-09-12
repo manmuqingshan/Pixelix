@@ -102,7 +102,7 @@ typedef enum
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
-static BootPartitionResult setFactoryPartitionActive();
+static BootPartitionResult setFactoryAsBootPartition();
 static String              tmplPageProcessor(const String& var);
 static void                htmlPage(AsyncWebServerRequest* request);
 
@@ -273,12 +273,12 @@ void Pages::init(AsyncWebServer& srv)
     }
 
     (void)srv.on("/change-partition", HTTP_GET, [](AsyncWebServerRequest* request) {
-        switch (setFactoryPartitionActive())
+        switch (setFactoryAsBootPartition())
         {
         case BOOT_SUCCESS:
             const uint32_t RESTART_DELAY = 100U; /* ms */
 
-            request->send(200, "text/plain", "Partition switched. Restarting...");
+            request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "Partition switched. Restarting...");
 
             /* To ensure that a positive response will be sent before the device restarts,
              * a short delay is necessary.
@@ -286,13 +286,13 @@ void Pages::init(AsyncWebServer& srv)
             RestartMgr::getInstance().reqRestart(RESTART_DELAY);
             break;
         case BOOT_PARTITION_NOT_FOUND:
-            request->send(500, "text/plain", "Factory partition not found!");
+            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Factory partition not found!");
             break;
         case BOOT_SET_FAILED:
-            request->send(500, "text/plain", "Failed to set factory partition as boot partition!");
+            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Failed to set factory partition as boot partition!");
             break;
         case BOOT_UNKNOWN_ERROR:
-            request->send(500, "text/plain", "Cannot switch to factory partition. Error unknown!");
+            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Cannot switch to factory partition. Error unknown!");
             break;
         }
     });
