@@ -66,6 +66,20 @@ const char* GrabViaRestPlugin::TOPIC_CONFIG = "grabConfig";
  * Public Methods
  *****************************************************************************/
 
+bool GrabViaRestPlugin::isEnabled() const
+{
+    bool isEnabled = false;
+
+    /* The plugin shall only be scheduled if its enabled and text is set. */
+    if ((true == m_isEnabled) &&
+        (false == m_view.getText().isEmpty()))
+    {
+        isEnabled = true;
+    }
+
+    return isEnabled;
+}
+
 void GrabViaRestPlugin::getTopics(JsonArray& topics) const
 {
     (void)topics.add(TOPIC_CONFIG);
@@ -698,11 +712,6 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
         {
             outputStr += "?";
         }
-    }
-
-    if (true == outputStr.isEmpty())
-    {
-        outputStr = "{hc}-";
     }
 
     LOG_INFO("Grabbed: %s", outputStr.c_str());

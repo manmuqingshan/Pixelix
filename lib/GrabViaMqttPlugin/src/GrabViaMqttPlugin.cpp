@@ -65,6 +65,20 @@ const char* GrabViaMqttPlugin::TOPIC_CONFIG = "grabConfig";
  * Public Methods
  *****************************************************************************/
 
+bool GrabViaMqttPlugin::isEnabled() const
+{
+    bool isEnabled = false;
+
+    /* The plugin shall only be scheduled if its enabled and text is set. */
+    if ((true == m_isEnabled) &&
+        (false == m_view.getText().isEmpty()))
+    {
+        isEnabled = true;
+    }
+
+    return isEnabled;
+}
+
 void GrabViaMqttPlugin::getTopics(JsonArray& topics) const
 {
     (void)topics.add(TOPIC_CONFIG);
@@ -558,11 +572,6 @@ void GrabViaMqttPlugin::mqttTopicCallback(const String& topic, const uint8_t* pa
             {
                 outputStr += "?";
             }
-        }
-
-        if (true == outputStr.isEmpty())
-        {
-            outputStr = "{hc}-";
         }
 
         LOG_INFO("Grabbed: %s", outputStr.c_str());
