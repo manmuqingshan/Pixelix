@@ -233,21 +233,15 @@ void GrabViaRestPlugin::start(uint16_t width, uint16_t height)
         if (false == FileMgrService::getInstance().getFileFullPathById(iconFullPath, m_iconFileId))
         {
             LOG_WARNING("Unknown file id %u.", m_iconFileId);
-            m_view.setupTextOnly();
         }
         else if (false == m_view.loadIcon(iconFullPath))
         {
             LOG_ERROR("Icon not found: %s", iconFullPath.c_str());
-            m_view.setupTextOnly();
         }
         else
         {
-            m_view.setupBitmapAndText();
+            ;
         }
-    }
-    else
-    {
-        m_view.setupTextOnly();
     }
 }
 
@@ -429,52 +423,45 @@ bool GrabViaRestPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     }
     else
     {
-        bool                       reqIcon = false;
         MutexGuard<MutexRecursive> guard(m_mutex);
+        FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
 
-        if (m_iconFileId != jsonIconFileId.as<FileMgrService::FileId>())
+        m_method                                 = jsonMethod.as<String>();
+        m_url                                    = jsonUrl.as<String>();
+        m_filter                                 = jsonFilter;
+        m_format                                 = jsonFormat.as<String>();
+        m_multiplier                             = jsonMultiplier.as<float>();
+        m_offset                                 = jsonOffset.as<float>();
+
+        if (m_iconFileId != newIconFileId)
         {
-            reqIcon = true;
-        }
+            m_iconFileId = newIconFileId;
 
-        m_method     = jsonMethod.as<String>();
-        m_url        = jsonUrl.as<String>();
-        m_filter     = jsonFilter;
-        m_iconFileId = jsonIconFileId.as<FileMgrService::FileId>();
-        m_format     = jsonFormat.as<String>();
-        m_multiplier = jsonMultiplier.as<float>();
-        m_offset     = jsonOffset.as<float>();
-
-        /* Force update on display */
-        m_requestTimer.start(UPDATE_PERIOD_SHORT);
-
-        /* Load icon immediately */
-        if (true == reqIcon)
-        {
-            if (FileMgrService::FILE_ID_INVALID != m_iconFileId)
+            if (FileMgrService::FILE_ID_INVALID == m_iconFileId)
+            {
+                m_view.clearIcon();
+            }
+            else
             {
                 String iconFullPath;
 
                 if (false == FileMgrService::getInstance().getFileFullPathById(iconFullPath, m_iconFileId))
                 {
                     LOG_WARNING("Unknown file id %u.", m_iconFileId);
-                    m_view.setupTextOnly();
-                }
-                else if (false == m_view.loadIcon(iconFullPath))
-                {
-                    LOG_ERROR("Icon not found: %s", iconFullPath.c_str());
-                    m_view.setupTextOnly();
+                    m_view.clearIcon();
                 }
                 else
                 {
-                    m_view.setupBitmapAndText();
+                    if (false == m_view.loadIcon(iconFullPath))
+                    {
+                        LOG_WARNING("Couldn't load icon: %s", iconFullPath.c_str());
+                    }
                 }
             }
-            else
-            {
-                m_view.setupTextOnly();
-            }
         }
+
+        /* Force update on display */
+        m_requestTimer.start(UPDATE_PERIOD_SHORT);
 
         m_hasTopicChanged = true;
 
@@ -628,7 +615,7 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
 
         getJsonValueByFilter(jsonDoc, m_filter, jsonValuesArray);
     }
-    
+
     valueCount = jsonValuesArray.size();
 
     if (true == jsonDocValues.overflowed())

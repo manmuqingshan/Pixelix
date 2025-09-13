@@ -200,7 +200,6 @@ bool IconTextPlugin::hasTopicChanged(const String& topic)
 
 void IconTextPlugin::start(uint16_t width, uint16_t height)
 {
-    String                     iconFullPath;
     MutexGuard<MutexRecursive> guard(m_mutex);
 
     m_view.init(width, height);
@@ -211,6 +210,8 @@ void IconTextPlugin::start(uint16_t width, uint16_t height)
 
     if (FileMgrService::FILE_ID_INVALID != m_iconFileId)
     {
+        String iconFullPath;
+
         if (false == FileMgrService::getInstance().getFileFullPathById(iconFullPath, m_iconFileId))
         {
             LOG_WARNING("Unknown file id %u.", m_iconFileId);
