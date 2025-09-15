@@ -23,16 +23,16 @@
 
 Pixelix is a MQTT client which can be connected to a MQTT broker. The MQTT broker URL is configued in the settings via webinterface.
 
-Format: \[mqtt://\]\[&lt;USER&gt;:&lt;PASSWORD&gt;@\]&lt;URI&gt;
+Format: \[mqtt://\]\[&lt;USER&gt;:&lt;PASSWORD&gt;@\]&lt;URI&gt;[:&lt;PORT&gt;]
 
 Examples:
 
 * without authentication:
     * mosquitto.at.home
-    * mqtt://mosquitto.at.home
+    * mqtt://mosquitto.at.home:1883
 * with authentication:
     * myuser:mypassword@mosquitto.at.home
-    * mqtt://myuser:mypassword@mosquitto.at.home
+    * mqtt://myuser:mypassword@mosquitto.at.home:1883
 
 ## Overview Mindmap
 
