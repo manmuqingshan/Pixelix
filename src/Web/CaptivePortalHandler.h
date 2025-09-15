@@ -91,7 +91,7 @@ public:
      *
      * @return If request can be handled, it will return true otherwise false.
      */
-    bool canHandle(AsyncWebServerRequest* request) final
+    bool canHandle(AsyncWebServerRequest* request) const final
     {
         /* The captive portal handles every request. */
         return true;
@@ -112,7 +112,7 @@ public:
      * 
      * @return Always false.
      */
-    bool isRequestHandlerTrivial() final
+    bool isRequestHandlerTrivial() const final
     {
         return false;
     }
