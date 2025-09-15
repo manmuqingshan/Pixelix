@@ -34,6 +34,7 @@
  *****************************************************************************/
 #include "WsCmdIperf.h"
 
+#include <WiFi.h>
 #include <Logging.h>
 #include <Util.h>
 
