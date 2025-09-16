@@ -103,6 +103,7 @@ typedef enum
  * Prototypes
  *****************************************************************************/
 static BootPartitionResult setFactoryAsBootPartition();
+static bool                disableHomeAssistentAutomaticDiscovery();
 static String              tmplPageProcessor(const String& var);
 static void                htmlPage(AsyncWebServerRequest* request);
 
@@ -275,7 +276,7 @@ void Pages::init(AsyncWebServer& srv)
     (void)srv.on("/change-partition", HTTP_GET, [](AsyncWebServerRequest* request) {
         switch (setFactoryAsBootPartition())
         {
-        case BOOT_SUCCESS:
+        case BOOT_SUCCESS: {
             const uint32_t RESTART_DELAY = 100U; /* ms */
 
             request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "Partition switched. Restarting...");
@@ -285,6 +286,7 @@ void Pages::init(AsyncWebServer& srv)
              */
             RestartMgr::getInstance().reqRestart(RESTART_DELAY);
             break;
+        }
         case BOOT_PARTITION_NOT_FOUND:
             request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Factory partition not found!");
             break;
@@ -294,6 +296,17 @@ void Pages::init(AsyncWebServer& srv)
         case BOOT_UNKNOWN_ERROR:
             request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Cannot switch to factory partition. Error unknown!");
             break;
+        }
+    });
+
+    (void)srv.on("/disable-HA-discovery", HTTP_GET, [](AsyncWebServerRequest* request) {
+        if (true == disableHomeAssistentAutomaticDiscovery())
+        {
+            request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "HomeAssistent automatic discovery is disabled.");
+        }
+        else
+        {
+            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "HomeAssistent automatic discovery could not be disabled.");
         }
     });
 
@@ -410,6 +423,37 @@ static BootPartitionResult setFactoryAsBootPartition()
     }
 
     return result;
+}
+
+/* Disable HomeAssistant MQTT automatic discovery to avoid that the welcome plugin
+ * will be discovered in case of a filesystem update.
+ */
+static bool disableHomeAssistentAutomaticDiscovery()
+{
+    bool             isSuccessful            = false;
+    SettingsService& settings                = SettingsService::getInstance();
+
+    /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
+     * Include the header is not possible, because MQTT might not be compiled in.
+     */
+    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
+
+    if ((nullptr != kvHomeAssistantEnableDiscovery) &&
+        (KeyValue::TYPE_BOOL == kvHomeAssistantEnableDiscovery->getValueType()))
+    {
+        if (true == settings.open(false))
+        {
+            KeyValueBool* homeAssistantEnableDiscovery = static_cast<KeyValueBool*>(kvHomeAssistantEnableDiscovery);
+
+            homeAssistantEnableDiscovery->setValue(false);
+            settings.close();
+
+            LOG_INFO("HA discovery disabled for filesystem update.");
+            isSuccessful = true;
+        }
+    }
+
+    return isSuccessful;
 }
 
 /**
