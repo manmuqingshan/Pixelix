@@ -32,18 +32,42 @@ blueprint:
                   value: icontextlamp
         uid:
           name: Plugin UID
-          description: The plugin UID of the plugin instance. See display page in the Pixelix web interface.
+          description: |
+            The plugin UID of the plugin instance. See display page in the Pixelix web interface.
+            0 means invalid UID, like UID not set.
+            If both UID and alias are set, the alias is used.
+          default: 0
           selector:
             number:
               min: 0
               max: 65535
               mode: box
+        alias:
+          name: Plugin Alias
+          description: |
+            The plugin alias of the plugin instance. See display page in the Pixelix web interface.
+            If both UID and alias are set, the alias is used.
+          default: ''
+          selector:
+            text:
         sensors:
           name: Sensors
           description: The sensors to monitor in realtime.
           selector:
             entity:
               multiple: true
+        user_triggers:
+          name: User Triggers
+          description: Additional triggers defined by the user.
+          default:
+          selector:
+              trigger:
+        user_conditions:
+          name: User Conditions
+          description: User defined conditions for the automation.
+          default: []
+          selector:
+            condition:
         icon_selector:
           name: Icon Selector
           description: 'Optional: Keep current icon or change it. Only used by IconText and IconTextLamp plugins.'
@@ -65,18 +89,6 @@ blueprint:
           default: 255
           selector:
             text:
-        user_triggers:
-          name: User Triggers
-          description: Additional triggers defined by the user.
-          default:
-          selector:
-              trigger:
-        user_conditions:
-          name: User Conditions
-          description: User defined conditions for the automation.
-          default: []
-          selector:
-            condition:
         horizontal_alignment:
           name: Horizontal Alignment
           description: The horizontal alignment of the text.
@@ -250,6 +262,7 @@ blueprint:
 variables:
   var_plugin_type: !input plugin_type
   var_uid: !input uid
+  var_alias: !input alias
   var_sensors: !input sensors
   var_icon_selector: !input icon_selector
   var_icon_file_id: !input icon_file_id
@@ -391,29 +404,62 @@ conditions: !input user_conditions
 # https://www.home-assistant.io/docs/automation/action/
 actions:
   - choose:
-    # Use MQTT API
+    # Use MQTT API with plugin UID
     - conditions:
       - condition: template
         value_template: "{{ var_protocol == 'mqtt' }}"
       - condition: template
         value_template: "{{ var_device and var_hostname == '' }}"
+      - condition: template
+        value_template: "{{ (var_alias == '') or (var_uid != 0) }}"
       sequence:
         - action: mqtt.publish
           data:
             topic: "{{ device_attr(var_device, 'name') }}/display/uid/{{ var_uid }}/{{ var_plugin_topic }}/set"
             payload: "{{ var_mqtt_payload }}"
 
-    # Use REST API
+    # Use MQTT API with plugin alias
+    - conditions:
+      - condition: template
+        value_template: "{{ var_protocol == 'mqtt' }}"
+      - condition: template
+        value_template: "{{ var_device and var_hostname == '' }}"
+      - condition: template
+        value_template: "{{ (var_alias != '') or (var_uid == 0) }}"
+      sequence:
+        - action: mqtt.publish
+          data:
+            topic: "{{ device_attr(var_device, 'name') }}/display/alias/{{ var_alias }}/{{ var_plugin_topic }}/set"
+            payload: "{{ var_mqtt_payload }}"
+
+    # Use REST API with plugin UID
     - conditions:
       - condition: template
         value_template: "{{ var_protocol == 'rest' }}"
       - condition: template
         value_template: "{{ var_device is none and var_hostname != '' }}"
+      - condition: template
+        value_template: "{{ (var_alias == '') or (var_uid != 0) }}"
       sequence:
         - action: rest_command.pixelix_plugin_command
           data:
             hostname: "{{ var_hostname }}"
             endpoint: "/rest/api/v1/display/uid/{{ var_uid }}/{{ var_plugin_topic }}"
+            url_parameter: "{{ var_rest_url_parameter }}"
+
+    # Use REST API with plugin alias
+    - conditions:
+      - condition: template
+        value_template: "{{ var_protocol == 'rest' }}"
+      - condition: template
+        value_template: "{{ var_device is none and var_hostname != '' }}"
+      - condition: template
+        value_template: "{{ (var_alias != '') or (var_uid == 0) }}"
+      sequence:
+        - action: rest_command.pixelix_plugin_command
+          data:
+            hostname: "{{ var_hostname }}"
+            endpoint: "/rest/api/v1/display/alias/{{ var_alias }}/{{ var_plugin_topic }}"
             url_parameter: "{{ var_rest_url_parameter }}"
 
     # Default
