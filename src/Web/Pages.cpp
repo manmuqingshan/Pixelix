@@ -36,7 +36,6 @@
 #include "WebConfig.h"
 #include "Version.h"
 #include "DisplayMgr.h"
-#include "RestartMgr.h"
 #include "RestApi.h"
 #include "PluginList.h"
 #include "Services.h"
@@ -44,15 +43,12 @@
 
 #include <WiFi.h>
 #include <Esp.h>
-#include <esp_ota_ops.h>
-#include <esp_partition.h>
 #include <Logging.h>
 #include <Util.h>
 #include <ArduinoJson.h>
 #include <lwip/init.h>
 #include <SettingsService.h>
 #include <FileSystem.h>
-#include <HttpStatus.h>
 
 #include <mbedtls/version.h>
 #include <freertos/task.h>
@@ -87,25 +83,12 @@ struct HtmlPageRoute
     WebRequestMethodComposite reqMethodComposite; /**< Request method composite */
 };
 
-/**
- * Result of setting boot partition.
- */
-typedef enum
-{
-    BOOT_SUCCESS,
-    BOOT_PARTITION_NOT_FOUND,
-    BOOT_SET_FAILED,
-    BOOT_UNKNOWN_ERROR
-
-} BootPartitionResult;
-
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
-static BootPartitionResult setFactoryAsBootPartition();
-static bool                disableHomeAssistentAutomaticDiscovery();
-static String              tmplPageProcessor(const String& var);
-static void                htmlPage(AsyncWebServerRequest* request);
+
+static String tmplPageProcessor(const String& var);
+static void   htmlPage(AsyncWebServerRequest* request);
 
 namespace tmpl
 {
@@ -273,43 +256,6 @@ void Pages::init(AsyncWebServer& srv)
         ++idx;
     }
 
-    (void)srv.on("/change-partition", HTTP_GET, [](AsyncWebServerRequest* request) {
-        switch (setFactoryAsBootPartition())
-        {
-        case BOOT_SUCCESS: {
-            const uint32_t RESTART_DELAY = 100U; /* ms */
-
-            request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "Partition switched. Restarting...");
-
-            /* To ensure that a positive response will be sent before the device restarts,
-             * a short delay is necessary.
-             */
-            RestartMgr::getInstance().reqRestart(RESTART_DELAY);
-            break;
-        }
-        case BOOT_PARTITION_NOT_FOUND:
-            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Factory partition not found!");
-            break;
-        case BOOT_SET_FAILED:
-            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Failed to set factory partition as boot partition!");
-            break;
-        case BOOT_UNKNOWN_ERROR:
-            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Cannot switch to factory partition. Error unknown!");
-            break;
-        }
-    });
-
-    (void)srv.on("/disable-HA-discovery", HTTP_GET, [](AsyncWebServerRequest* request) {
-        if (true == disableHomeAssistentAutomaticDiscovery())
-        {
-            request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "HomeAssistent automatic discovery is disabled.");
-        }
-        else
-        {
-            request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "HomeAssistent automatic discovery could not be disabled.");
-        }
-    });
-
     /* Add one page per plugin. */
     idx = 0U;
     while (pluginTypeListLength > idx)
@@ -384,77 +330,6 @@ void Pages::error(AsyncWebServerRequest* request)
 /******************************************************************************
  * Local Functions
  *****************************************************************************/
-
-/**
- * Set the factory partition active to be the next boot partition.
- *
- * @return BootPartitionResult indicating wether factory was set as boot partition successfully or not.
- */
-static BootPartitionResult setFactoryAsBootPartition()
-{
-    BootPartitionResult    result    = BOOT_UNKNOWN_ERROR;
-    const esp_partition_t* partition = nullptr;
-
-    partition                        = esp_partition_find_first(
-        esp_partition_type_t::ESP_PARTITION_TYPE_APP,
-        esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_FACTORY,
-        nullptr);
-
-    if (nullptr != partition)
-    {
-        esp_err_t err = esp_ota_set_boot_partition(partition);
-
-        LOG_INFO("Setting factory partition '%s' as boot partition", partition->label);
-
-        if (ESP_OK != err)
-        {
-            LOG_ERROR("Failed to set factory partition '%s' as boot partition: %d", partition->label, err);
-            result = BOOT_SET_FAILED;
-        }
-        else
-        {
-            result = BOOT_SUCCESS;
-        }
-    }
-    else
-    {
-        LOG_ERROR("Factory partition '%s' not found!", partition->label);
-        result = BOOT_PARTITION_NOT_FOUND;
-    }
-
-    return result;
-}
-
-/* Disable HomeAssistant MQTT automatic discovery to avoid that the welcome plugin
- * will be discovered in case of a filesystem update.
- */
-static bool disableHomeAssistentAutomaticDiscovery()
-{
-    bool             isSuccessful            = false;
-    SettingsService& settings                = SettingsService::getInstance();
-
-    /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
-     * Include the header is not possible, because MQTT might not be compiled in.
-     */
-    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
-
-    if ((nullptr != kvHomeAssistantEnableDiscovery) &&
-        (KeyValue::TYPE_BOOL == kvHomeAssistantEnableDiscovery->getValueType()))
-    {
-        if (true == settings.open(false))
-        {
-            KeyValueBool* homeAssistantEnableDiscovery = static_cast<KeyValueBool*>(kvHomeAssistantEnableDiscovery);
-
-            homeAssistantEnableDiscovery->setValue(false);
-            settings.close();
-
-            LOG_INFO("HA discovery disabled for filesystem update.");
-            isSuccessful = true;
-        }
-    }
-
-    return isSuccessful;
-}
 
 /**
  * Processor for page template, containing the common part, which is available
