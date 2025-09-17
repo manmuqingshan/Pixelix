@@ -313,7 +313,7 @@
             /* Request HomeAssistent automatic discovery to be disabled. */
             function disableHomeAssistentAutomaticDiscovery() {
                 return utils.makeRequest({
-                    method: "GET",
+                    method: "POST",
                     url: "/rest/api/v1/homeAssistent/automaticDiscovery/disable",
                 }).then(function(rsp) {
                     dialog.showInfo("<p>HomeAssistent automatic discovery is now disabled. </p>");   
@@ -327,7 +327,7 @@
                 disableUI();
                 
                 utils.makeRequest({
-                    method: "GET",
+                    method: "POST",
                     url: "/rest/api/v1/partitionChange",
                 }).then(function(rsp) {
                     let seconds = 20;
