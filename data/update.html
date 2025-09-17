@@ -314,7 +314,7 @@
             function disableHomeAssistentAutomaticDiscovery() {
                 return utils.makeRequest({
                     method: "GET",
-                    url: "/disable-HA-discovery",
+                    url: "/rest/api/v1/homeAssistent/automaticDiscovery/disable",
                 }).then(function(rsp) {
                     dialog.showInfo("<p>HomeAssistent automatic discovery is now disabled. </p>");   
                 }).catch(function(rsp) {
@@ -328,7 +328,7 @@
                 
                 utils.makeRequest({
                     method: "GET",
-                    url: "/change-partition",
+                    url: "/rest/api/v1/partitionChange",
                 }).then(function(rsp) {
                     let seconds = 20;
                     dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
