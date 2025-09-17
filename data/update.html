@@ -86,16 +86,7 @@
                 <div>
                     <br />
                         <p>To update your firmware or filesystem binary go to Pixelix Updater. Be careful a filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it. </p>
-                    <button class="btn btn-light" type="button" onclick="showHomeAssistentPopUp();">Go to PixelixUpdater</button>
-                </div>
-                <div id="homeassistent-popup" class="popup">
-                    <div class="popup-content">
-                        <p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Do you want to disable it? </p>
-                        <div class="btn-arrangement">
-                            <button class="btn btn-light" type="button" onclick="homeAssistentPopUpYesPressed();">Yes</button>
-                            <button class="btn btn-light" type="button" onclick="homeAssistentPopUpNoPressed();">No</button>
-                        </div>
-                    </div>
+                    <button class="btn btn-light" type="button" onclick="dialog.showYesNo('HomeAssistant', '<p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Do you want to disable it? </p>', homeAssistentPopUpYesPressed, homeAssistentPopUpNoPressed, true);">Go to PixelixUpdater</button>
                 </div>
 
             </div>
@@ -304,17 +295,7 @@
                 });
             }
 
-            /* Shows the popup asking the user wether or not to disable the HomeAssistent automatic discovery. */
-            function showHomeAssistentPopUp() {
-                document.getElementById("homeassistent-popup").style.display="flex";
-            }
-
-            /* Closes the popup askting the user wether or not to disable the HomeAssistent automatic discovery.  */
-            function closeHomeAssistentPopUp() {
-                document.getElementById("homeassistent-popup").style.display="none";
-            }
-
-            /* Disables the HomeAssistent automatic discovery before requesting a change of acitve partitions. Closes the homeassistent popup. */
+            /* Handle popup button yes pressed. Disables the HomeAssistent automatic discovery before requesting a change of acitve partitions. */
             function homeAssistentPopUpYesPressed() {
                 disableUI();
                 
@@ -322,14 +303,11 @@
                     .finally(() => {
                         setTimeout(sendPartitionChangeRequest, 5000);
                     });
-
-                closeHomeAssistentPopUp();
             }
 
-            /* Request a change of active partitions and closes the homeassistent popup */
+            /* Handle popup button no pressed. Requests a change of active partitions */
             function homeAssistentPopUpNoPressed() {
                 sendPartitionChangeRequest();
-                closeHomeAssistentPopUp();
             }
                 
             /* Request HomeAssistent automatic discovery to be disabled. */
