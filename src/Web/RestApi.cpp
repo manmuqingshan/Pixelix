@@ -1817,7 +1817,7 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
         /* To ensure that a positive response will be sent before the device restarts,
          * a short delay is necessary.
          */
-        RestartMgr::getInstance().reqRestart(RESTART_DELAY);
+        RestartMgr::getInstance().reqRestart(RESTART_DELAY, true);
         break;
     }
     case BOOT_PARTITION_NOT_FOUND:

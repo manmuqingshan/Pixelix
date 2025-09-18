@@ -83,6 +83,8 @@ void RestartState::entry(StateMachine& sm)
 
 void RestartState::process(StateMachine& sm)
 {
+    Display& display = Display::getInstance();
+
     UTIL_NOT_USED(sm);
 
     MyWebServer::process();
@@ -110,12 +112,26 @@ void RestartState::process(StateMachine& sm)
          */
         DisplayMgr::getInstance().end();
 
-        /* Clear display */
-        Display::getInstance().clear();
-        Display::getInstance().show();
+        if (false == RestartMgr::getInstance().isPartitionChange())
+        {
+            /* Clear display */
+            display.clear();
+            display.show();
+        }
+        else
+        {
+            TextWidget textWidget(CONFIG_LED_MATRIX_WIDTH, CONFIG_LED_MATRIX_HEIGHT, 1, 1);
 
-        /* Wait till all physical pixels are cleared. */
-        while (false == Display::getInstance().isReady())
+            /* Show "Update". */
+            display.fillScreen(ColorDef::BLACK);
+            textWidget.setFormatStr("Update");
+            textWidget.disableFadeEffect();
+            textWidget.update(display);
+            display.show();
+        }
+
+        /* Wait until the LED matrix is updated. */
+        while (false == display.isReady())
         {
             /* Just wait ... */
             ;
