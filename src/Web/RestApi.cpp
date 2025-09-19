@@ -1807,29 +1807,51 @@ static bool disableHomeAssistentAutomaticDiscovery()
  */
 static void handlePartitionChange(AsyncWebServerRequest* request)
 {
-    switch (setFactoryAsBootPartition())
+    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
+    const size_t        JSON_DOC_SIZE  = 512U;
+    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+
+    if (nullptr == request)
     {
-    case BOOT_SUCCESS: {
-        const uint32_t RESTART_DELAY = 100U; /* ms */
-
-        request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "Partition switched. Restarting...");
-
-        /* To ensure that a positive response will be sent before the device restarts,
-         * a short delay is necessary.
-         */
-        RestartMgr::getInstance().reqRestart(RESTART_DELAY, true);
-        break;
+        return;
     }
-    case BOOT_PARTITION_NOT_FOUND:
-        request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Factory partition not found!");
-        break;
-    case BOOT_SET_FAILED:
-        request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Failed to set factory partition as boot partition!");
-        break;
-    case BOOT_UNKNOWN_ERROR:
-        request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "Cannot switch to factory partition. Error unknown!");
-        break;
+
+    if (HTTP_POST != request->method())
+    {
+        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
+        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
     }
+    else
+    {
+        switch (setFactoryAsBootPartition())
+        {
+        case BOOT_SUCCESS: {
+            const uint32_t RESTART_DELAY = 100U; /* ms */
+
+            (void)RestUtil::prepareRspSuccess(jsonDoc);
+
+            /* To ensure that a positive response will be sent before the device restarts,
+             * a short delay is necessary.
+             */
+            RestartMgr::getInstance().reqRestart(RESTART_DELAY, true);
+            break;
+        }
+        case BOOT_PARTITION_NOT_FOUND:
+            RestUtil::prepareRspError(jsonDoc, "Factory partition not found!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+        case BOOT_SET_FAILED:
+            RestUtil::prepareRspError(jsonDoc, "Failed to set factory partition as boot partition!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+        case BOOT_UNKNOWN_ERROR:
+            RestUtil::prepareRspError(jsonDoc, "Cannot switch to factory partition. Error unknown!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+        }
+    }
+
+    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
 }
 
 /**
@@ -1839,12 +1861,32 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
  */
 static void handleHomeAssistentAutomaticDiscoveryDisable(AsyncWebServerRequest* request)
 {
-    if (true == disableHomeAssistentAutomaticDiscovery())
+    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
+    const size_t        JSON_DOC_SIZE  = 512U;
+    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+
+    if (nullptr == request)
     {
-        request->send(HttpStatus::STATUS_CODE_OK, "text/plain", "HomeAssistent automatic discovery is disabled.");
+        return;
+    }
+
+    if (HTTP_POST != request->method())
+    {
+        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
+        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
     }
     else
     {
-        request->send(HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR, "text/plain", "HomeAssistent automatic discovery could not be disabled.");
+        if (true == disableHomeAssistentAutomaticDiscovery())
+        {
+            (void)RestUtil::prepareRspSuccess(jsonDoc);
+        }
+        else
+        {
+            RestUtil::prepareRspError(jsonDoc, "HomeAssistent automatic discovery could not be disabled.");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+        }
     }
+
+    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
 }
