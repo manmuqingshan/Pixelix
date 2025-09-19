@@ -86,7 +86,7 @@
                 <div>
                     <br />
                         <p>To update your firmware or filesystem binary go to Pixelix Updater. Be careful a filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it. </p>
-                    <button class="btn btn-light" type="button" onclick="sendPartitionChangeRequest();">Go to PixelixUpdater</button>
+                    <button class="btn btn-light" type="button" onclick="dialog.showYesNo('HomeAssistant', '<p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Do you want to disable it? </p>', homeAssistentPopUpYesPressed, homeAssistentPopUpNoPressed, true);">Go to PixelixUpdater</button>
                 </div>
 
             </div>
@@ -295,13 +295,40 @@
                 });
             }
 
+            /* Handle popup button yes pressed. Disables the HomeAssistent automatic discovery before requesting a change of acitve partitions. */
+            function homeAssistentPopUpYesPressed() {
+                disableUI();
+                
+                disableHomeAssistentAutomaticDiscovery()
+                    .finally(() => {
+                        setTimeout(sendPartitionChangeRequest, 5000);
+                    });
+            }
+
+            /* Handle popup button no pressed. Requests a change of active partitions */
+            function homeAssistentPopUpNoPressed() {
+                sendPartitionChangeRequest();
+            }
+                
+            /* Request HomeAssistent automatic discovery to be disabled. */
+            function disableHomeAssistentAutomaticDiscovery() {
+                return utils.makeRequest({
+                    method: "POST",
+                    url: "/rest/api/v1/homeAssistent/automaticDiscovery/disable",
+                }).then(function(rsp) {
+                    dialog.showInfo("<p>HomeAssistent automatic discovery is now disabled. </p>");   
+                }).catch(function(rsp) {
+                    dialog.showError("<p>HomeAssistent automatic discovery could not be disabled. </p>")
+                });
+            }
+
              /* Request change of active partition. */
             function sendPartitionChangeRequest() {
                 disableUI();
-
+                
                 utils.makeRequest({
-                    method: "GET",
-                    url: "/change-partition",
+                    method: "POST",
+                    url: "/rest/api/v1/partitionChange",
                 }).then(function(rsp) {
                     let seconds = 20;
                     dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
