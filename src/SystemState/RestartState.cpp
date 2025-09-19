@@ -116,7 +116,6 @@ void RestartState::process(StateMachine& sm)
         {
             /* Clear display */
             display.clear();
-            display.show();
         }
         else
         {
@@ -127,8 +126,9 @@ void RestartState::process(StateMachine& sm)
             textWidget.setFormatStr("Update");
             textWidget.disableFadeEffect();
             textWidget.update(display);
-            display.show();
         }
+
+        display.show();
 
         /* Wait until the LED matrix is updated. */
         while (false == display.isReady())
