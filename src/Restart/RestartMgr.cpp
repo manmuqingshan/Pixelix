@@ -79,7 +79,8 @@ void RestartMgr::process()
 
 RestartMgr::RestartMgr() :
     m_isRestartReq(false),
-    m_timer()
+    m_timer(),
+    m_isPartitionChange(false)
 {
 }
 
