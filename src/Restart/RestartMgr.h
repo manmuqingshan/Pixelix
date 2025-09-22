@@ -74,13 +74,24 @@ public:
 
     /**
      * Is a restart requested?
-     * A restart will be requested after a user initiates a partition change via the webinterface.
+     * A restart will be requested after a user initiates a change to the PixelixUpdater partition (factory) via the webinterface.
      *
      * @return If restart is requested, it will return true otherwise false.
      */
     bool isRestartRequested() const
     {
         return m_isRestartReq;
+    }
+
+    /**
+     * Will active partition change after restart?
+     * Active partition will change after a user initiates a change to the PixelixUpdater partition (factory) via the webinterface.
+     * 
+     * @return If active partition changes after restart, it will return true otherwise false.
+     */
+    bool isPartitionChange() const
+    {
+        return m_isPartitionChange;
     }
 
     /**
@@ -92,9 +103,16 @@ public:
      * Request a restart.
      *
      * @param[in] delay How long the restart shall be delayed in ms.
+     * @param[in] isPartitionChange Whether or not active partition will change after restart.
      */
-    void reqRestart(uint32_t delay)
+    void reqRestart(uint32_t delay, bool isPartitionChange)
     {
+        /* Cannot be overwritten by a later restart request before restart is carried out. */
+        if (true == isPartitionChange)
+        {
+            m_isPartitionChange = true;
+        }
+
         if (0U == delay)
         {
             m_isRestartReq = true;
@@ -112,6 +130,9 @@ private:
 
     /** Timer used to delay a restart request. */
     SimpleTimer m_timer;
+
+    /** Partition change following after restart? */
+    bool m_isPartitionChange;
 
     /**
      * Constructs the restart manager.
