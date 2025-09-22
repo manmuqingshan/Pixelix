@@ -32,7 +32,7 @@ InitState --> APState: [Button pressed]\nSet wifi access point mode
 InitState -> ConnectingState: [Button released]\nSet wifi station mode
 
 APState --> ErrorState: [Failed to start\nwifi access point]
-APState --> RestartState: [Restart requested through Captive Portal]
+APState --> RestartState: [Restart requested via Captive Portal]
 
 ConnectingState --> IdleState: [Remote wifi SSID or\npassword missing]
 ConnectingState --> ConnectedState: [Connection successful established]
