@@ -145,8 +145,9 @@ Steps:
    1. The software for the device: ```firmware.bin```
    2. The prebuilt filesystem for the device: ```littlefs.bin``` (or ```spiffs.bin``` for Pixelix &lt; 6.x.x)
 4. Open browser add enter ip address of the device.
-5. Jump to Update site.
-6. Select firmware binary (```firmware.bin```) or filesystem binary (```spiffs.bin```/```littlefs.bin```) and click on upload button. Since Pixelix v6.x its possible to update the firmware and filesystem at once. Multi-select both binaries in this case.
+5. Open the "Update" submenu of the webinterface.
+6. Go to Pixelix Updater.
+7. Select firmware binary (```firmware.bin```) or filesystem binary (```spiffs.bin```/```littlefs.bin```) and click on the respective upload button. 
 
 ## Flash Layout Information
 
@@ -156,7 +157,8 @@ Steps:
 | ------ | ------------- |
 | bootloader.bin | 0x1000 |
 | partitions.bin | 0x8000 |
-| firmware.bin | 0x10000 (ota_0) |
+| ```<BOARD-ENV-NAME>```-factory.bin | 0x10000 (factory) |
+| firmware.bin | 0xE0000 (ota_0) |
 | littlefs.bin | see filesystem table |
 
 ### esp32-s3
@@ -165,24 +167,25 @@ Steps:
 | ------ | ------------- |
 | bootloader.bin | 0x0000 |
 | partitions.bin | 0x8000 |
-| firmware.bin | 0x10000 (ota_0) |
+| ```<BOARD-ENV-NAME>```-factory.bin | 0x10000 (factory) |
+| firmware.bin | 0xE0000 (ota_0) |
 | littlefs.bin | see filesystem table |
 
 ### Filesystem
 
 | Development Board | Flash size in MByte | Address (hex) of littlefs.bin | Partition table |
 | ----------------- | ------------------- | ----------------------------- | --------------- |
-| adafruit_feather_esp32_v2 | 8 | 0x670000 | default_8MB.csv |
-| adafruit_matrixportal_s3 | 8 | 0x450000 | partitions-8MB-tinyuf2.csv |
-| az-delivery-devkit-v4 | 4 | 0x2d0000 | custom_4MB_no_coredump.csv |
-| esp32doit-devkit-v1 | 4 | 0x2d0000 | custom_4MB_no_coredump.csv |
-| esp32-s3-devkitc-1-n16r8v | 16 | 0xc90000 | default_16MB.csv |
-| esp32-nodemcu | 4 | 0x2d0000 | custom_4MB_no_coredump.csv |
-| lilygo-ttgo-t-display | 8 | 0x670000 | default_8MB.csv |
-| lilygo-t-display-s3 | 16 | 0xc90000 | default_16MB.csv |
-| m5stack_core | 16 | 0xc90000 | default_16MB.csv |
-| ulanzi-tc001 | 4 | 0x2d0000 | custom_4MB_no_coredump.csv |
-| wemos_lolin_s2_mini | 4 | 0x2d0000 | custom_4MB_no_coredump.csv |
+| adafruit_feather_esp32_v2 | 8 | 0x670000 | 8MB.csv |
+| adafruit_matrixportal_s3 | 8 | 0x670000 | 8MB.csv |
+| az-delivery-devkit-v4 | 4 | 0x290000 | 4MB.csv |
+| esp32doit-devkit-v1 | 4 | 0x290000 | 4MB.csv |
+| esp32-s3-devkitc-1-n16r8v | 16 | 0xc90000 | 16MB.csv |
+| esp32-nodemcu | 4 | 0x290000 | 4MB.csv |
+| lilygo-ttgo-t-display | 8 | 0x670000 | 8MB.csv |
+| lilygo-t-display-s3 | 16 | 0xc90000 | 16MB.csv |
+| m5stack_core | 16 | 0xc90000 | 16MB.csv |
+| ulanzi-tc001 | 4 | 0x290000 | 4MB.csv |
+| wemos_lolin_s2_mini | 4 | 0x290000 | 4MB.csv |
 
 ## Issues, Ideas And Bugs
 
