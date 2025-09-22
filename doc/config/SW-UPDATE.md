@@ -157,7 +157,7 @@ Steps:
 | ------ | ------------- |
 | bootloader.bin | 0x1000 |
 | partitions.bin | 0x8000 |
-| <BOARD-ENV-NAME>-factory.bin | 0x10000 (factory) |
+| ```<BOARD-ENV-NAME>```-factory.bin | 0x10000 (factory) |
 | firmware.bin | 0xE0000 (ota_0) |
 | littlefs.bin | see filesystem table |
 
@@ -167,7 +167,7 @@ Steps:
 | ------ | ------------- |
 | bootloader.bin | 0x0000 |
 | partitions.bin | 0x8000 |
-| <BOARD-ENV-NAME>-factory.bin | 0x10000 (factory) |
+| ```<BOARD-ENV-NAME>```-factory.bin | 0x10000 (factory) |
 | firmware.bin | 0xE0000 (ota_0) |
 | littlefs.bin | see filesystem table |
 
