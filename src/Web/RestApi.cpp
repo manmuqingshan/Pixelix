@@ -88,7 +88,7 @@ typedef enum
 } BootPartitionResult;
 
 /**
- * Status of the HomeAssistent automatic discovery feature.
+ * Status of the HomeAssistant automatic discovery feature.
  */
 typedef enum
 {
@@ -96,7 +96,7 @@ typedef enum
     HA_DISABLED,
     HA_STATUS_UNKNOWN
 
-} HomeAssistentAutomaticDiscoveryStatus;
+} HomeAssistantAutomaticDiscoveryStatus;
 
 /******************************************************************************
  * Prototypes
@@ -125,10 +125,10 @@ static void                                  handleFileDelete(AsyncWebServerRequ
 static bool                                  isValidHostname(const String& hostname);
 static BootPartitionResult                   setFactoryAsBootPartition();
 static void                                  handlePartitionChange(AsyncWebServerRequest* request);
-static HomeAssistentAutomaticDiscoveryStatus disableHomeAssistentAutomaticDiscovery();
-static void                                  handleHomeAssistentAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
-static HomeAssistentAutomaticDiscoveryStatus checkHomeAssistentAutomaticDiscoveryStatus();
-static void                                  handleHomeAssistentAutomaticDiscoveryStatus(AsyncWebServerRequest* request);
+static HomeAssistantAutomaticDiscoveryStatus disableHomeAssistantAutomaticDiscovery();
+static void                                  handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
+static HomeAssistantAutomaticDiscoveryStatus checkHomeAssistantAutomaticDiscoveryStatus();
+static void                                  handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request);
 
 /******************************************************************************
  * Local Variables
@@ -180,8 +180,8 @@ void RestApi::init(AsyncWebServer& srv)
     (void)srv.on("/rest/api/v1/fs/file", HTTP_DELETE, handleFileDelete);
     (void)srv.on("/rest/api/v1/fs", handleFilesystem);
     (void)srv.on("/rest/api/v1/partitionChange", HTTP_POST, handlePartitionChange);
-    (void)srv.on("/rest/api/v1/homeAssistent/automaticDiscovery/disable", HTTP_POST, handleHomeAssistentAutomaticDiscoveryDisable);
-    (void)srv.on("/rest/api/v1/homeAssistent/automaticDiscovery/status", HTTP_GET, handleHomeAssistentAutomaticDiscoveryStatus);
+    (void)srv.on("/rest/api/v1/homeAssistant/automaticDiscovery/disable", HTTP_POST, handleHomeAssistantAutomaticDiscoveryDisable);
+    (void)srv.on("/rest/api/v1/homeAssistant/automaticDiscovery/status", HTTP_GET, handleHomeAssistantAutomaticDiscoveryStatus);
 }
 
 /**
@@ -1846,12 +1846,12 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
 /**
  * Disable HomeAssistant MQTT automatic discovery to avoid that the welcome plugin will be discovered in case of a filesystem update.
  *
- * @return The status of the HomeAssisent MQTT automatic discovery after this operation.
+ * @return The status of the HomeAssistant MQTT automatic discovery after this operation.
  */
-static HomeAssistentAutomaticDiscoveryStatus disableHomeAssistentAutomaticDiscovery()
+static HomeAssistantAutomaticDiscoveryStatus disableHomeAssistantAutomaticDiscovery()
 {
 
-    HomeAssistentAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
+    HomeAssistantAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
     SettingsService&                      settings = SettingsService::getInstance();
 
     /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
@@ -1871,7 +1871,7 @@ static HomeAssistentAutomaticDiscoveryStatus disableHomeAssistentAutomaticDiscov
                 settings.close();
 
                 status = HA_DISABLED;
-                LOG_INFO("Home Assistent MQTT automatic discovery disabled for filesystem update.");
+                LOG_INFO("Home Assistant MQTT automatic discovery disabled for filesystem update.");
             }
         }
     }
@@ -1884,11 +1884,11 @@ static HomeAssistentAutomaticDiscoveryStatus disableHomeAssistentAutomaticDiscov
 }
 
 /**
- * Disable the Home Assistent MQTT automatic discovery and notifiy the client whether it was successful or not.
+ * Disable the Home Assistant MQTT automatic discovery and notifiy the client whether it was successful or not.
  *
  * @param[in] request   HTTP request
  */
-static void handleHomeAssistentAutomaticDiscoveryDisable(AsyncWebServerRequest* request)
+static void handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request)
 {
     uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
     const size_t        JSON_DOC_SIZE  = 512U;
@@ -1906,19 +1906,19 @@ static void handleHomeAssistentAutomaticDiscoveryDisable(AsyncWebServerRequest* 
     }
     else
     {
-        switch (disableHomeAssistentAutomaticDiscovery())
+        switch (disableHomeAssistantAutomaticDiscovery())
         {
         case HA_DISABLED:
             (void)RestUtil::prepareRspSuccess(jsonDoc);
             break;
 
         case HA_ENABLED:
-            RestUtil::prepareRspError(jsonDoc, "Home Assistent MQTT automatic discovery could not be disabled.");
+            RestUtil::prepareRspError(jsonDoc, "Home Assistant MQTT automatic discovery could not be disabled.");
             httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
             break;
 
         case HA_STATUS_UNKNOWN:
-            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistent MQTT automatic discovery is unnkown.");
+            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistant MQTT automatic discovery is unnkown.");
             httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
 
         default:
@@ -1934,9 +1934,9 @@ static void handleHomeAssistentAutomaticDiscoveryDisable(AsyncWebServerRequest* 
  *
  * @return The status of the Home Assistant MQTT automatic discovery.
  */
-static HomeAssistentAutomaticDiscoveryStatus checkHomeAssistentAutomaticDiscoveryStatus()
+static HomeAssistantAutomaticDiscoveryStatus checkHomeAssistantAutomaticDiscoveryStatus()
 {
-    HomeAssistentAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
+    HomeAssistantAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
     SettingsService&                      settings = SettingsService::getInstance();
 
     /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
@@ -1978,7 +1978,7 @@ static HomeAssistentAutomaticDiscoveryStatus checkHomeAssistentAutomaticDiscover
  *
  * @param[in] request   HTTP request
  */
-static void handleHomeAssistentAutomaticDiscoveryStatus(AsyncWebServerRequest* request)
+static void handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request)
 {
     uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
     const size_t        JSON_DOC_SIZE  = 512U;
@@ -1996,20 +1996,22 @@ static void handleHomeAssistentAutomaticDiscoveryStatus(AsyncWebServerRequest* r
     }
     else
     {
-        switch (checkHomeAssistentAutomaticDiscoveryStatus())
+        switch (checkHomeAssistantAutomaticDiscoveryStatus())
         {
-        case HA_DISABLED:
-            JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
-            data["status"]  = "disabled";
-            break;
-
-        case HA_ENABLED:
+        case HA_ENABLED: {
             JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
             data["status"]  = "enabled";
             break;
+        }
+
+        case HA_DISABLED: {
+            JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
+            data["status"]  = "disabled";
+            break;
+        }
 
         case HA_STATUS_UNKNOWN:
-            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistent MQTT automatic discovery is unnkown.");
+            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistant MQTT automatic discovery is unknown.");
             httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
             break;
 
