@@ -14,7 +14,6 @@ Each plugin is identified by its unique UID.
   - [GrabViaRestPlugin](#grabviarestplugin)
   - [IconTextPlugin](#icontextplugin)
   - [IconTextLampPlugin](#icontextlampplugin)
-  - [JustTextPlugin](#justtextplugin)
   - [MultiIconPlugin](#multiiconplugin)
 - [Dedicated plugins](#dedicated-plugins)
   - [BatteryPlugin](#batteryplugin)
@@ -72,13 +71,6 @@ Each part can be set separately via the [REST API](https://app.swaggerhub.com/ap
 
 If MQTT is built in and enabled, it will support Home Assistant MQTT discovery.
 
-### JustTextPlugin
-
-The JustTextPlugin shows only text on the whole display. If no text is set, the plugin will be skipped in the slot.\
-The text to be displayed can be set via the [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0#/JustTextPlugin).
-
-If MQTT is built in and enabled, it will support Home Assistant MQTT discovery.
-
 ### MultiIconPlugin
 
 The MultiIconPlugin shows multiple icons on the display.\
@@ -107,7 +99,7 @@ Below the day of the week is shown, starting from the left with Monday.
 
 Configure the date and time format in the plugin configuration JSON file. The format itself is according to strftime(). For colorization text properties can be added.
 
-By default the local time (see timezone in the settings) is used. It can be overwritten by the plugin configuration.
+By default the local time (see time zone in the settings) is used. It can be overwritten by the plugin configuration.
 
 It can be set what shall be shown via the [REST API](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0#/DateTimePlugin).
 

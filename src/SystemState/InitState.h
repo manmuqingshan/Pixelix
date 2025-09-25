@@ -174,6 +174,11 @@ private:
      * @param[out] deviceUniqueId   The device unique id.
      */
     void getDeviceUniqueId(String& deviceUniqueId);
+
+    /**
+     * Configure the views with general settings.
+     */
+    void configureViews();
 };
 
 /******************************************************************************

@@ -102,12 +102,12 @@ void ClockDrv::init(IRtc* rtc)
     {
         LOG_WARNING("Use default values for NTP request.");
 
-        m_timeZone          = settings.getTimezone().getDefault();
+        m_timeZone          = settings.getTimeZone().getDefault();
         ntpServerAddress    = settings.getNTPServerAddress().getDefault();
     }
     else
     {
-        m_timeZone          = settings.getTimezone().getValue();
+        m_timeZone          = settings.getTimeZone().getValue();
         ntpServerAddress    = settings.getNTPServerAddress().getValue();
         settings.close();
     }
@@ -172,7 +172,7 @@ bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 
     if (nullptr != tz)
     {
-        /* Configure timezone */
+        /* Configure time zone */
         if (nullptr != m_internalTimeZoneBuffer)
         {
             /* Not nice, just a workaround which replaces
@@ -190,7 +190,7 @@ bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 
     if (nullptr != tz)
     {
-        /* Reset timezone to UTC */
+        /* Reset time zone to UTC */
         if (nullptr != m_internalTimeZoneBuffer)
         {
             /* Not nice, just a workaround which replaces

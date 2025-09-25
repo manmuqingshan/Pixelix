@@ -43,10 +43,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/DateTimeViewGeneric.h"
-#include "./layouts/DateTimeView32x8.h"
-#include "./layouts/DateTimeView32x16.h"
-#include "./layouts/DateTimeView64x64.h"
+#include "./layout/DateTimeViewGeneric.h"
+#include "./layout/DateTimeView32x8.h"
+#include "./layout/DateTimeView32x16.h"
+#include "./layout/DateTimeView64x64.h"
 
 /******************************************************************************
  * Macros

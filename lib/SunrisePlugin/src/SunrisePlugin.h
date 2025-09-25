@@ -360,9 +360,9 @@ private:
      *
      * @param[in] dateTimeString Date/Time string in UTC received via calling the sunrise-sunset.org API.
      *
-     * @return A formatted (timezone adjusted) time string according to the configured time format.
+     * @return A formatted (time zone adjusted) time string according to the configured time format.
      */
-    String addCurrentTimezoneValues(const String& dateTimeString) const;
+    String addCurrentTimeZoneValues(const String& dateTimeString) const;
 };
 
 /******************************************************************************

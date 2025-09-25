@@ -134,7 +134,7 @@ extern bool Util::strToUInt16(const String& str, uint16_t& value)
     return strToUInt16(str.c_str(), value);
 }
 
-extern bool Util::strToInt32(const char* str, int32_t& value)
+extern bool Util::strToInt16(const char* str, int16_t& value)
 {
     bool success = false;
 
@@ -150,9 +150,9 @@ extern bool Util::strToInt32(const char* str, int32_t& value)
             (nullptr != endPtr) &&
             ('\0' == *endPtr) &&
             (str != endPtr) &&
-            (INT32_MAX >= tmp))
+            (INT16_MAX >= tmp))
         {
-            value = static_cast<int32_t>(tmp);
+            value = static_cast<int16_t>(tmp);
             success = true;
         }
     }
@@ -160,9 +160,9 @@ extern bool Util::strToInt32(const char* str, int32_t& value)
     return success;
 }
 
-extern bool Util::strToInt32(const String& str, int32_t& value)
+extern bool Util::strToInt16(const String& str, int16_t& value)
 {
-    return strToInt32(str.c_str(), value);
+    return strToInt16(str.c_str(), value);
 }
 
 extern bool Util::strToUInt32(const char* str, uint32_t& value)
@@ -194,6 +194,37 @@ extern bool Util::strToUInt32(const char* str, uint32_t& value)
 extern bool Util::strToUInt32(const String& str, uint32_t& value)
 {
     return strToUInt32(str.c_str(), value);
+}
+
+extern bool Util::strToInt32(const char* str, int32_t& value)
+{
+    bool success = false;
+
+    if (nullptr != str)
+    {
+        char*   endPtr  = nullptr;
+        long    tmp     = 0L;
+
+        errno = 0;
+        tmp = strtol(str, &endPtr, 0);
+
+        if ((0 == errno) &&
+            (nullptr != endPtr) &&
+            ('\0' == *endPtr) &&
+            (str != endPtr) &&
+            (INT32_MAX >= tmp))
+        {
+            value = static_cast<int32_t>(tmp);
+            success = true;
+        }
+    }
+
+    return success;
+}
+
+extern bool Util::strToInt32(const String& str, int32_t& value)
+{
+    return strToInt32(str.c_str(), value);
 }
 
 extern String Util::uint32ToHex(uint32_t value)

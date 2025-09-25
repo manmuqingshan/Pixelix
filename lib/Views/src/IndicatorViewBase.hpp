@@ -43,7 +43,7 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/IndicatorViewGeneric.h"
+#include "./layout/IndicatorViewGeneric.h"
 
 /******************************************************************************
  * Macros

@@ -116,6 +116,28 @@ extern bool strToUInt16(const char* str, uint16_t& value);
 extern bool strToUInt16(const String& str, uint16_t& value);
 
 /**
+ * Convert a string to int16_t. String can contain integer number in decimal
+ * or hexadecimal format.
+ *
+ * @param[in]   str     String
+ * @param[out]  value   Converted value
+ *
+ * @return If conversion fails, it will return false otherwise true.
+ */
+extern bool strToInt16(const char* str, int16_t& value);
+
+/**
+ * Convert a string to int16_t. String can contain integer number in decimal
+ * or hexadecimal format.
+ *
+ * @param[in]   str     String
+ * @param[out]  value   Converted value
+ *
+ * @return If conversion fails, it will return false otherwise true.
+ */
+extern bool strToInt16(const String& str, int16_t& value);
+
+/**
  * Convert a string to uint32_t. String can contain integer number in decimal
  * or hexadecimal format.
  *

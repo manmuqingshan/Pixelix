@@ -43,7 +43,7 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/CanvasViewGeneric.h"
+#include "./layout/CanvasViewGeneric.h"
 
 /******************************************************************************
  * Macros

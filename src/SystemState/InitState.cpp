@@ -41,6 +41,7 @@
 #include <SensorDataProvider.h>
 #include <Wire.h>
 #include <IconTextPlugin.h>
+#include <ViewConfig.h>
 
 #include "ButtonDrv.h"
 #include "ClockDrv.h"
@@ -247,6 +248,8 @@ void InitState::entry(StateMachine& sm)
         {
             m_isQuiet = settings.getQuietMode().getDefault();
         }
+
+        configureViews();
 
         /* Don't store the wifi configuration in the NVS.
          * This seems to cause a reset after a client connected to the access point.
@@ -584,6 +587,71 @@ void InitState::getDeviceUniqueId(String& deviceUniqueId)
 
     deviceUniqueId += "-";
     deviceUniqueId += chipId.substring(4U);
+}
+
+void InitState::configureViews()
+{
+    SettingsService& settings                   = SettingsService::getInstance();
+    ViewConfig&      viewConfig                 = ViewConfig::getInstance();
+    uint8_t          brushType                  = settings.getBrushType().getDefault();
+    const uint8_t    BRUSH_TYPE_LINEAR_GRADIENT = 1U;
+    String           solidBrushColorStr         = "0x" + settings.getSolidBrushColor().getDefault();
+    String           linearGradientColor1Str    = "0x" + settings.getLinearGradientColor1().getDefault();
+    String           linearGradientColor2Str    = "0x" + settings.getLinearGradientColor2().getDefault();
+    int16_t          linearGradientOffset       = settings.getLinearGradientOffset().getDefault();
+    uint16_t         linearGradientLength       = settings.getLinearGradientLength().getDefault();
+    bool             linearGradientVertical     = settings.getLinearGradientVertical().getDefault();
+    uint32_t         solidBrushColor;
+    uint32_t         linearGradientColor1;
+    uint32_t         linearGradientColor2;
+    bool             solidBrushColorStatus      = false;
+    bool             linearGradientColor1Status = false;
+    bool             linearGradientColor2Status = false;
+
+    if (true == settings.open(true))
+    {
+        brushType               = settings.getBrushType().getValue();
+        solidBrushColorStr      = "0x" + settings.getSolidBrushColor().getValue();
+        linearGradientColor1Str = "0x" + settings.getLinearGradientColor1().getValue();
+        linearGradientColor2Str = "0x" + settings.getLinearGradientColor2().getValue();
+        linearGradientOffset    = settings.getLinearGradientOffset().getValue();
+        linearGradientLength    = settings.getLinearGradientLength().getValue();
+        linearGradientVertical  = settings.getLinearGradientVertical().getValue();
+
+        settings.close();
+    }
+
+    solidBrushColorStatus      = Util::strToUInt32(solidBrushColorStr, solidBrushColor);
+    linearGradientColor1Status = Util::strToUInt32(linearGradientColor1Str, linearGradientColor1);
+    linearGradientColor2Status = Util::strToUInt32(linearGradientColor2Str, linearGradientColor2);
+
+    if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush(solidBrushColor);
+    }
+
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status))
+    {
+        viewConfig.setLinearGradientBrush(linearGradientColor1, linearGradientColor2, linearGradientOffset, linearGradientLength, linearGradientVertical);
+    }
+
+    /* Set general view configuration. */
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status) &&
+        (BRUSH_TYPE_LINEAR_GRADIENT == brushType))
+    {
+        viewConfig.setLinearGradientBrush();
+    }
+    else if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush();
+    }
+    else
+    {
+        /* Default brush is already set in the constructor. */
+        ;
+    }
 }
 
 /******************************************************************************
