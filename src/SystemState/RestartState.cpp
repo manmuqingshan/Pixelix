@@ -47,6 +47,7 @@
 #include <Logging.h>
 #include <Util.h>
 #include <ESPmDNS.h>
+#include <WiFi.h>
 
 /******************************************************************************
  * Compiler Switches
