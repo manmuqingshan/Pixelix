@@ -86,7 +86,7 @@
                 <div>
                     <br />
                         <p>To update your firmware or filesystem binary go to Pixelix Updater. Be careful a filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it. </p>
-                    <button class="btn btn-light" type="button" onclick="dialog.showYesNo('HomeAssistant', '<p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Do you want to disable it? </p>', homeAssistentPopUpYesPressed, homeAssistentPopUpNoPressed, true);">Go to PixelixUpdater</button>
+                    <button class="btn btn-light" type="button" onclick="goToPixelixUpdaterPressed()">Go to PixelixUpdater</button>
                 </div>
 
             </div>
@@ -295,30 +295,31 @@
                 });
             }
 
-            /* Handle popup button yes pressed. Disables the HomeAssistent automatic discovery before requesting a change of acitve partitions. */
-            function homeAssistentPopUpYesPressed() {
+            /* Handle popup button yes pressed. Disables the HomeAssistant automatic discovery before requesting a change of acitve partitions. */
+            function homeAssistantPopUpYesPressed() {
                 disableUI();
                 
-                disableHomeAssistentAutomaticDiscovery()
+                disableHomeAssistantAutomaticDiscovery()
                     .finally(() => {
                         setTimeout(sendPartitionChangeRequest, 5000);
                     });
             }
 
             /* Handle popup button no pressed. Requests a change of active partitions */
-            function homeAssistentPopUpNoPressed() {
+            function homeAssistantPopUpNoPressed() {
                 sendPartitionChangeRequest();
             }
                 
-            /* Request HomeAssistent automatic discovery to be disabled. */
-            function disableHomeAssistentAutomaticDiscovery() {
+            /* Request HomeAssistant automatic discovery to be disabled. */
+            function disableHomeAssistantAutomaticDiscovery() {
                 return utils.makeRequest({
                     method: "POST",
-                    url: "/rest/api/v1/homeAssistent/automaticDiscovery/disable",
+                    url: "/rest/api/v1/homeAssistant/automaticDiscovery/disable",
+                    isJsonResponse: true
                 }).then(function(rsp) {
-                    dialog.showInfo("<p>HomeAssistent automatic discovery is now disabled. </p>");   
+                    dialog.showInfo("<p>HomeAssistant automatic discovery is now disabled. </p>");   
                 }).catch(function(rsp) {
-                    dialog.showError("<p>HomeAssistent automatic discovery could not be disabled. </p>")
+                    dialog.showError("<p>HomeAssistant automatic discovery could not be disabled. </p>")
                 });
             }
 
@@ -329,6 +330,7 @@
                 utils.makeRequest({
                     method: "POST",
                     url: "/rest/api/v1/partitionChange",
+                    isJsonResponse: true
                 }).then(function(rsp) {
                     let seconds = 20;
                     dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
@@ -345,6 +347,29 @@
                 }).catch(function(rsp) {
                     dialog.showError("<p>Error: " + rsp + "</p>")
                     enableUI();
+                });
+            }
+
+            /* Handle "Go to PixelixUpdater" button pressed. If the Home Assistant automatic discovery is enabled 
+            the user will be asked whether or not it should be disabled. Afterwards a partition change will be requested. */
+            function goToPixelixUpdaterPressed() {
+                disableUI();
+
+                utils.makeRequest({
+                    method: "GET",
+                    url: "/rest/api/v1/homeAssistant/automaticDiscovery/status",
+                    isJsonResponse: true
+                }).then(function(rsp) {
+                    if(rsp.data && rsp.data.status === "enabled") {
+                        dialog.showYesNo('HomeAssistant', '<p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Current status is enabled. Do you want to disable it? </p>', homeAssistantPopUpYesPressed, homeAssistantPopUpNoPressed, true);
+                    } else if(rsp.data && rsp.data.status === "disabled") {
+                        sendPartitionChangeRequest();
+                    } else {
+                        console.error("Unexpected response!");
+                        enableUI();
+                    }
+                }).catch(function(rsp) {
+                    dialog.showYesNo('HomeAssistant', '<p>In case of a filesystem update the HomeAssistant MQTT discovery feature needs to be disabled. Current status is unknown. Do you want to disable it? </p>', homeAssistantPopUpYesPressed, homeAssistantPopUpNoPressed, true);
                 });
             }
 
