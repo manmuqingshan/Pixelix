@@ -80,55 +80,55 @@ typedef struct
  */
 typedef enum
 {
-    BOOT_SUCCESS,
-    BOOT_PARTITION_NOT_FOUND,
-    BOOT_SET_FAILED,
-    BOOT_UNKNOWN_ERROR
+    BOOT_SUCCESS = 0,         /**< Boot partition was set successfully. */
+    BOOT_PARTITION_NOT_FOUND, /**< Partition could not be found. */
+    BOOT_SET_FAILED,          /**< Partition could not be set as boot partition. */
+    BOOT_UNKNOWN_ERROR        /**< An unknown error happened.*/
 
 } BootPartitionResult;
 
 /**
- * Status of the HomeAssistant automatic discovery feature.
+ * Status of the Home Assistant MQTT automatic discovery feature.
  */
 typedef enum
 {
-    HA_ENABLED,
-    HA_DISABLED,
-    HA_STATUS_UNKNOWN
+    HA_ENABLED = 0,   /**< Discovery is enabled. */
+    HA_DISABLED,      /**< Discovery is disabled. This is also the case if the MqttService is not configured. */
+    HA_STATUS_UNKNOWN /**< Status is unknown. */
 
-} HomeAssistantAutomaticDiscoveryStatus;
+} HomeAssistantDiscoveryStatus;
 
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
 
-static void                                  handleFadeEffect(AsyncWebServerRequest* request);
-static void                                  getSlotInfo(JsonObject& slot, uint16_t slotId);
-static void                                  handleSlots(AsyncWebServerRequest* request);
-static void                                  handleSlot(AsyncWebServerRequest* request);
-static void                                  handlePluginInstall(AsyncWebServerRequest* request);
-static void                                  handlePluginUninstall(AsyncWebServerRequest* request);
-static void                                  handlePlugins(AsyncWebServerRequest* request);
-static void                                  handleSensors(AsyncWebServerRequest* request);
-static void                                  handleSettings(AsyncWebServerRequest* request);
-static void                                  handleSetting(AsyncWebServerRequest* request);
-static bool                                  storeSetting(KeyValue* parameter, const String& value, String& error);
-static void                                  handleStatus(AsyncWebServerRequest* request);
-static void                                  getFiles(File& dir, JsonArray& files, uint32_t& preCount, uint32_t& count, bool isRecursive);
-static void                                  handleFilesystem(AsyncWebServerRequest* request);
-static void                                  handleFileGet(AsyncWebServerRequest* request);
-static const char*                           getContentType(const String& filename);
-static void                                  handleFilePost(AsyncWebServerRequest* request);
-static bool                                  createDirectories(const String& path);
-static void                                  uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final);
-static void                                  handleFileDelete(AsyncWebServerRequest* request);
-static bool                                  isValidHostname(const String& hostname);
-static BootPartitionResult                   setFactoryAsBootPartition();
-static void                                  handlePartitionChange(AsyncWebServerRequest* request);
-static HomeAssistantAutomaticDiscoveryStatus disableHomeAssistantAutomaticDiscovery();
-static void                                  handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
-static HomeAssistantAutomaticDiscoveryStatus checkHomeAssistantAutomaticDiscoveryStatus();
-static void                                  handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request);
+static void                         handleFadeEffect(AsyncWebServerRequest* request);
+static void                         getSlotInfo(JsonObject& slot, uint16_t slotId);
+static void                         handleSlots(AsyncWebServerRequest* request);
+static void                         handleSlot(AsyncWebServerRequest* request);
+static void                         handlePluginInstall(AsyncWebServerRequest* request);
+static void                         handlePluginUninstall(AsyncWebServerRequest* request);
+static void                         handlePlugins(AsyncWebServerRequest* request);
+static void                         handleSensors(AsyncWebServerRequest* request);
+static void                         handleSettings(AsyncWebServerRequest* request);
+static void                         handleSetting(AsyncWebServerRequest* request);
+static bool                         storeSetting(KeyValue* parameter, const String& value, String& error);
+static void                         handleStatus(AsyncWebServerRequest* request);
+static void                         getFiles(File& dir, JsonArray& files, uint32_t& preCount, uint32_t& count, bool isRecursive);
+static void                         handleFilesystem(AsyncWebServerRequest* request);
+static void                         handleFileGet(AsyncWebServerRequest* request);
+static const char*                  getContentType(const String& filename);
+static void                         handleFilePost(AsyncWebServerRequest* request);
+static bool                         createDirectories(const String& path);
+static void                         uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final);
+static void                         handleFileDelete(AsyncWebServerRequest* request);
+static bool                         isValidHostname(const String& hostname);
+static BootPartitionResult          setFactoryAsBootPartition();
+static void                         handlePartitionChange(AsyncWebServerRequest* request);
+static HomeAssistantDiscoveryStatus disableHomeAssistantAutomaticDiscovery();
+static void                         handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
+static HomeAssistantDiscoveryStatus getHomeAssistantAutomaticDiscoveryStatus();
+static void                         handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request);
 
 /******************************************************************************
  * Local Variables
@@ -1848,16 +1848,16 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
  *
  * @return The status of the HomeAssistant MQTT automatic discovery after this operation.
  */
-static HomeAssistantAutomaticDiscoveryStatus disableHomeAssistantAutomaticDiscovery()
+static HomeAssistantDiscoveryStatus disableHomeAssistantAutomaticDiscovery()
 {
 
-    HomeAssistantAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
-    SettingsService&                      settings = SettingsService::getInstance();
+    HomeAssistantDiscoveryStatus status      = HA_STATUS_UNKNOWN;
+    SettingsService&             settings    = SettingsService::getInstance();
 
     /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
      * Include the header is not possible, because MQTT might not be compiled in.
      */
-    KeyValue* kvHomeAssistantEnableDiscovery       = settings.getSettingByKey("ha_ena");
+    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
 
     if ((nullptr != kvHomeAssistantEnableDiscovery))
     {
@@ -1930,25 +1930,25 @@ static void handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* 
 }
 
 /**
- * Check whether the Home Assistant MQTT automatic discovery is enabled or not.
+ * Get the status of the Home Assistant MQTT automatic discovery.
  *
  * @return The status of the Home Assistant MQTT automatic discovery.
  */
-static HomeAssistantAutomaticDiscoveryStatus checkHomeAssistantAutomaticDiscoveryStatus()
+static HomeAssistantDiscoveryStatus getHomeAssistantAutomaticDiscoveryStatus()
 {
-    HomeAssistantAutomaticDiscoveryStatus status   = HA_STATUS_UNKNOWN;
-    SettingsService&                      settings = SettingsService::getInstance();
+    HomeAssistantDiscoveryStatus status      = HA_STATUS_UNKNOWN;
+    SettingsService&             settings    = SettingsService::getInstance();
 
     /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
      * Include the header is not possible, because MQTT might not be compiled in.
      */
-    KeyValue* kvHomeAssistantEnableDiscovery       = settings.getSettingByKey("ha_ena");
+    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
 
     if ((nullptr != kvHomeAssistantEnableDiscovery))
     {
         if (KeyValue::TYPE_BOOL == kvHomeAssistantEnableDiscovery->getValueType())
         {
-            if (true == settings.open(false))
+            if (true == settings.open(true))
             {
                 KeyValueBool* homeAssistantEnableDiscovery = static_cast<KeyValueBool*>(kvHomeAssistantEnableDiscovery);
 
@@ -1996,7 +1996,7 @@ static void handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* r
     }
     else
     {
-        switch (checkHomeAssistantAutomaticDiscoveryStatus())
+        switch (getHomeAssistantAutomaticDiscoveryStatus())
         {
         case HA_ENABLED: {
             JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
