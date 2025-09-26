@@ -43,7 +43,7 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/TextViewGeneric.h"
+#include "./layout/TextViewGeneric.h"
 
 /******************************************************************************
  * Macros

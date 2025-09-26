@@ -36,6 +36,7 @@
 #include "HttpStatus.h"
 #include "FileSystem.h"
 
+#include <WiFi.h>
 #include <SettingsService.h>
 #include <Logging.h>
 

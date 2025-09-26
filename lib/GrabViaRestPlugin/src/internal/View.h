@@ -92,31 +92,6 @@ public:
         setFormatText("{hc}?");
     }
 
-    /**
-     * Setup layout for text only.
-     */
-    void setupTextOnly()
-    {
-        m_textWidget.move(0, 0);
-        m_textWidget.setWidth(CONFIG_LED_MATRIX_WIDTH);
-        m_textWidget.setHeight(CONFIG_LED_MATRIX_HEIGHT);
-        m_bitmapWidget.clear(ColorDef::BLACK);
-
-        m_isTextOnly = true;
-    }
-
-    /**
-     * Setup layout for bitmap and text.
-     */
-    void setupBitmapAndText()
-    {
-        m_textWidget.move(TEXT_X, TEXT_Y);
-        m_textWidget.setWidth(TEXT_WIDTH);
-        m_textWidget.setHeight(TEXT_HEIGHT);
-
-        m_isTextOnly = false;
-    }
-
 private:
 
     bool    m_isTextOnly;   /**< Is text only layout selected? */

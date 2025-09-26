@@ -17,5 +17,3 @@ doc/doxygen/doxygen_warnings.txt
 firmware.map
 out
 src/Generated/
-factory_binaries/*
-!factory_binaries/.gitkeep

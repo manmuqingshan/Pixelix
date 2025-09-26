@@ -65,6 +65,20 @@ const char* GrabViaMqttPlugin::TOPIC_CONFIG = "grabConfig";
  * Public Methods
  *****************************************************************************/
 
+bool GrabViaMqttPlugin::isEnabled() const
+{
+    bool isEnabled = false;
+
+    /* The plugin shall only be scheduled if its enabled and text is set. */
+    if ((true == m_isEnabled) &&
+        (false == m_view.getText().isEmpty()))
+    {
+        isEnabled = true;
+    }
+
+    return isEnabled;
+}
+
 void GrabViaMqttPlugin::getTopics(JsonArray& topics) const
 {
     (void)topics.add(TOPIC_CONFIG);
@@ -226,21 +240,15 @@ void GrabViaMqttPlugin::start(uint16_t width, uint16_t height)
         if (false == FileMgrService::getInstance().getFileFullPathById(iconFullPath, m_iconFileId))
         {
             LOG_WARNING("Unknown file id %u.", m_iconFileId);
-            m_view.setupTextOnly();
         }
         else if (false == m_view.loadIcon(iconFullPath))
         {
             LOG_ERROR("Icon not found: %s", iconFullPath.c_str());
-            m_view.setupTextOnly();
         }
         else
         {
-            m_view.setupBitmapAndText();
+            ;
         }
-    }
-    else
-    {
-        m_view.setupTextOnly();
     }
 
     subscribe();
@@ -327,8 +335,8 @@ bool GrabViaMqttPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     else
     {
         bool                       reqInit = false;
-        bool                       reqIcon = false;
         MutexGuard<MutexRecursive> guard(m_mutex);
+        FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
 
         if (m_path != jsonPath.as<String>())
         {
@@ -336,49 +344,42 @@ bool GrabViaMqttPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
             reqInit = true;
         }
 
-        if (m_iconFileId != jsonIconFileId.as<FileMgrService::FileId>())
-        {
-            reqIcon = true;
-        }
-
         m_path       = jsonPath.as<String>();
         m_filter     = jsonFilter;
-        m_iconFileId = jsonIconFileId.as<FileMgrService::FileId>();
         m_format     = jsonFormat.as<String>();
         m_multiplier = jsonMultiplier.as<float>();
         m_offset     = jsonOffset.as<float>();
 
-        if (true == reqInit)
+        if (m_iconFileId != newIconFileId)
         {
-            subscribe();
-        }
+            m_iconFileId = newIconFileId;
 
-        /* Load icon immediately */
-        if (true == reqIcon)
-        {
-            if (FileMgrService::FILE_ID_INVALID != m_iconFileId)
+            if (FileMgrService::FILE_ID_INVALID == m_iconFileId)
+            {
+                m_view.clearIcon();
+            }
+            else
             {
                 String iconFullPath;
 
                 if (false == FileMgrService::getInstance().getFileFullPathById(iconFullPath, m_iconFileId))
                 {
                     LOG_WARNING("Unknown file id %u.", m_iconFileId);
-                    m_view.setupTextOnly();
-                }
-                else if (false == m_view.loadIcon(iconFullPath))
-                {
-                    LOG_ERROR("Icon not found: %s", iconFullPath.c_str());
-                    m_view.setupTextOnly();
+                    m_view.clearIcon();
                 }
                 else
                 {
-                    m_view.setupBitmapAndText();
+                    if (false == m_view.loadIcon(iconFullPath))
+                    {
+                        LOG_WARNING("Couldn't load icon: %s", iconFullPath.c_str());
+                    }
                 }
             }
-            else
-            {
-                m_view.setupTextOnly();
-            }
+        }
+
+        if (true == reqInit)
+        {
+            subscribe();
         }
 
         m_hasTopicChanged = true;
@@ -571,11 +572,6 @@ void GrabViaMqttPlugin::mqttTopicCallback(const String& topic, const uint8_t* pa
             {
                 outputStr += "?";
             }
-        }
-
-        if (true == outputStr.isEmpty())
-        {
-            outputStr = "{hc}-";
         }
 
         LOG_INFO("Grabbed: %s", outputStr.c_str());

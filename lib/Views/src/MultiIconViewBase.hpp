@@ -43,10 +43,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/MultiIconViewGeneric.h"
-#include "./layouts/MultiIconView32x8.h"
-#include "./layouts/MultiIconView32x16.h"
-#include "./layouts/MultiIconView64x64.h"
+#include "./layout/MultiIconViewGeneric.h"
+#include "./layout/MultiIconView32x8.h"
+#include "./layout/MultiIconView32x16.h"
+#include "./layout/MultiIconView64x64.h"
 
 /******************************************************************************
  * Macros

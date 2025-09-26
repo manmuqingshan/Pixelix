@@ -1775,7 +1775,7 @@ static BootPartitionResult setFactoryAsBootPartition()
     }
     else
     {
-        LOG_ERROR("Factory partition '%s' not found!", partition->label);
+        LOG_ERROR("Factory partition not found!");
         result = BOOT_PARTITION_NOT_FOUND;
     }
 
