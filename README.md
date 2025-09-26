@@ -127,7 +127,8 @@ Although PIXELIX was designed to show information, that is pushed or pulled via 
 
 ## Installation
 
-The following steps are necessary for the first time and to get PIXELIX initial running on the target. Once it runs, later on the firmware and filesystem can be updated via the PIXELIX web interface.
+The following steps are necessary for the first time and to get PIXELIX initial running on the target. Once it runs, later on the firmware and filesystem can be updated via the PIXELIX Updater: https://github.com/BlueAndi/PixelixUpdater.
+You can accesss the Updater through the submenu "Update" of PIXELIX's webinterface.
 
 1. Setup the [toolchain](./doc/config/TOOLCHAIN-INSTALLATION.md).
 2. [Build the software](./doc/config/SW-BUILD.md) and check whether the toolchain works.
@@ -280,8 +281,7 @@ This is a low level error code. Please have a look into the following table.
 | E4 | Bad filesystem, did you explicit program the filesystem too? If not, please upload it. |
 | E5 | The display manager didn't start up. |
 | E6 | The system message handler didn't start up. |
-| E7 | The update manager didn't start up. |
-| E8 | One of the services failed to start. |
+| E7 | One of the services failed to start. |
 
 ### How can I use animated icons?
 

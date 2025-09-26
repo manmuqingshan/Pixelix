@@ -49,7 +49,6 @@
 #include "OneButtonCtrl.hpp"
 #include "TwoButtonCtrl.hpp"
 #include "ThreeButtonCtrl.hpp"
-#include <UpdateMgr.h>
 
 #if (configCHECK_FOR_STACK_OVERFLOW > 0)
 #include "freertos/task.h"
@@ -64,7 +63,7 @@
 #endif /* CONFIG_ESP_LOG_SEVERITY */
 
 #ifndef CONFIG_LOG_SEVERITY
-#define CONFIG_LOG_SEVERITY     (Logging::LOG_LEVEL_INFO)
+#define CONFIG_LOG_SEVERITY (Logging::LOG_LEVEL_INFO)
 #endif /* CONFIG_LOG_SEVERITY */
 
 #if CONFIG_BUTTON_CTRL == 2
@@ -73,7 +72,7 @@
  * Button control policy defines the number and kind of buttons, which are used to
  * control Pixelix.
  */
-#define BUTTON_CTRL_POLICY      TwoButtonCtrl<BUTTON_ID_LEFT, BUTTON_ID_RIGHT>
+#define BUTTON_CTRL_POLICY TwoButtonCtrl<BUTTON_ID_LEFT, BUTTON_ID_RIGHT>
 
 #elif CONFIG_BUTTON_CTRL == 3
 
@@ -81,7 +80,7 @@
  * Button control policy defines the number and kind of buttons, which are used to
  * control Pixelix.
  */
-#define BUTTON_CTRL_POLICY      ThreeButtonCtrl<BUTTON_ID_LEFT, BUTTON_ID_OK, BUTTON_ID_RIGHT>
+#define BUTTON_CTRL_POLICY ThreeButtonCtrl<BUTTON_ID_LEFT, BUTTON_ID_OK, BUTTON_ID_RIGHT>
 
 #else
 
@@ -89,7 +88,7 @@
  * Button control policy defines the number and kind of buttons, which are used to
  * control Pixelix.
  */
-#define BUTTON_CTRL_POLICY      OneButtonCtrl<BUTTON_ID_OK>
+#define BUTTON_CTRL_POLICY OneButtonCtrl<BUTTON_ID_OK>
 
 #endif
 
@@ -106,25 +105,25 @@
  *****************************************************************************/
 
 /** Serial terminal */
-static MiniTerminal                         gTerminal(Serial);
+static MiniTerminal gTerminal(Serial);
 
 /** System state machine */
-static StateMachine                         gSysStateMachine(InitState::getInstance());
+static StateMachine gSysStateMachine(InitState::getInstance());
 
 /** Serial log sink */
-static LogSinkPrinter                       gLogSinkSerial("Serial", &Serial);
+static LogSinkPrinter gLogSinkSerial("Serial", &Serial);
 
 /** Websocket log sink */
-static LogSinkWebsocket                     gLogSinkWebsocket("Websocket", &WebSocketSrv::getInstance());
+static LogSinkWebsocket gLogSinkWebsocket("Websocket", &WebSocketSrv::getInstance());
 
 /** Button handler */
-static ButtonHandler<BUTTON_CTRL_POLICY>    gButtonHandler;
+static ButtonHandler<BUTTON_CTRL_POLICY> gButtonHandler;
 
 /** Serial interface baudrate. */
-static const uint32_t                       SERIAL_BAUDRATE     = 115200U;
+static const uint32_t SERIAL_BAUDRATE  = 115200U;
 
 /** Task period in ms of the loop() task. */
-static const uint32_t                       LOOP_TASK_PERIOD    = 40U;
+static const uint32_t LOOP_TASK_PERIOD = 40U;
 
 #if ARDUINO_USB_MODE
 #if ARDUINO_USB_CDC_ON_BOOT /* Serial used for USB CDC */
@@ -134,10 +133,10 @@ static const uint32_t                       LOOP_TASK_PERIOD    = 40U;
  * writing e.g. log messages to it. If the value is too high, it will influence
  * the display refresh bad.
  */
-static const uint32_t                       HWCDC_TX_TIMEOUT    = 4U;
+static const uint32_t HWCDC_TX_TIMEOUT = 4U;
 
-#endif  /* ARDUINO_USB_CDC_ON_BOOT */
-#endif  /* ARDUINO_USB_MODE */
+#endif /* ARDUINO_USB_CDC_ON_BOOT */
+#endif /* ARDUINO_USB_MODE */
 
 /******************************************************************************
  * External functions
@@ -150,12 +149,12 @@ void setup()
 {
     /* Setup serial interface */
     Serial.begin(SERIAL_BAUDRATE);
-    
-    #if ARDUINO_USB_MODE
-    #if ARDUINO_USB_CDC_ON_BOOT
+
+#if ARDUINO_USB_MODE
+#if ARDUINO_USB_CDC_ON_BOOT
     Serial.setTxTimeoutMs(HWCDC_TX_TIMEOUT);
-    #endif  /* ARDUINO_USB_CDC_ON_BOOT */
-    #endif  /* ARDUINO_USB_MODE */
+#endif /* ARDUINO_USB_CDC_ON_BOOT */
+#endif /* ARDUINO_USB_MODE */
 
     /* Ensure a distance between the boot mode message and the first log message.
      * Otherwise the first log message appears in the same line than the last
@@ -191,7 +190,7 @@ void setup()
         /* Memory monitor */
         MemMon::getInstance().process();
     }
-    while(static_cast<AbstractState*>(&InitState::getInstance()) == gSysStateMachine.getState());
+    while (static_cast<AbstractState*>(&InitState::getInstance()) == gSysStateMachine.getState());
 
     /* Observe button state changes and derrive actions.
      * Do this after init state!
@@ -205,7 +204,7 @@ void setup()
      * If the main loop does not reset the watchdog, it will trigger a reset.
      * The task watchdog is not used to detect a deadlock of the init state,
      * because it is expected that the init state will finish in a short time.
-    */
+     */
     (void)esp_task_wdt_add(nullptr);
 }
 
@@ -234,12 +233,8 @@ void loop()
         gSysStateMachine.setState(RestartState::getInstance());
     }
 
-    /* Handle button actions only if
-     * - No update is running.
-     * - Not in RestartState.
-     */
-    if ((false == UpdateMgr::getInstance().isUpdateRunning()) &&
-        (&RestartState::getInstance() != gSysStateMachine.getState()))
+    /* Handle button actions only if not in RestartState. */
+    if (&RestartState::getInstance() != gSysStateMachine.getState())
     {
         gButtonHandler.process();
     }
@@ -254,7 +249,7 @@ void loop()
 
 #if (configCHECK_FOR_STACK_OVERFLOW > 0)
 
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
 {
     /* Inform via serial and avoid the logging feature, because it may never show up. */
     Serial.write("Task stack overflow detected: ");
@@ -263,7 +258,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
     Serial.flush();
 
     /* Trigger watchdog reset. */
-    while(1)
+    while (1)
     {
         /* Waiting for watchdog reset. */
         ;

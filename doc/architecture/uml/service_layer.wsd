@@ -62,7 +62,6 @@ package "Service" as servicePckg {
         component "EspAsyncWebServer" as webServer
         component "AsyncTcpSock" as tcp
         component "mDNS" as dns <<Arduino>>
-        component "ArduinoOTA" <<Arduino>> as ota
         component "LwIP" <<Arduino>> as lwip
         component "ArduinoFFT" as fft
 
@@ -70,7 +69,6 @@ package "Service" as servicePckg {
         pubSubClient ..> tcp
         tcp ..> lwip
         dns ..> lwip
-        ota ..> lwip
         ntp ..> lwip
     }
 
