@@ -50,12 +50,24 @@
                 <h1 class="mt-5">Update</h1>
 
                 <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation"><a class="nav-link active" id="update-tab" data-bs-toggle="tab" role="tab" href="#update" aria-controls="update" aria-selected="true">Update</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" id="backup-tab" data-bs-toggle="tab" role="tab" href="#backup" aria-controls="backup" aria-selected="false">Backup</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" id="restore-tab" data-bs-toggle="tab" role="tab" href="#restore" aria-controls="restore" aria-selected="false">Restore</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" id="restart-tab" data-bs-toggle="tab" role="tab" href="#restart" aria-controls="restart" aria-selected="false">Restart</a></li>
                 </ul>
 
                 <div class="tab-content" id="myTabContent">
+
+                    <div class="tab-pane fade active show" id="update" role="tabpanel" aria-labelledby="update-tab">
+                        <br />
+                        <p>To update the firmware or filesystem, activate the Pixelix Updater.</p>
+                        <p>
+                            <div class="alert alert-warning" role="alert">
+                                <strong>Important:</strong> Updating the filesystem will erase all your configuration data. Before proceeding, make sure to create a backup of your configuration to avoid losing any settings.
+                            </div>
+                        </p>
+                        <button class="btn btn-light" type="button" onclick="goToPixelixUpdaterPressed()">Go to PixelixUpdater</button>
+                    </div>
 
                     <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
                         <br />
@@ -81,12 +93,6 @@
                         <p><button class="btn btn-light" type="button" onclick="restart();" disabled>Restart</button></p>
                     </div>
 
-                </div>
-
-                <div>
-                    <br />
-                        <p>To update your firmware or filesystem binary go to Pixelix Updater. Be careful a filesystem update might cause a loss of all configuration data on the filesystem. Make sure you have a backup of your configuration before updating it. </p>
-                    <button class="btn btn-light" type="button" onclick="goToPixelixUpdaterPressed()">Go to PixelixUpdater</button>
                 </div>
 
             </div>
