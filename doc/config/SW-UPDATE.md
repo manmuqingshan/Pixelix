@@ -56,7 +56,7 @@ The recommeded way how to program the software to the board depends on the skill
 
 ### Use Espressif Flash Download Tool (Windows only)
 
-1. Download binaries (```Pixelix-v6.0.0.zip```) from the [latest release](https://github.com/BlueAndi/Pixelix/releases).
+1. Download binaries from the [latest release](https://github.com/BlueAndi/Pixelix/releases).
 2. Unzip to a local folder.
 3. Download the [Espressif Flash Download Tool](https://www.espressif.com/en/support/download/other-tools).
 4. Unzip to a local folder.
@@ -147,7 +147,7 @@ Steps:
 4. Open browser add enter ip address of the device.
 5. Open the "Update" submenu of the webinterface.
 6. Go to Pixelix Updater.
-7. Select firmware binary (```firmware.bin```) or filesystem binary (```spiffs.bin```/```littlefs.bin```) and click on the respective upload button. 
+7. Select firmware binary (```firmware.bin```) or filesystem binary (```spiffs.bin```/```littlefs.bin```) and click on the respective upload button.
 
 ## Flash Layout Information
 
@@ -175,13 +175,13 @@ Steps:
 
 | Development Board | Flash size in MByte | Address (hex) of littlefs.bin | Partition table |
 | ----------------- | ------------------- | ----------------------------- | --------------- |
-| adafruit_feather_esp32_v2 | 8 | 0x670000 | 8MB.csv |
-| adafruit_matrixportal_s3 | 8 | 0x670000 | 8MB.csv |
+| adafruit_feather_esp32_v2 | 8 | 0x5F0000 | 8MB.csv |
+| adafruit_matrixportal_s3 | 8 | 0x5F0000 | 8MB.csv |
 | az-delivery-devkit-v4 | 4 | 0x290000 | 4MB.csv |
 | esp32doit-devkit-v1 | 4 | 0x290000 | 4MB.csv |
 | esp32-s3-devkitc-1-n16r8v | 16 | 0xc90000 | 16MB.csv |
 | esp32-nodemcu | 4 | 0x290000 | 4MB.csv |
-| lilygo-ttgo-t-display | 8 | 0x670000 | 8MB.csv |
+| lilygo-ttgo-t-display | 8 | 0x5F0000 | 8MB.csv |
 | lilygo-t-display-s3 | 16 | 0xc90000 | 16MB.csv |
 | m5stack_core | 16 | 0xc90000 | 16MB.csv |
 | ulanzi-tc001 | 4 | 0x290000 | 4MB.csv |
