@@ -78,7 +78,7 @@ void WsCmdRestart::execute(AsyncWebSocket* server, uint32_t clientId)
         /* To ensure the positive response will be sent. */
         const uint32_t RESTART_DELAY = 100U; /* ms */
 
-        RestartMgr::getInstance().reqRestart(RESTART_DELAY, false);
+        (void)RestartMgr::getInstance().reqRestart(RESTART_DELAY, false);
 
         sendPositiveResponse(server, clientId);
     }

@@ -145,18 +145,8 @@ void ConnectedState::process(StateMachine& sm)
     /* Handle webserver. */
     MyWebServer::process();
 
-    /* Handle delayed restart request. */
-    RestartMgr::getInstance().process();
-
-    /* Restart requested by restart manager? This may happen after a user has requested 
-     * a change of partitions via the web interface.
-     */
-    if (true == RestartMgr::getInstance().isRestartRequested())
-    {
-        sm.setState(RestartState::getInstance());
-    }
     /* Connection lost? */
-    else if (false == WiFi.isConnected())
+    if (false == WiFi.isConnected())
     {
         LOG_INFO("Connection lost.");
 

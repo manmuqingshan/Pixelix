@@ -283,6 +283,8 @@ This is a low level error code. Please have a look into the following table.
 | E6 | The system message handler didn't start up. |
 | E7 | One of the services failed to start. |
 
+Press a button and Pixelix will jump to the Pixelix Updater.
+
 ### How can I use animated icons?
 
 Use animated GIF images to get animated icons. The sprite sheet support (< v8.0.0) was replaced with the GIF images.

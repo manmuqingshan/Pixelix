@@ -22,7 +22,8 @@ ConnectedState: /entry: Enable slot routing on the display.
 ConnectedState: /do: Handle client requests.
 ConnectedState: /exit: Disconnect all wifi connections.
 
-ErrorState: /do: Wait for manual reset.
+ErrorState: /entry: Show error message on display.
+ErrorState: /do: Wait for button press to restart.
 
 RestartState: /entry: Unmount filesystem
 RestartState: /do: Restart
@@ -40,7 +41,7 @@ ConnectingState --> ConnectedState: [Connection successful established]
 ConnectedState --> ConnectingState: [Connection lost]
 ConnectedState --> RestartState: [Restart requested]
 
-ErrorState --> [*]: [Restart]
+ErrorState --> RestartState: [Any button pressed]
 
 IdleState --> [*]: [Restart]
 

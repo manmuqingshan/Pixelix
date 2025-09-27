@@ -55,10 +55,23 @@
 
 /**
  * The restart manager handles everything around restart requests.
+ * If requested, it will set the factory partition as boot partition.
  */
 class RestartMgr
 {
 public:
+
+    /**
+     * This type defines the possible results when requesting a restart.
+     */
+    typedef enum
+    {
+        RESTART_REQ_STATUS_OK = 0,                      /**< Restart request was accepted. */
+        RESTART_REQ_STATUS_ERR,                         /**< Restart request failed. */
+        RESTART_REQ_STATUS_FACTORY_PARTITION_NOT_FOUND, /**< Partition could not be found. */
+        RESTART_REQ_STATUS_FACTORY_SET_FAILED           /**< Partition could not be set as boot partition. */
+
+    } RestartReqStatus;
 
     /**
      * Get restart manager instance.
@@ -78,15 +91,19 @@ public:
      *
      * @return If restart is requested, it will return true otherwise false.
      */
-    bool isRestartRequested() const
+    bool isRestartRequested()
     {
-        return m_isRestartReq;
+        bool isRestartReq = m_isRestartReq;
+
+        m_isRestartReq    = false;
+
+        return isRestartReq;
     }
 
     /**
      * Will active partition change after restart?
      * Active partition will change after a user initiates a change to the PixelixUpdater partition (factory) via the webinterface.
-     * 
+     *
      * @return If active partition changes after restart, it will return true otherwise false.
      */
     bool isPartitionChange() const
@@ -104,24 +121,10 @@ public:
      *
      * @param[in] delay How long the restart shall be delayed in ms.
      * @param[in] isPartitionChange Whether or not active partition will change after restart.
+     *
+     * @return Status
      */
-    void reqRestart(uint32_t delay, bool isPartitionChange)
-    {
-        /* Cannot be overwritten by a later restart request before restart is carried out. */
-        if (true == isPartitionChange)
-        {
-            m_isPartitionChange = true;
-        }
-
-        if (0U == delay)
-        {
-            m_isRestartReq = true;
-        }
-        else
-        {
-            m_timer.start(delay);
-        }
-    }
+    RestartReqStatus reqRestart(uint32_t delay, bool isPartitionChange);
 
 private:
 
@@ -143,6 +146,13 @@ private:
      * Destroys the restart manager.
      */
     ~RestartMgr();
+
+    /**
+     * Set the factory partition active to be the next boot partition.
+     *
+     * @return RestartReqStatus Indicating whether factory was set as boot partition successfully or not.
+     */
+    RestartReqStatus setFactoryAsBootPartition();
 };
 
 /******************************************************************************

@@ -399,7 +399,7 @@ static bool restart(const String& topic, const JsonObjectConst& value)
     /* To ensure that a positive response will be sent before the device restarts,
      * a short delay is necessary.
      */
-    RestartMgr::getInstance().reqRestart(RESTART_DELAY, false);
+    (void)RestartMgr::getInstance().reqRestart(RESTART_DELAY, false);
 
     return true;
 }

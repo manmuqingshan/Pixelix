@@ -34,6 +34,11 @@
  *****************************************************************************/
 #include "RestartMgr.h"
 
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
+#include <esp_err.h>
+#include <Logging.h>
+
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -69,6 +74,39 @@ void RestartMgr::process()
     }
 }
 
+RestartMgr::RestartReqStatus RestartMgr::reqRestart(uint32_t delay, bool isPartitionChange)
+{
+    RestartReqStatus status = RESTART_REQ_STATUS_OK;
+
+    /* Cannot be overwritten by a later restart request before restart is carried out. */
+    if (true == isPartitionChange)
+    {
+        if (false == m_isPartitionChange)
+        {
+            status = setFactoryAsBootPartition();
+
+            if (RESTART_REQ_STATUS_OK == status)
+            {
+                m_isPartitionChange = true;
+            }
+        }
+    }
+
+    if (RESTART_REQ_STATUS_OK == status)
+    {
+        if (0U == delay)
+        {
+            m_isRestartReq = true;
+        }
+        else
+        {
+            m_timer.start(delay);
+        }
+    }
+
+    return status;
+}
+
 /******************************************************************************
  * Protected Methods
  *****************************************************************************/
@@ -86,6 +124,39 @@ RestartMgr::RestartMgr() :
 
 RestartMgr::~RestartMgr()
 {
+}
+
+RestartMgr::RestartReqStatus RestartMgr::setFactoryAsBootPartition()
+{
+    RestartReqStatus       result    = RESTART_REQ_STATUS_ERR;
+    const esp_partition_t* partition = esp_partition_find_first(
+        esp_partition_type_t::ESP_PARTITION_TYPE_APP,
+        esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_FACTORY,
+        nullptr);
+
+    if (nullptr != partition)
+    {
+        esp_err_t err = esp_ota_set_boot_partition(partition);
+
+        LOG_INFO("Setting factory partition '%s' as boot partition", partition->label);
+
+        if (ESP_OK != err)
+        {
+            LOG_ERROR("Failed to set factory partition '%s' as boot partition: %d", partition->label, err);
+            result = RESTART_REQ_STATUS_FACTORY_SET_FAILED;
+        }
+        else
+        {
+            result = RESTART_REQ_STATUS_OK;
+        }
+    }
+    else
+    {
+        LOG_ERROR("Factory partition not found!");
+        result = RESTART_REQ_STATUS_FACTORY_PARTITION_NOT_FOUND;
+    }
+
+    return result;
 }
 
 /******************************************************************************

@@ -50,9 +50,6 @@
 #include <Logging.h>
 #include <SensorDataProvider.h>
 #include <SettingsService.h>
-#include <esp_ota_ops.h>
-#include <esp_partition.h>
-#include <esp_err.h>
 #include "RestartMgr.h"
 
 /******************************************************************************
@@ -74,18 +71,6 @@ typedef struct
     const char* contentType;   /**< Content type */
 
 } ContentTypeElem;
-
-/**
- * Result of setting boot partition.
- */
-typedef enum
-{
-    BOOT_SUCCESS = 0,         /**< Boot partition was set successfully. */
-    BOOT_PARTITION_NOT_FOUND, /**< Partition could not be found. */
-    BOOT_SET_FAILED,          /**< Partition could not be set as boot partition. */
-    BOOT_UNKNOWN_ERROR        /**< An unknown error happened.*/
-
-} BootPartitionResult;
 
 /**
  * Status of the Home Assistant MQTT automatic discovery feature.
@@ -123,7 +108,6 @@ static bool                         createDirectories(const String& path);
 static void                         uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final);
 static void                         handleFileDelete(AsyncWebServerRequest* request);
 static bool                         isValidHostname(const String& hostname);
-static BootPartitionResult          setFactoryAsBootPartition();
 static void                         handlePartitionChange(AsyncWebServerRequest* request);
 static HomeAssistantDiscoveryStatus disableHomeAssistantAutomaticDiscovery();
 static void                         handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
@@ -1743,46 +1727,6 @@ static bool isValidHostname(const String& hostname)
 }
 
 /**
- * Set the factory partition active to be the next boot partition.
- *
- * @return BootPartitionResult indicating wether factory was set as boot partition successfully or not.
- */
-static BootPartitionResult setFactoryAsBootPartition()
-{
-    BootPartitionResult    result    = BOOT_UNKNOWN_ERROR;
-    const esp_partition_t* partition = nullptr;
-
-    partition                        = esp_partition_find_first(
-        esp_partition_type_t::ESP_PARTITION_TYPE_APP,
-        esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_FACTORY,
-        nullptr);
-
-    if (nullptr != partition)
-    {
-        esp_err_t err = esp_ota_set_boot_partition(partition);
-
-        LOG_INFO("Setting factory partition '%s' as boot partition", partition->label);
-
-        if (ESP_OK != err)
-        {
-            LOG_ERROR("Failed to set factory partition '%s' as boot partition: %d", partition->label, err);
-            result = BOOT_SET_FAILED;
-        }
-        else
-        {
-            result = BOOT_SUCCESS;
-        }
-    }
-    else
-    {
-        LOG_ERROR("Factory partition not found!");
-        result = BOOT_PARTITION_NOT_FOUND;
-    }
-
-    return result;
-}
-
-/**
  * Set the factory partition active to be the next boot partition and notify the client whether it was successful or not.
  * If it was successful the board will be restarted.
  *
@@ -1793,6 +1737,7 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
     uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
     const size_t        JSON_DOC_SIZE  = 512U;
     DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+    const uint32_t      RESTART_DELAY = 100U; /* ms */
 
     if (nullptr == request)
     {
@@ -1806,34 +1751,31 @@ static void handlePartitionChange(AsyncWebServerRequest* request)
     }
     else
     {
-        switch (setFactoryAsBootPartition())
+        RestartMgr&                  restartMgr = RestartMgr::getInstance();
+        RestartMgr::RestartReqStatus status     = restartMgr.reqRestart(RESTART_DELAY, true);
+
+        switch (status)
         {
-        case BOOT_SUCCESS: {
-            const uint32_t RESTART_DELAY = 100U; /* ms */
-
+        case RestartMgr::RESTART_REQ_STATUS_OK:
             (void)RestUtil::prepareRspSuccess(jsonDoc);
-
-            /* To ensure that a positive response will be sent before the device restarts,
-             * a short delay is necessary.
-             */
-            RestartMgr::getInstance().reqRestart(RESTART_DELAY, true);
             break;
-        }
 
-        case BOOT_PARTITION_NOT_FOUND:
+        case RestartMgr::RESTART_REQ_STATUS_ERR:
+            RestUtil::prepareRspError(jsonDoc, "Cannot switch to factory partition. Error unknown!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+
+        case RestartMgr::RESTART_REQ_STATUS_FACTORY_PARTITION_NOT_FOUND:
             RestUtil::prepareRspError(jsonDoc, "Factory partition not found!");
             httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
             break;
 
-        case BOOT_SET_FAILED:
+        case RestartMgr::RESTART_REQ_STATUS_FACTORY_SET_FAILED:
             RestUtil::prepareRspError(jsonDoc, "Failed to set factory partition as boot partition!");
             httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
             break;
 
-        case BOOT_UNKNOWN_ERROR:
-            RestUtil::prepareRspError(jsonDoc, "Cannot switch to factory partition. Error unknown!");
-            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
-            break;
 
         default:
             break;

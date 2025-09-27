@@ -89,7 +89,6 @@ void RestartState::process(StateMachine& sm)
     UTIL_NOT_USED(sm);
 
     MyWebServer::process();
-    RestartMgr::getInstance().process();
 
     /* Wait a certain amount of time, because there may be still some pending tasks, which
      * need to be finished before the system is restarted.
@@ -122,9 +121,9 @@ void RestartState::process(StateMachine& sm)
         {
             TextWidget textWidget(CONFIG_LED_MATRIX_WIDTH, CONFIG_LED_MATRIX_HEIGHT, 1, 1);
 
-            /* Show "Update". */
+            /* Show "Updater". */
             display.fillScreen(ColorDef::BLACK);
-            textWidget.setFormatStr("Update");
+            textWidget.setFormatStr("{#FF0000}U{#FFFF00}p{#00FF00}d{#00FFFF}a{#0000FF}t{#FF00FF}e{#FF0000}r");
             textWidget.disableFadeEffect();
             textWidget.update(display);
         }

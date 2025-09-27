@@ -35,6 +35,8 @@
 #include "ErrorState.h"
 #include "Services.h"
 #include "DisplayMgr.h"
+#include "ButtonDrv.h"
+#include "RestartMgr.h"
 
 #include <Logging.h>
 #include <Util.h>
@@ -105,6 +107,7 @@ void ErrorState::entry(StateMachine& sm)
         }
         else
         {
+            const uint8_t   BRIGHTNESS_HALF = 128U; /* 50%*/
             YAFont          font(&TomThumb);
             int16_t         cursorX = 0;
             int16_t         cursorY = display.getHeight() - 1;
@@ -112,7 +115,10 @@ void ErrorState::entry(StateMachine& sm)
             String          errorIdStr;
             uint8_t         idx = 0U;
 
-            errorIdStr          = m_errorId;
+            /* Set 50% brightness. */
+            display.setBrightness(BRIGHTNESS_HALF);
+
+            errorIdStr = m_errorId;
 
             /* The 'E' in front is the error prefix. */
             font.drawChar(display, cursorX, cursorY, 'E', brush);
@@ -136,7 +142,15 @@ void ErrorState::entry(StateMachine& sm)
 
 void ErrorState::process(StateMachine& sm)
 {
-    UTIL_NOT_USED(sm);
+    /* If any button is pressed, jump to the PixelixUpdater. */
+    for (uint8_t btnId = BUTTON_ID_OK; btnId < BUTTON_ID_CNT; ++btnId)
+    {
+        if (BUTTON_STATE_PRESSED == ButtonDrv::getInstance().getState(static_cast<ButtonId>(btnId)))
+        {
+            (void)RestartMgr::getInstance().reqRestart(0U, true);
+            break;
+        }
+    }
 
     /* The error state is signalled with the onboard LED.
      * If a dedicated error id is set, the number of the error is blinked, so
@@ -173,8 +187,6 @@ void ErrorState::process(StateMachine& sm)
             }
         }
     }
-
-    /* Wait for manual reset. */
 }
 
 void ErrorState::exit(StateMachine& sm)

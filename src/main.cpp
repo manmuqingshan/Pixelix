@@ -41,8 +41,10 @@
 #include <esp_task_wdt.h>
 #include "InitState.h"
 #include "RestartState.h"
+#include "ErrorState.h"
 #include "MemMon.h"
 #include "MiniTerminal.h"
+#include "RestartMgr.h"
 
 #include "ButtonDrv.h"
 #include "ButtonHandler.hpp"
@@ -213,6 +215,8 @@ void setup()
  */
 void loop()
 {
+    RestartMgr& restartMgr = RestartMgr::getInstance();
+
     /* Reset task watchdog to avoid a timeout.
      * The task watchdog is used to detect a deadlock of the main loop.
      * If the main loop does not reset the watchdog, it will trigger a reset.
@@ -230,11 +234,21 @@ void loop()
 
     if (true == gTerminal.isRestartRequested())
     {
+        (void)restartMgr.reqRestart(0U, false);
+    }
+
+    /* Handle delayed restart request. */
+    restartMgr.process();
+
+    /* Restart requested by restart manager? */
+    if (true == restartMgr.isRestartRequested())
+    {
         gSysStateMachine.setState(RestartState::getInstance());
     }
 
-    /* Handle button actions only if not in RestartState. */
-    if (&RestartState::getInstance() != gSysStateMachine.getState())
+    /* Handle button actions only if not in RestartState and not in ErrorState. */
+    if (&RestartState::getInstance() != gSysStateMachine.getState() &&
+        &ErrorState::getInstance() != gSysStateMachine.getState())
     {
         gButtonHandler.process();
     }
