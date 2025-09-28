@@ -78,7 +78,7 @@ const char* HomeAssistantMqtt::DEFAULT_HA_DISCOVERY_PREFIX = "homeassistant";
 const char* HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE     = "ha_ena";
 
 /* Initialize Home Assistant discovery enable flag name */
-const char* HomeAssistantMqtt::NAME_HA_DISCOVERY_ENABLE    = "Enable Home Assistant Discovery";
+const char* HomeAssistantMqtt::NAME_HA_DISCOVERY_ENABLE    = "Enable Home Assistant MQTT Discovery";
 
 /* Initialize Home Assistant discovery enable flag default value */
 const bool HomeAssistantMqtt::DEFAULT_HA_DISCOVERY_ENABLE  = false;

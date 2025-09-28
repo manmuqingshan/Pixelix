@@ -84,7 +84,7 @@ Then configure Pixelix in the *Settings* web page like:
 
 1. Enter the MQTT broker URL to *MQTT broker URL*.
 2. If necessary, update the *Home Assistant Discovery Prefix*.
-3. Activate the checkbox *Enable Home Assistant Discovery*.
+3. Activate the checkbox *Enable Home Assistant MQTT Discovery*.
 4. Restart PIXELIX.
 
 #### MQTT Discovery
