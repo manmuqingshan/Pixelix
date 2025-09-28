@@ -205,7 +205,6 @@ public:
     void setSolidBrush()
     {
         m_gfxText.setBrush(m_solidBrush);
-        m_gfxNewText.setBrush(m_solidBrush);
     }
 
     /**
@@ -214,7 +213,6 @@ public:
     void setLinearGradientBrush()
     {
         m_gfxText.setBrush(m_linearGradientBrush);
-        m_gfxNewText.setBrush(m_linearGradientBrush);
     }
 
     /**
@@ -226,7 +224,6 @@ public:
     {
         m_solidBrush.setColor(color);
         m_gfxText.setBrush(m_solidBrush);
-        m_gfxNewText.setBrush(m_solidBrush);
     }
 
     /**
@@ -246,7 +243,6 @@ public:
         m_linearGradientBrush.setLength(length);
         m_linearGradientBrush.setDirection(vertical);
         m_gfxText.setBrush(m_linearGradientBrush);
-        m_gfxNewText.setBrush(m_linearGradientBrush);
     }
 
     /**
@@ -466,7 +462,6 @@ private:
     YAGfxSolidBrush          m_solidBrush;          /**< Solid text color brush. */
     YAGfxLinearGradientBrush m_linearGradientBrush; /**< Linear gradient text color brush. */
     YAGfxText                m_gfxText;             /**< GFX for current text. */
-    YAGfxText                m_gfxNewText;          /**< GFX for new text. */
     uint32_t                 m_scrollingCnt;        /**< Counts how often a text was complete scrolled. */
     int16_t                  m_scrollOffset;        /**< Pixel offset of cursor x position, used for scrolling. */
     SimpleTimer              m_scrollTimer;         /**< Timer, used for scrolling */

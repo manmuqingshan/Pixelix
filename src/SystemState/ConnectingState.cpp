@@ -134,7 +134,7 @@ void ConnectingState::process(StateMachine& sm)
         String          infoStr                 = "Connecting to ";
 
         infoStr += m_wifiSSID;
-        infoStr += ".";
+        infoStr += " ...";
 
         LOG_INFO(infoStr);
 

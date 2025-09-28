@@ -117,7 +117,6 @@ TextWidget::TextWidget(uint16_t width, uint16_t height, int16_t x, int16_t y) :
         DEFAULT_TEXT_COLOR_GRADIENT_LENGTH,
         DEFAULT_TEXT_COLOR_GRADIENT_VERTICAL),
     m_gfxText(DEFAULT_FONT, m_solidBrush),
-    m_gfxNewText(DEFAULT_FONT, m_solidBrush),
     m_scrollingCnt(0U),
     m_scrollOffset(0),
     m_scrollTimer(),
@@ -153,7 +152,6 @@ TextWidget::TextWidget(const String& str, const Color& color) :
         DEFAULT_TEXT_COLOR_GRADIENT_LENGTH,
         DEFAULT_TEXT_COLOR_GRADIENT_VERTICAL),
     m_gfxText(DEFAULT_FONT, m_solidBrush),
-    m_gfxNewText(DEFAULT_FONT, m_solidBrush),
     m_scrollingCnt(0U),
     m_scrollOffset(0),
     m_scrollTimer(),
@@ -196,7 +194,6 @@ TextWidget::TextWidget(const TextWidget& widget) :
     m_solidBrush(widget.m_solidBrush),
     m_linearGradientBrush(widget.m_linearGradientBrush),
     m_gfxText(widget.m_gfxText),
-    m_gfxNewText(widget.m_gfxNewText),
     m_scrollingCnt(widget.m_scrollingCnt),
     m_scrollOffset(widget.m_scrollOffset),
     m_scrollTimer(widget.m_scrollTimer),
@@ -226,7 +223,6 @@ TextWidget& TextWidget::operator=(const TextWidget& widget)
         m_solidBrush          = widget.m_solidBrush;
         m_linearGradientBrush = widget.m_linearGradientBrush;
         m_gfxText             = widget.m_gfxText;
-        m_gfxNewText          = widget.m_gfxNewText;
         m_scrollingCnt        = widget.m_scrollingCnt;
         m_scrollOffset        = widget.m_scrollOffset;
         m_scrollTimer         = widget.m_scrollTimer;
@@ -803,15 +799,16 @@ uint32_t TextWidget::getSingleLine(String& singleLine, const TWAbstractSyntaxTre
 void TextWidget::show(YAGfx& gfx, const TWAbstractSyntaxTree& ast, bool isScrolling)
 {
     uint32_t                 astLength                 = ast.length();
-    YAGfxSolidBrush          solidBrushBackup          = m_solidBrush;
-    YAGfxLinearGradientBrush linearGradientBrushBackup = m_linearGradientBrush;
-    YAGfxBrush&              textBrushBackup           = m_gfxText.getBrush(); /* Backup text brush */
-    Alignment::Horizontal    hAlignBackup              = m_hAlign;             /* Backup alignment */
-    Alignment::Vertical      vAlignBackup              = m_vAlign;             /* Backup alignment */
-    Alignment::Horizontal    hAlign                    = m_hAlign;             /* Used to detect horizontal alignment change */
+    YAGfxSolidBrush          solidBrushBackup          = m_solidBrush;          /* Backup solid brush */
+    YAGfxLinearGradientBrush linearGradientBrushBackup = m_linearGradientBrush; /* Backup linear gradient brush */
+    YAGfxBrush&              textBrushBackup           = m_gfxText.getBrush();  /* Backup text brush */
+    Alignment::Horizontal    hAlignBackup              = m_hAlign;              /* Backup alignment */
+    Alignment::Vertical      vAlignBackup              = m_vAlign;              /* Backup alignment */
+    Alignment::Horizontal    hAlign                    = m_hAlign;              /* Used to detect horizontal alignment change */
     int16_t                  hAlignPosX                = 0;
     uint32_t                 idx;
     String                   singleLine;
+    uint8_t                  brushIntensity;
 
     /* First run handles only format tags, which influence the whole text. */
     for (idx = 0U; idx < astLength; ++idx)
@@ -869,10 +866,15 @@ void TextWidget::show(YAGfx& gfx, const TWAbstractSyntaxTree& ast, bool isScroll
         }
     }
 
-    /* Restore original in case it was changed by format keywords. */
+    /* Restore original backups in case it was changed by format keywords.
+     * Important is to keep the current brush intensity, because it would
+     * disturb the fade effect.
+     */
+    brushIntensity        = m_gfxText.getBrush().getIntensity();
     m_solidBrush          = solidBrushBackup;
     m_linearGradientBrush = linearGradientBrushBackup;
     m_gfxText.setBrush(textBrushBackup);
+    m_gfxText.getBrush().setIntensity(brushIntensity);
     m_hAlign = hAlignBackup;
     m_vAlign = vAlignBackup;
 }
@@ -1071,17 +1073,23 @@ void TextWidget::handleLinearGradientHorizontal(YAGfx& gfx, const String& keywor
 
 void TextWidget::solidTextColor(YAGfx& gfx, const String& keyword)
 {
+    uint8_t intensity = m_gfxText.getBrush().getIntensity();
+
     UTIL_NOT_USED(gfx);
     UTIL_NOT_USED(keyword);
 
+    m_solidBrush.setIntensity(intensity); /* Take over current intensity. */
     m_gfxText.setBrush(m_solidBrush);
 }
 
 void TextWidget::linearGradientTextColor(YAGfx& gfx, const String& keyword)
 {
+    uint8_t intensity = m_gfxText.getBrush().getIntensity();
+
     UTIL_NOT_USED(gfx);
     UTIL_NOT_USED(keyword);
 
+    m_linearGradientBrush.setIntensity(intensity); /* Take over current intensity. */
     m_gfxText.setBrush(m_linearGradientBrush);
 }
 
