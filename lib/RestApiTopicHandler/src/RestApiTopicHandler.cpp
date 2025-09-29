@@ -88,6 +88,10 @@ void RestApiTopicHandler::registerTopic(const String& deviceId, const String& en
                 [this, topicMetaData](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final) {
                     this->uploadHandler(request, filename, index, data, len, final, topicMetaData);
                 };
+            ArBodyHandlerFunction onBody =
+                [this, topicMetaData](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+                    this->bodyHandler(request, data, len, index, total, topicMetaData);
+                };
 
             topicMetaData->entityId      = entityId;
             topicMetaData->topic         = topic;
@@ -95,7 +99,7 @@ void RestApiTopicHandler::registerTopic(const String& deviceId, const String& en
             topicMetaData->setTopicFunc  = setTopicFunc;
             topicMetaData->uploadReqFunc = uploadReqFunc;
             topicMetaData->uri           = getUri(entityId, topic);
-            topicMetaData->webHandler    = &MyWebServer::getInstance().on(topicMetaData->uri.c_str(), HTTP_ANY, onRequest, onUpload);
+            topicMetaData->webHandler    = &MyWebServer::getInstance().on(topicMetaData->uri.c_str(), HTTP_ANY, onRequest, onUpload, onBody);
 
             LOG_INFO("Register: %s", topicMetaData->uri.c_str());
 
@@ -200,14 +204,46 @@ void RestApiTopicHandler::webReqHandler(AsyncWebServerRequest* request, TopicMet
             jsonDoc["status"] = "ok";
         }
     }
+    /* Check for content length. */
+    else if (MAX_CONTENT_LENGTH < request->contentLength())
+    {
+        LOG_WARNING("Content length exceeds maximum allowed.");
+
+        RestUtil::prepareRspError(jsonDoc, "Content length exceeds maximum allowed.");
+
+        jsonDoc.remove("data");
+
+        httpStatusCode = HttpStatus::STATUS_CODE_PAYLOAD_TOO_LARGE;
+    }
     else if ((HTTP_POST == request->method()) &&
              (nullptr != topicMetaData->setTopicFunc))
     {
         DynamicJsonDocument jsonDocPar(JSON_DOC_SIZE);
         JsonObjectConst     jsonValue;
 
-        /* Topic data is in the HTTP parameters and needs to be converted to JSON. */
-        par2Json(jsonDocPar, request);
+        /* JSON in the body has higher priority than the HTTP parameters! */
+        if (nullptr == request->_tempObject)
+        {
+            /* Topic data is in the HTTP parameters and needs to be converted to JSON. */
+            par2Json(jsonDocPar, request);
+        }
+        else
+        {
+            DeserializationError error = deserializeJson(jsonDocPar, static_cast<const char*>(request->_tempObject));
+
+            if (DeserializationError::Ok != error)
+            {
+                LOG_WARNING("Received invalid payload.");
+            }
+
+            delete[] static_cast<uint8_t*>(request->_tempObject);
+            request->_tempObject = nullptr;
+
+            if (0U < request->args())
+            {
+                LOG_WARNING("Ignore HTTP parameters, because JSON is in the body.");
+            }
+        }
 
         /* Add uploaded file */
         if ((false == topicMetaData->isUploadError) &&
@@ -327,6 +363,41 @@ void RestApiTopicHandler::uploadHandler(AsyncWebServerRequest* request, const St
 
             request->_tempFile.close();
         }
+    }
+}
+
+void RestApiTopicHandler::bodyHandler(AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total, TopicMetaData* topicMetaData)
+{
+    if ((nullptr == request) ||
+        (nullptr == topicMetaData) ||
+        (MAX_CONTENT_LENGTH < total)) /* Ignore incoming data if it exceeds the maximum content length. */
+    {
+        return;
+    }
+
+    if (0U == index)
+    {
+        if (nullptr != request->_tempObject)
+        {
+            LOG_ERROR("Temporary object already allocated.");
+            request->abort();
+        }
+        else
+        {
+            request->_tempObject = new (std::nothrow) uint8_t[total + 1U]; /* null-terminated string */
+
+            if (request->_tempObject == NULL)
+            {
+                LOG_ERROR("Failed to allocate temporary object of %d bytes.", total + 1U);
+                request->abort();
+            }
+        }
+    }
+
+    if (nullptr != request->_tempObject)
+    {
+        uint8_t* buffer = static_cast<uint8_t*>(request->_tempObject);
+        memcpy(&buffer[index], data, len);
     }
 }
 
