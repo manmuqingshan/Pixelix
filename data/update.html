@@ -233,6 +233,14 @@
                     } else {
 
                         dialog.show("Restore", "<p>Please wait, restore is in progress.</p>").then(function() {
+                            progress = 2;
+                            updateProgressBar("progressBarRestore", progress);
+
+                            return restClient.removeFile("/configuration/*.json")
+                        }).then(function() {
+                            progress = 10;
+                            updateProgressBar("progressBarRestore", progress);
+
                             return zip.loadAsync(file);
                         }).then(function(zipObj) {
                             return new Promise(function(resolve, reject) {

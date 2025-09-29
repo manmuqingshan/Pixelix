@@ -1618,6 +1618,9 @@ static void uploadHandler(AsyncWebServerRequest* request, const String& filename
 
 /**
  * Delete file from filesystem (?path=<path>).
+ * Delete directories is not supported.
+ * A single wildcard '*' is supported at the start, middle or end of the filename, but not in the directory part.
+ * E.g.:: /configuration/*.json will delete all .json files in the /configuration directory.
  *
  * DELETE \c "/api/v1/fs/file"
  *
@@ -1641,18 +1644,127 @@ static void handleFileDelete(AsyncWebServerRequest* request)
     }
     else
     {
-        const String& path = request->arg("path");
+        const char*   WILDCARD    = "*";
+        const String& path        = request->arg("path");
+        int32_t       lastSlash   = path.lastIndexOf('/');
+        String        dir         = (0 <= lastSlash) ? path.substring(0U, static_cast<size_t>(lastSlash)) : "/";
+        String        filename    = (0 <= lastSlash) ? path.substring(static_cast<size_t>(lastSlash + 1)) : path;
+        int32_t       wildcardPos = filename.indexOf('*');
+        bool          anyRemoved  = false;
 
         LOG_INFO("File \"%s\" removal requested.", path.c_str());
 
-        if (false == FILESYSTEM.remove(path))
+        /* Wildcard used, but not allowed in directory part. */
+        if (0 <= dir.indexOf(WILDCARD))
         {
-            RestUtil::prepareRspError(jsonDoc, "Failed to remove file.");
-            httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            RestUtil::prepareRspError(jsonDoc, "Wildcard not allowed in directory part.");
+            httpStatusCode = HttpStatus::STATUS_CODE_BAD_REQUEST;
+        }
+        else if (0 <= wildcardPos)
+        {
+            File dirFile = FILESYSTEM.open(dir, "r");
+
+            if ((false == dirFile) || (false == dirFile.isDirectory()))
+            {
+                RestUtil::prepareRspError(jsonDoc, "Invalid directory.");
+                httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            }
+            else
+            {
+                File file = dirFile.openNextFile();
+
+                while (true == file)
+                {
+                    String fname = String(file.name());
+
+                    if (false == file.isDirectory())
+                    {
+                        bool   match    = false;
+                        String fullPath = String(file.path());
+
+                        /* Check if filename matches wildcard pattern. */
+                        if (filename == WILDCARD)
+                        {
+                            match = true;
+                        }
+                        else
+                        {
+                            int32_t startPos   = filename.indexOf(WILDCARD);
+                            String  prefix     = filename.substring(0U, static_cast<size_t>(startPos));
+                            String  suffix     = filename.substring(static_cast<size_t>(startPos + 1));
+                            int32_t fnameSlash = fname.lastIndexOf('/');
+                            String  fnameOnly;
+
+                            if (0 <= fnameSlash)
+                            {
+                                fnameOnly = fname.substring(static_cast<size_t>(fnameSlash + 1));
+                            }
+                            else
+                            {
+                                fnameOnly = fname;
+                            }
+
+                            if ((0U == prefix.length()) && (0U == suffix.length()))
+                            {
+                                match = true;
+                            }
+                            else if (0U == prefix.length())
+                            {
+                                match = fnameOnly.endsWith(suffix);
+                            }
+                            else if (0U == suffix.length())
+                            {
+                                match = fnameOnly.startsWith(prefix);
+                            }
+                            else
+                            {
+                                match = (fnameOnly.startsWith(prefix) && fnameOnly.endsWith(suffix));
+                            }
+                        }
+
+                        file.close();
+
+                        if (true == match)
+                        {
+                            LOG_DEBUG("Remove file \"%s\".", fullPath.c_str());
+
+                            if (true == FILESYSTEM.remove(fullPath))
+                            {
+                                anyRemoved = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        file.close();
+                    }
+
+                    file = dirFile.openNextFile();
+                }
+                dirFile.close();
+
+                if (true == anyRemoved)
+                {
+                    (void)RestUtil::prepareRspSuccess(jsonDoc);
+                }
+                else
+                {
+                    RestUtil::prepareRspError(jsonDoc, "No matching files found to remove.");
+                    httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+                }
+            }
         }
         else
         {
-            (void)RestUtil::prepareRspSuccess(jsonDoc);
+            if (false == FILESYSTEM.remove(path))
+            {
+                RestUtil::prepareRspError(jsonDoc, "Failed to remove file.");
+                httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            }
+            else
+            {
+                (void)RestUtil::prepareRspSuccess(jsonDoc);
+            }
         }
     }
 
