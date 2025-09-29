@@ -1620,7 +1620,6 @@ static void uploadHandler(AsyncWebServerRequest* request, const String& filename
  * Delete file from filesystem (?path=<path>).
  * Delete directories is not supported.
  * A single wildcard '*' is supported at the start, middle or end of the filename, but not in the directory part.
- * E.g.:: /configuration/*.json will delete all .json files in the /configuration directory.
  *
  * DELETE \c "/api/v1/fs/file"
  *
