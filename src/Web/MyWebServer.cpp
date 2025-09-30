@@ -62,11 +62,15 @@ static void error(AsyncWebServerRequest* request);
  * Local Variables
  *****************************************************************************/
 
-/** Web server */
-static AsyncWebServer   gWebServer(WebConfig::WEBSERVER_PORT);
+/**
+ * The web server instance.
+ * 
+ * @return Its not a function, it's a variable! Doxygen just gets confused here.
+ */
+static AsyncWebServer gWebServer(WebConfig::WEBSERVER_PORT);
 
 /** Is captive portal enabled? */
-static bool             gIsCaptivePortalEnabled = false;
+static bool gIsCaptivePortalEnabled = false;
 
 /******************************************************************************
  * Public Methods
@@ -155,5 +159,4 @@ static void error(AsyncWebServerRequest* request)
     {
         Pages::error(request);
     }
-
 }
