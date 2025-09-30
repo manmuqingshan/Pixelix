@@ -37,6 +37,9 @@
 
 #ifndef NATIVE
 
+/**
+ * No EEPROM support required.
+ */
 #define STREAMUTILS_ENABLE_EEPROM 0
 #include <StreamUtils.h>
 

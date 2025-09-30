@@ -62,6 +62,9 @@ $INCLUDES
 
 $INSTANCES
 
+/**
+ * List of topic handlers.
+ */
 static ITopicHandler* gList[] =
 {
 $LIST_OF_INSTANCES

@@ -77,68 +77,68 @@ public:
      */
     enum ViewMode
     {
-        DIGITAL_ONLY = 0U,       /**< Show date and time */
-        ANALOG_ONLY,             /**< Show only the date */
-        DIGITAL_AND_ANALOG,      /**< Show only the time */
-        VIEW_MODE_MAX            /**< Number of configurations */
+        DIGITAL_ONLY = 0U,  /**< Show date and time */
+        ANALOG_ONLY,        /**< Show only the date */
+        DIGITAL_AND_ANALOG, /**< Show only the time */
+        VIEW_MODE_MAX       /**< Number of configurations */
     };
 
     /**
      * Initialize view, which will prepare the widgets and the default values.
-     * 
+     *
      * @param[in] width     Display width in pixel.
      * @param[in] height    Display height in pixel.
      */
-    virtual void init(uint16_t width, uint16_t height) = 0;
+    virtual void init(uint16_t width, uint16_t height)                                         = 0;
 
     /**
      * Get font type.
-     * 
+     *
      * @return The font type the view uses.
      */
-    virtual Fonts::FontType getFontType() const = 0;
+    virtual Fonts::FontType getFontType() const                                                = 0;
 
     /**
      * Set font type.
-     * 
+     *
      * @param[in] fontType  The font type which the view shall use.
      */
-    virtual void setFontType(Fonts::FontType fontType) = 0;
+    virtual void setFontType(Fonts::FontType fontType)                                         = 0;
 
     /**
      * Update the underlying canvas.
-     * 
+     *
      * @param[in] gfx   Graphic functionality to draw on the underlying canvas.
      */
-    virtual void update(YAGfx& gfx) = 0;
+    virtual void update(YAGfx& gfx)                                                            = 0;
 
     /**
      * Get text (non-formatted).
-     * 
+     *
      * @return Text
      */
-    virtual String getText() const = 0;
+    virtual String getText() const                                                             = 0;
 
     /**
      * Get text (formatted).
-     * 
+     *
      * @return Text
      */
-    virtual String getFormatText() const = 0;
+    virtual String getFormatText() const                                                       = 0;
 
     /**
      * Set text (formatted).
-     * 
+     *
      * @param[in] formatText    Formatted text to show.
      */
-    virtual void setFormatText(const String& formatText) = 0;
+    virtual void setFormatText(const String& formatText)                                       = 0;
 
     /**
      * Get the start of week configuration (Sunday = 0).
      *
      * @return uint8_t
      */
-    virtual uint8_t getStartOfWeek() const = 0;
+    virtual uint8_t getStartOfWeek() const                                                     = 0;
 
     /**
      * Set the start of week configuration (Sunday = 0).
@@ -147,83 +147,82 @@ public:
      *
      * @return bool success
      */
-    virtual bool setStartOfWeek(uint8_t startOfWeek) = 0;
+    virtual bool setStartOfWeek(uint8_t startOfWeek)                                           = 0;
 
     /**
      * Get the color to show the actual day.
-     * 
+     *
      * @return Color
      */
-    virtual const Color& getDayOnColor() const = 0;
+    virtual const Color& getDayOnColor() const                                                 = 0;
 
     /**
      * Set the color which is used for the actual day.
-     * 
+     *
      * @param[in] color Color for the actual day
      */
-    virtual void setDayOnColor(const Color& color) = 0;
+    virtual void setDayOnColor(const Color& color)                                             = 0;
 
     /**
      * Get the color to show the other days than the actual one.
-     * 
+     *
      * @return Color
      */
-    virtual const Color& getDayOffColor() const = 0;
+    virtual const Color& getDayOffColor() const                                                = 0;
 
     /**
      * Set the color which is used for the other days than the actual day.
-     * 
+     *
      * @param[in] color Color for the other days
      */
-    virtual void setDayOffColor(const Color& color) = 0;
+    virtual void setDayOffColor(const Color& color)                                            = 0;
 
     /**
      * Get the view mode (analog, digital or both).
-     * 
-     * @return View mode 
+     *
+     * @return View mode
      */
-    virtual ViewMode getViewMode() const = 0;
+    virtual ViewMode getViewMode() const                                                       = 0;
 
     /**
      * Set the view mode (analog, digital or both).
-     * 
+     *
      * @param[in] mode  View mode
-     * 
-     * @return bool success of failure 
+     *
+     * @return bool success of failure
      */
-    virtual bool setViewMode(ViewMode mode) = 0;
+    virtual bool setViewMode(ViewMode mode)                                                    = 0;
 
     /**
-     * @file   IDateTimeView.h
- * @brief Update current time values in view.
-     * 
+     * Update current time values in view.
+     *
      * @param[in] now current time
      */
-    virtual void setCurrentTime(const tm& now) = 0;
+    virtual void setCurrentTime(const tm& now)                                                 = 0;
 
-        /**
+    /**
      * Get current active configuration in JSON format.
-     * 
+     *
      * @param[out] jsonCfg Configuration
      */
-    virtual void getConfiguration(JsonObject& jsonCfg) const = 0;
+    virtual void getConfiguration(JsonObject& jsonCfg) const                                   = 0;
 
     /**
      * Apply configuration from JSON.
-     * 
+     *
      * @param[in] jsonCfg Configuration
-     * 
+     *
      * @return If successful set, it will return true otherwise false.
      */
-    virtual bool setConfiguration(const JsonObjectConst& jsonCfg) = 0;
+    virtual bool setConfiguration(const JsonObjectConst& jsonCfg)                              = 0;
 
-     /**
+    /**
      * Merge JSON configuration with local settings to create a complete set.
      *
      * The received configuration may not contain all single key/value pair.
      * Therefore create a complete internal configuration and overwrite it
      * with the received one.
-     *  
+     *
      * @param[out] jsonMerged  The complete config set with merge content from jsonSource.
      * @param[in]  jsonSource  The recevied congi set, which may not cover all keys.
      * @return     true        Keys needed merging.
@@ -245,6 +244,6 @@ protected:
  * Functions
  *****************************************************************************/
 
-#endif  /* IDATE_TIME_VIEW_H */
+#endif /* IDATE_TIME_VIEW_H */
 
 /** @} */

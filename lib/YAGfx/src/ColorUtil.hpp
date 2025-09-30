@@ -28,7 +28,7 @@
  * @file   ColorUtil.hpp
  * @brief  Color utility functions
  * @author Andreas Merkle <web@blue-andi.de>
- * 
+ *
  * @addtogroup GFX
  *
  * @{
@@ -193,11 +193,11 @@ static inline uint16_t to565(uint32_t rgb888)
 }
 
 /**
- * @file   ColorUtil.hpp
- * @brief Convert RGB565 color to RGB888 color.
+ * Convert RGB565 color to RGB888 color.
  *
  * @param[in] rgb565 RGB565 color value
- * @return uint32_t RGB888 color value
+ *
+ * @return RGB888 color value
  */
 static inline uint32_t to888(uint16_t rgb565)
 {
@@ -210,6 +210,6 @@ static inline uint32_t to888(uint16_t rgb565)
 
 }; /* namespace ColorUtil */
 
-#endif  /* COLOR_UTIL_HPP */
+#endif /* COLOR_UTIL_HPP */
 
 /** @} */

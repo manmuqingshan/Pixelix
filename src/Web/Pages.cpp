@@ -337,6 +337,8 @@ void Pages::error(AsyncWebServerRequest* request)
  * in every page. It is responsible for the data binding.
  *
  * @param[in] var   Name of variable in the template
+ * 
+ * @return The variable content.
  */
 static String tmplPageProcessor(const String& var)
 {

@@ -105,6 +105,9 @@ typedef struct _BmpV5Header
 
 } __attribute__ ((packed)) BmpV5Header;
 
+/**
+ * Compression methods.
+ */
 typedef enum
 {
     COMPRESSION_METHOD_RGB          = 0,    /**< None */

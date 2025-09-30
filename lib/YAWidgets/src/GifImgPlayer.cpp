@@ -69,8 +69,13 @@
 
 #else /* GIF_IMG_PLAYER_DEBUG_MODE == GIF_IMG_PLAYER_DEBUG_ENABLE */
 
+/** Debug log macro. */
 #define GIF_IMG_PLAYER_LOG_DEBUG(...)
+
+/** Reset the frame counter to zero. */
 #define GIF_IMG_PLAYER_RESET_FRAME_COUNT()
+
+/** Increase the frame counter by one. */
 #define GIF_IMG_PLAYER_INC_FRAME_COUNT()
 
 #endif /* GIF_IMG_PLAYER_DEBUG_MODE == GIF_IMG_PLAYER_DEBUG_ENABLE */

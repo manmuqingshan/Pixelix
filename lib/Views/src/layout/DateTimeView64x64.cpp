@@ -101,38 +101,8 @@ const char* DateTimeView64x64::ANALOG_CLOCK_COLOR_KEYS[DateTimeView64x64::ANA_CL
  * Prototypes
  *****************************************************************************/
 
-/**
- * @file   DateTimeView64x64.cpp
- * @brief Get the Minute Sinus value
- *
- * @param[in] angle Minute angle, must be multiple of 6°  (360 °/ 60 minutes)
- * @return sinus value for angle (scaled by 10.000)
- */
 static int16_t getMinuteSinus(uint16_t angle);
-
-/**
- * @file   DateTimeView64x64.cpp
- * @brief Get the Minute Cosinus value
- *
- * @param[in] angle Minute angle, must be multiple of 6° (360 °/ 60 minutes)
- * @return cosinus value for angle (scaled by 10.000)
- */
 static int16_t getMinuteCosinus(uint16_t angle);
-
-/**
- * @file   DateTimeView64x64.cpp
- * @brief Get hour hand destination minute mark.
- *
- * The hour hand direction also depends on the elapsed minutes of
- * the actual hour to avoid long jumps at hour change.
- *
- * Example: At 12:30, it should point to the middle between 12 and 1.
- *
- * @param[in] current hour value
- * @param[in] current minute value
- *
- * @return minute value the hour hand should point to.
- */
 static int16_t getHourHandDestination(int hour, int minute);
 
 /******************************************************************************
@@ -398,6 +368,13 @@ bool DateTimeView64x64::mergeConfiguration(JsonObject& jsonMerged, const JsonObj
  * Local Functions
  *****************************************************************************/
 
+/**
+ * Get the Minute Sinus value
+ *
+ * @param[in] angle Minute angle, must be multiple of 6°  (360 °/ 60 minutes)
+ * 
+ * @return sinus value for angle (scaled by 10.000)
+ */
 static int16_t getMinuteSinus(uint16_t angle)
 {
     /*
@@ -428,11 +405,31 @@ static int16_t getMinuteSinus(uint16_t angle)
     return sinus;
 }
 
+/**
+ * Get the Minute Cosinus value
+ *
+ * @param[in] angle Minute angle, must be multiple of 6° (360 °/ 60 minutes)
+ * 
+ * @return cosinus value for angle (scaled by 10.000)
+ */
 static int16_t getMinuteCosinus(uint16_t angle)
 {
     return getMinuteSinus(angle + 90U);
 }
 
+/**
+ * Get hour hand destination minute mark.
+ *
+ * The hour hand direction also depends on the elapsed minutes of
+ * the actual hour to avoid long jumps at hour change.
+ *
+ * Example: At 12:30, it should point to the middle between 12 and 1.
+ *
+ * @param[in] hour   hour value
+ * @param[in] minute minute value
+ *
+ * @return minute value the hour hand should point to.
+ */
 static int16_t getHourHandDestination(int hour, int minute)
 {
     return (hour * MINUTE_HOUR_DELTA) + (minute / MINUTE_MARKS_COUNT);

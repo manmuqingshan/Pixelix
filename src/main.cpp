@@ -62,11 +62,17 @@
  *****************************************************************************/
 
 #ifndef CONFIG_ESP_LOG_SEVERITY
+
+/** The ESP log severity level (default). */
 #define CONFIG_ESP_LOG_SEVERITY (ESP_LOG_INFO)
+
 #endif /* CONFIG_ESP_LOG_SEVERITY */
 
 #ifndef CONFIG_LOG_SEVERITY
+
+/** The Pixelix log severity level (default). */
 #define CONFIG_LOG_SEVERITY (Logging::LOG_LEVEL_INFO)
+
 #endif /* CONFIG_LOG_SEVERITY */
 
 #if CONFIG_BUTTON_CTRL == 2

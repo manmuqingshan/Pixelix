@@ -294,8 +294,7 @@ public:
     }
 
     /**
-     * @file   DateTimeView32x8.h
- * @brief Update current time values in view.
+     * Update current time values in view.
      *
      * @param[in] now current time
      */
