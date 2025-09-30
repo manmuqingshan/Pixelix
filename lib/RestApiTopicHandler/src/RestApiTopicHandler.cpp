@@ -216,6 +216,21 @@ void RestApiTopicHandler::webReqHandler(AsyncWebServerRequest* request, TopicMet
 
         httpStatusCode = HttpStatus::STATUS_CODE_PAYLOAD_TOO_LARGE;
     }
+    /* Check for body length indirectly if the content type is JSON.
+     * In this case the bodyHandler() method was called before and if the body length
+     * exceeds the maximum allowed, the temporary object will be nullptr.
+     */
+    else if ((true == request->contentType().startsWith("application/json")) &&
+             (nullptr == request->_tempObject))
+    {
+        LOG_WARNING("Body length exceeds maximum allowed.");
+
+        RestUtil::prepareRspError(jsonDoc, "Body length exceeds maximum allowed.");
+
+        jsonDoc.remove("data");
+
+        httpStatusCode = HttpStatus::STATUS_CODE_PAYLOAD_TOO_LARGE;
+    }
     else if ((HTTP_POST == request->method()) &&
              (nullptr != topicMetaData->setTopicFunc))
     {
@@ -371,7 +386,7 @@ void RestApiTopicHandler::bodyHandler(AsyncWebServerRequest* request, uint8_t* d
 {
     if ((nullptr == request) ||
         (nullptr == topicMetaData) ||
-        (MAX_CONTENT_LENGTH < total)) /* Ignore incoming data if it exceeds the maximum content length. */
+        (MAX_BODY_LENGTH < total)) /* Ignore incoming data if it exceeds the maximum body length. */
     {
         return;
     }

@@ -150,7 +150,14 @@ public:
      * If the content length exceeds this value, the request will be rejected.
      * This is a safety mechanism to avoid memory exhaustion.
      */
-    const size_t MAX_CONTENT_LENGTH = 16384U; /**< 16kB */
+    static const size_t MAX_CONTENT_LENGTH = 50U * 1024U; /* 50 KB */
+
+    /**
+     * Maximum body length for HTTP POST/PUT requests.
+     * If the body length exceeds this value, the request will be rejected.
+     * This is a safety mechanism to avoid memory exhaustion.
+     */
+    static const size_t MAX_BODY_LENGTH    = 8U * 1024U; /* 8 KB */
 
 private:
 
