@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TWAbstractSyntaxTree.cpp
  * @brief  Text widget abstract syntax tree
  * @author Andreas Merkle <web@blue-andi.de>
  */

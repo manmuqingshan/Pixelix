@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   InitState.h
  * @brief  System state: Init
  * @author Andreas Merkle <web@blue-andi.de>
  *

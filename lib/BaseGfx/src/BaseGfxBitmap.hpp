@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxBitmap.hpp
  * @brief  Basic graphics bitmap
  * @author Andreas Merkle <web@blue-andi.de>
  *

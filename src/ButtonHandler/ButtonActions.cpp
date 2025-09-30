@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ButtonActions.cpp
  * @brief  Button actions
  * @author Andreas Merkle <web@blue-andi.de>
  */

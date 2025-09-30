@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Rgb565.h
  * @brief  Color in RGB565 format
  * @author Andreas Merkle <web@blue-andi.de>
  *

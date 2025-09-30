@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WebSocket.cpp
  * @brief  Websocket server
  * @author Andreas Merkle <web@blue-andi.de>
  */

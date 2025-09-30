@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextLampViewBase.hpp
  * @brief  Base class for view with icon, text and lamps.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

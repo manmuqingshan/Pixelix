@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Mutex.hpp
  * @brief  freeRTOS mutex wrapper
  * @author Andreas Merkle <web@blue-andi.de>
  * 

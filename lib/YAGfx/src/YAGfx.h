@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   xxxx
  * @brief  Yet anoterh GFX class
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxPen.h
  * @brief  Yet anoterh GFX drawing pen class
  * @author Andreas Merkle <web@blue-andi.de>
  *

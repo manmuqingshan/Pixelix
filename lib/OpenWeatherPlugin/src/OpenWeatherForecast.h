@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherForecast.h
  * @brief  OpenWeather source for forecast weather data
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValue.h
  * @brief  Key value pair
  * @author Andreas Merkle <web@blue-andi.de>
  *

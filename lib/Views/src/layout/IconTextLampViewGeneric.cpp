@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextLampViewGeneric.cpp
  * @brief  Generic view with icon, text and lamps for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

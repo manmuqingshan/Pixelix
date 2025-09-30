@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdGetDisp.h
  * @brief  Websocket command get display content
  * @author Andreas Merkle <web@blue-andi.de>
  * 

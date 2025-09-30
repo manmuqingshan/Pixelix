@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Display.cpp
  * @brief  HUB75 matrix display
  * @author Mariano Dupont <marianomd@gmail.com>
  */

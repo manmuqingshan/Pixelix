@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IDateTimeView.h
  * @brief  Date and time view interface.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -193,7 +194,8 @@ public:
     virtual bool setViewMode(ViewMode mode) = 0;
 
     /**
-     * @brief Update current time values in view.
+     * @file   IDateTimeView.h
+ * @brief Update current time values in view.
      * 
      * @param[in] now current time
      */

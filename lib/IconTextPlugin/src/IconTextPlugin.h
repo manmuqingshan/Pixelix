@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextPlugin.h
  * @brief  Icon and text plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TimerSetting.h
  * @brief  Timer setting
  * @author Andreas Merkle <web@blue-andi.de>
  *

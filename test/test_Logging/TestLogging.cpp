@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestLogging.cpp
  * @brief  Test Logging.
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SysMsg.h
  * @brief  System message
  * @author Andreas Merkle <web@blue-andi.de>
  *

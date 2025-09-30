@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxBrush.h
  * @brief  Yet another brush class
  * @author Andreas Merkle <web@blue-andi.de>
  *

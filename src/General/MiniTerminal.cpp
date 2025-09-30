@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MiniTerminal.cpp
  * @brief  Mini-Terminal
  * @author Andreas Merkle <web@blue-andi.de>
  */

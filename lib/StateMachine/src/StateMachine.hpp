@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   StateMachine.hpp
  * @brief  Abstract state machine
  * @author Andreas Merkle <web@blue-andi.de>
  * 

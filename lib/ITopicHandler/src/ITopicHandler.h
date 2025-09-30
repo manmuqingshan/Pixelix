@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ITopicHandler.h
  * @brief  Topic handler interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestLogger.cpp
  * @brief  Logging interface for testing purposes.
  * @author Andreas Merkle <web@blue-andi.de>
  */

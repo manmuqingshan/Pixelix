@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Topics.cpp
  * @brief  Topics
  * @author Andreas Merkle <web@blue-andi.de>
  */

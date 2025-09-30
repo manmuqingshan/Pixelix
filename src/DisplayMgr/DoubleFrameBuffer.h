@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DoubleFrameBuffer.h
  * @brief  Double frame buffer
  * @author Andreas Merkle <web@blue-andi.de>
  *

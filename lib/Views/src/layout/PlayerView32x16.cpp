@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PlayerView32x16.cpp
  * @brief  View with icon, text and progress bar for 32x16 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

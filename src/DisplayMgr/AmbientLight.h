@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AmbientLight.h
  * @brief  Ambient light functions
  * @author Andreas Merkle <web@blue-andi.de>
  *

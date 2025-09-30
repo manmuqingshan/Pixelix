@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorPlugin.h
  * @brief  Sensor plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

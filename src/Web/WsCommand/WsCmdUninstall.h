@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdUninstall.h
  * @brief  Websocket command to uninstall a plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

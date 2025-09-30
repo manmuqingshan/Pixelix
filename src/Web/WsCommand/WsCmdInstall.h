@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdInstall.h
  * @brief  Websocket command to install a plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

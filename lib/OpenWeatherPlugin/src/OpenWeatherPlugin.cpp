@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherPlugin.cpp
  * @brief  OpenWeather plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

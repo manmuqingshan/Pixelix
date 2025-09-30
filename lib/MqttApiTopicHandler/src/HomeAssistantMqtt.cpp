@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   HomeAssistantMqtt.cpp
  * @brief  Home Assistant MQTT extension
  * @author Andreas Merkle <web@blue-andi.de>
  */

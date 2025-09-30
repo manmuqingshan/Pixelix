@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ClockDrv.h
  * @brief  Clock driver
  * @author Yann Le Glaz <yann_le@web.de>
  *

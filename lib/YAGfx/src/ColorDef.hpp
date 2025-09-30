@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ColorDef.hpp
  * @brief  Color definitions
  * @author Andreas Merkle <web@blue-andi.de>
  *

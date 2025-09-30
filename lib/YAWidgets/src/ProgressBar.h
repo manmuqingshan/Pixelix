@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ProgressBar.h
  * @brief  Progress bar
  * @author Andreas Merkle <web@blue-andi.de>
  * 

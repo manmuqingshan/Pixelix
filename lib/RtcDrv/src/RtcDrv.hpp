@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RtcDrv.hpp
  * @brief  RTC driver selector
  * @author Andreas Merkle <web@blue-andi.de>
  * 

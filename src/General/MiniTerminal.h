@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MiniTerminal.h
  * @brief  Mini-Terminal
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -108,7 +109,8 @@ public:
     }
 
     /**
-     * @brief Table entry for known terminal commands
+     * @file   MiniTerminal.h
+ * @brief Table entry for known terminal commands
      * 
      */
     struct CmdTableEntry {

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasTextViewBase.hpp
  * @brief  Base class for view with canvas and text.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

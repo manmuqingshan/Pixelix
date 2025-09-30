@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdButton.cpp
  * @brief  Websocket command to control the virtual user button
  * @author Andreas Merkle <web@blue-andi.de>
  */

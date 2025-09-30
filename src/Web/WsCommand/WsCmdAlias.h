@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdAlias.h
  * @brief  Websocket command to get/set plugin alias name
  * @author Andreas Merkle <web@blue-andi.de>
  *

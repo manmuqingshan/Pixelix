@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestartState.cpp
  * @brief  System state: Restart
  * @author Andreas Merkle <web@blue-andi.de>
  */

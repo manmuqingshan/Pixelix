@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IService.hpp
  * @brief  Service interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

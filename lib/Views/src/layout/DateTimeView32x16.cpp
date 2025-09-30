@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimeView32x16.cpp
  * @brief  View for 32x16 LED matrix with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  */

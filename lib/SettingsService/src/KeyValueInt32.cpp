@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueInt32.cpp
  * @brief  Key value pair of int32_t type
  * @author Andreas Merkle <web@blue-andi.de>
  */

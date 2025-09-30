@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestGfx.cpp
  * @brief  Graphics interface for testing purposes.
  * @author Andreas Merkle <web@blue-andi.de>
  */

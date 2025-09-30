@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SunrisePlugin.cpp
  * @brief  Sunrise plugin.
  * @author Yann Le Glaz <yann_le@web.de>
  */

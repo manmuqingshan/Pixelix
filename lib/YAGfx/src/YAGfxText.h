@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxText.h
  * @brief  Yet another text class
  * @author Andreas Merkle <web@blue-andi.de>
  *

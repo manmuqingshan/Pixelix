@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IIconTextLampView.h
  * @brief  Icon, text and lamp view interface
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

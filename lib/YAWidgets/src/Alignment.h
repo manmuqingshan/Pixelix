@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Alignment.h
  * @brief  Alignment
  * @author Andreas Merkle <web@blue-andi.de>
  *

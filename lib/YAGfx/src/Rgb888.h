@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Rgb888.h
  * @brief  Color in RGB888 format
  * @author Andreas Merkle <web@blue-andi.de>
  *

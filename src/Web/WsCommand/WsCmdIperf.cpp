@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdIperf.cpp
  * @brief  Websocket command to start/stop iperf
  * @author Andreas Merkle <web@blue-andi.de>
  */

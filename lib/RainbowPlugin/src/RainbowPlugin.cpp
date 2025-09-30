@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RainbowPlugin.cpp
  * @brief  Rainbow demo plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

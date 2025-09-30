@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestApiTopicHandler.h
  * @brief  REST API topic handler
  * @author Andreas Merkle <web@blue-andi.de>
  *

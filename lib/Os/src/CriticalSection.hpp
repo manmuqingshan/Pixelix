@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CriticalSection.hpp
  * @brief  freeRTOS critical section wrapper
  * @author Andreas Merkle <web@blue-andi.de>
  * 

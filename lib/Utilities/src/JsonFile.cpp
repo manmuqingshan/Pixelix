@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   JsonFile.cpp
  * @brief  JSON file handler
  * @author Andreas Merkle <web@blue-andi.de>
  */

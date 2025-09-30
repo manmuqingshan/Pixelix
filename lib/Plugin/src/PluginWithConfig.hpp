@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PluginWithConfig.hpp
  * @brief  Plugin base with configuration
  * @author Andreas Merkle <web@blue-andi.de>
  *

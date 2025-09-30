@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ConnectingState.h
  * @brief  System state: Connecting
  * @author Andreas Merkle <web@blue-andi.de>
  * 

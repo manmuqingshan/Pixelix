@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IndicatorViewBase.hpp
  * @brief  Base class for view with indicators.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

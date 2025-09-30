@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseFont.hpp
  * @brief  Base font
  * @author Andreas Merkle <web@blue-andi.de>
  *

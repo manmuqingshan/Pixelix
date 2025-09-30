@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxCanvas.h
  * @brief  Yet anoterh GFX bitmap canvas class
  * @author Andreas Merkle <web@blue-andi.de>
  *

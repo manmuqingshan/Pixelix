@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MqttApiTopicHandler.h
  * @brief  MQTT API topic handler
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BatteryPlugin.h
  * @brief  Shows current battery state of charge.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

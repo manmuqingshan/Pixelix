@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   LzwDecoder.cpp
  * @brief  LZW decoder for GIF images
  * @author Andreas Merkle <web@blue-andi.de>
  */

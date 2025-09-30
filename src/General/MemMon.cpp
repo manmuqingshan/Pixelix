@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MemMon.cpp
  * @brief  Memory monitor
  * @author Andreas Merkle <web@blue-andi.de>
  */

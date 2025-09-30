@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IndicatorViewGeneric.h
  * @brief  Generic view with indicators in each display corner.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

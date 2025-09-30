@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestGfxText.cpp
  * @brief  Test the text graphic functions.
  * @author Andreas Merkle <web@blue-andi.de>
  */

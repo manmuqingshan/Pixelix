@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BuzzerDrv.h
  * @brief  Buzzer driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IGifLoader.h
  * @brief  Interface of GIF loader
  * @author Andreas Merkle <web@blue-andi.de>
  *

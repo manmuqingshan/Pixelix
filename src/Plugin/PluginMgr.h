@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PluginMgr.h
  * @brief  Plugin manager
  * @author Andreas Merkle <web@blue-andi.de>
  *

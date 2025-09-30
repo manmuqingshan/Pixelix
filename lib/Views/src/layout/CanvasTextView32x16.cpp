@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasTextView32x16.cpp
  * @brief  View for 32x16 LED matrix with canvas and text for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Display.h
  * @brief  LED matrix display
  * @author Andreas Merkle <web@blue-andi.de>
  *

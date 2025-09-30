@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MqttService.cpp
  * @brief  MQTT service
  * @author Andreas Merkle <web@blue-andi.de>
  */

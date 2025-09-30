@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestartMgr.cpp
  * @brief  Restart manager
  * @author Andreas Merkle <web@blue-andi.de>
  */

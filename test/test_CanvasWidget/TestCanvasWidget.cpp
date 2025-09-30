@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestCanvasWidget.cpp
  * @brief  Test canvas widget.
  * @author Andreas Merkle <web@blue-andi.de>
  */

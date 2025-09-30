@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SettingsService.h
  * @brief  Settings service
  * @author Andreas Merkle <web@blue-andi.de>
  *

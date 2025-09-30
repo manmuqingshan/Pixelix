@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TaskProxy.hpp
  * @brief  Task proxy, used for task decoupling.
  * @author Andreas Merkle <web@blue-andi.de>
  *

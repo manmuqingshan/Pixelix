@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasTextViewGeneric.cpp
  * @brief  Generic view with canvas and text for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

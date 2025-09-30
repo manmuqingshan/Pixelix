@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IPlayerView.h
  * @brief  Icon, text and progress bar view interface
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

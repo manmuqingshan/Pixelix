@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TimerService.cpp
  * @brief  Timer service
  * @author Andreas Merkle <web@blue-andi.de>
  */

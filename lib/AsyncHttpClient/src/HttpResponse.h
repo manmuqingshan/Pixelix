@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   HttpResponse.h
  * @brief  HTTP response
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   GrabViaRestPlugin.cpp
  * @brief  Grab information via REST plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

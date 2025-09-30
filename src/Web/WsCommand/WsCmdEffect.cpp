@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdEffect.cpp
  * @brief  Websocket command to control fade effects
  * @author Yann Le Glaz <yann_le@web.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextLampPlugin.cpp
  * @brief  Icon, text and lamp plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

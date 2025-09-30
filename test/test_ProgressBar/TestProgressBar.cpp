@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestProgressBar.cpp
  * @brief  Test progress bar.
  * @author Andreas Merkle <web@blue-andi.de>
  */

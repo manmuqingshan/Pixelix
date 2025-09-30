@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AudioService.cpp
  * @brief  Audio service
  * @author Andreas Merkle <web@blue-andi.de>
  */

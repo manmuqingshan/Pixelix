@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestBmpImgLoader.cpp
  * @brief  Test bitmap image loader.
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   GifImgPlayer.h
  * @brief  GIF image player
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAColor.h
  * @brief  Yet anoterh color class
  * @author Andreas Merkle <web@blue-andi.de>
  *

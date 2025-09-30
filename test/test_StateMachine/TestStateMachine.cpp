@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestStateMachine.cpp
  * @brief  Test the abstract state machine.
  * @author Andreas Merkle <web@blue-andi.de>
  */

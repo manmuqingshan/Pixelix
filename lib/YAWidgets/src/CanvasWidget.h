@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasWidget.h
  * @brief  Canvas widget
  * @author Andreas Merkle <web@blue-andi.de>
  *

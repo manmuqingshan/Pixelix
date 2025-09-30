@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueUInt8.h
  * @brief  Key value pair of uint8_t type
  * @author Andreas Merkle <web@blue-andi.de>
  *

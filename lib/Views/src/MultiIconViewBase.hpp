@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MultiIconViewBase.hpp
  * @brief  Base class for view with multiple icons.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

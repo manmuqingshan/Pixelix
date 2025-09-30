@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DDPPlugin.cpp
  * @brief  Distributed Display Protocol plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

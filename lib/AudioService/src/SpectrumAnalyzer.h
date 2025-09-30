@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SpectrumAnalyzer.h
  * @brief  Spectrum analyzer
  * @author Andreas Merkle <web@blue-andi.de>
  * 

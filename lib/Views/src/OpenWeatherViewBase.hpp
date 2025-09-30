@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherViewBase.hpp
  * @brief  Base class for view for OpenWeather.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

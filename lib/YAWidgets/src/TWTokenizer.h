@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TWTokenizer.h
  * @brief  Text widget tokenizer
  * @author Andreas Merkle <web@blue-andi.de>
  *

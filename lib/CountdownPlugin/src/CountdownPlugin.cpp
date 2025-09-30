@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CountdownPlugin.cpp
  * @brief  Countdown plugin.
  * @author Yann Le Glaz <yann_le@web.de>
  */

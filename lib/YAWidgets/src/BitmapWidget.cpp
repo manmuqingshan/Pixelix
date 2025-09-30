@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BitmapWidget.cpp
  * @brief  Bitmap Widget
  * @author Andreas Merkle <web@blue-andi.de>
  */

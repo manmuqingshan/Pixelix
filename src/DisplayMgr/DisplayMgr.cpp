@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DisplayMgr.cpp
  * @brief  Display manager
  * @author Andreas Merkle <web@blue-andi.de>
  */

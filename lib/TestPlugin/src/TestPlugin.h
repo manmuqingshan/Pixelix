@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestPlugin.h
  * @brief  Test plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

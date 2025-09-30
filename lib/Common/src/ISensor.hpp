@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ISensor.hpp
  * @brief  Generic sensor interface
  * @author Andreas Merkle <web@blue-andi.de>
  * 

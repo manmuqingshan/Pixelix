@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AsyncHttpClient.cpp
  * @brief  Asynchronous HTTP client
  * @author Andreas Merkle <web@blue-andi.de>
  */

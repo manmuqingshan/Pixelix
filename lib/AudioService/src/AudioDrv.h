@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AudioDrv.h
  * @brief  Audio driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

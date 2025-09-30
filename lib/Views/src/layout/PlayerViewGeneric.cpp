@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PlayerViewGeneric.cpp
  * @brief  Generic view with icon, text and progress bar for LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

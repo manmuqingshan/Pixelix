@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TempHumidPlugin.h
  * @brief  Reads temperature and humidity from a sensor and displays it
  * @author Flavio Curti <fcu-github@no-way.org>
  * @addtogroup PLUGIN

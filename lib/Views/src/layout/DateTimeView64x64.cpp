@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimeView64x64.cpp
  * @brief  View for 64x64 LED matrix with date and time.
  *
  * @author Andreas Merkle <web@blue-andi.de>
@@ -101,6 +102,7 @@ const char* DateTimeView64x64::ANALOG_CLOCK_COLOR_KEYS[DateTimeView64x64::ANA_CL
  *****************************************************************************/
 
 /**
+ * @file   DateTimeView64x64.cpp
  * @brief Get the Minute Sinus value
  *
  * @param[in] angle Minute angle, must be multiple of 6°  (360 °/ 60 minutes)
@@ -109,6 +111,7 @@ const char* DateTimeView64x64::ANALOG_CLOCK_COLOR_KEYS[DateTimeView64x64::ANA_CL
 static int16_t getMinuteSinus(uint16_t angle);
 
 /**
+ * @file   DateTimeView64x64.cpp
  * @brief Get the Minute Cosinus value
  *
  * @param[in] angle Minute angle, must be multiple of 6° (360 °/ 60 minutes)
@@ -117,6 +120,7 @@ static int16_t getMinuteSinus(uint16_t angle);
 static int16_t getMinuteCosinus(uint16_t angle);
 
 /**
+ * @file   DateTimeView64x64.cpp
  * @brief Get hour hand destination minute mark.
  *
  * The hour hand direction also depends on the elapsed minutes of

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestColor.cpp
  * @brief  Test color.
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ISensorChannel.hpp
  * @brief  Abstract sensor data channel interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

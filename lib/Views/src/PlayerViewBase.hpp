@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PlayerViewBase.hpp
  * @brief  Base class for view with icon, text and progress bar.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

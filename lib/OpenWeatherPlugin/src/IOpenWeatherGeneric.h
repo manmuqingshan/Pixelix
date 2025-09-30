@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IOpenWeatherGeneric.h
  * @brief  Interface for the weather
  * @author Andreas Merkle <web@blue-andi.de>
  *

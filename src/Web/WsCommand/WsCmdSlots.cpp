@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdSlots.cpp
  * @brief  Websocket command get slots information
  * @author Andreas Merkle <web@blue-andi.de>
  */

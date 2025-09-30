@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorDataProviderImpl.cpp
  * @brief  Sensor data provider implementation
  * @author Andreas Merkle <web@blue-andi.de>
  */

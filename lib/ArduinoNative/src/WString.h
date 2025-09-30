@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WString.h
  * @brief  String implementation for test
  * @author Andreas Merkle <web@blue-andi.de>
  *

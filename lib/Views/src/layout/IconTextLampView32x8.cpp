@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextLampView32x8.cpp
  * @brief  Generic view with icon, text and lamps for 32x8 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

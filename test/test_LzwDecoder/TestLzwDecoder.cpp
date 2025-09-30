@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestLzwDecoder.cpp
  * @brief  Test LZW decoder.
  * @author Andreas Merkle <web@blue-andi.de>
  */

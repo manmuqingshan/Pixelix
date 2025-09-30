@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfx.hpp
  * @brief  Basic graphics interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

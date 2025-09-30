@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AudioDrv.cpp
  * @brief  Audio driver
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestService.h
  * @brief  REST service
  * @author Niklas Kümmel (niklas-kuemmel@web.de)
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorChannelType.hpp
  * @brief  Sensor channel type classes
  * @author Andreas Merkle <web@blue-andi.de>
  * 

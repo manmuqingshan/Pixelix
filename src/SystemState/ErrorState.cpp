@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ErrorState.cpp
  * @brief  System state: Error
  * @author Andreas Merkle <web@blue-andi.de>
  */

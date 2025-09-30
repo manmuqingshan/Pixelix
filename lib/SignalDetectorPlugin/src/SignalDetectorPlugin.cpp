@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SignalDetectorPlugin.cpp
  * @brief  Audio signal detector plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

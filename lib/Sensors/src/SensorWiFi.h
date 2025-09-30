@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorWiFi.h
  * @brief  WiFi sensor driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

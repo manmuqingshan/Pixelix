@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdBrightness.h
  * @brief  Websocket command to get/set display brightness
  * @author Andreas Merkle <web@blue-andi.de>
  *

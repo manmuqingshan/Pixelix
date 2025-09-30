@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimeView32x16.h
  * @brief  View for 32x16 LED matrix with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -284,7 +285,8 @@ public:
     }
 
     /**
-     * @brief Update current time values in view.
+     * @file   DateTimeView32x16.h
+ * @brief Update current time values in view.
      * 
      * @param[in] now current time
      */

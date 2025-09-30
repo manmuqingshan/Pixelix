@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxText.hpp
  * @brief  Base GFX text
  * @author Andreas Merkle <web@blue-andi.de>
  *

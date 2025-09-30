@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimeViewGeneric.h
  * @brief  Generic view for LED matrix with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -287,7 +288,8 @@ public:
     }
 
     /**
-     * @brief Update current time values in view
+     * @file   DateTimeViewGeneric.h
+ * @brief Update current time values in view
      * 
      * @param now current time
      */

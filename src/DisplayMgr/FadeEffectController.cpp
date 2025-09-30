@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FadeEffectController.cpp
  * @brief  Fade effect controller
  * @author Andreas Merkle <web@blue-andi.de>
  */

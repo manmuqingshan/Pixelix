@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IOpenWeatherCurrent.h
  * @brief  Interface for the current weather
  * @author Andreas Merkle <web@blue-andi.de>
  *

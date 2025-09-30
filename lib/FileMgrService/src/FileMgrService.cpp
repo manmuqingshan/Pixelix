@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FileMgrService.cpp
  * @brief  File manager service
  * @author Andreas Merkle <web@blue-andi.de>
  */

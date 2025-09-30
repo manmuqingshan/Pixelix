@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IIndicatorView.h
  * @brief  Indicator view interface
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BmpImgLoader.h
  * @brief  Bitmap image loader
  * @author Andreas Merkle <web@blue-andi.de>
  *

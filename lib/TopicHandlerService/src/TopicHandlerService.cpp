@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TopicHandlerService.cpp
  * @brief  Topic handler service
  * @author Andreas Merkle <web@blue-andi.de>
  */

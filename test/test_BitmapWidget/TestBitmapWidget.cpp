@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestBitmapWidget.cpp
  * @brief  Test bitmap widget.
  * @author Andreas Merkle <web@blue-andi.de>
  */

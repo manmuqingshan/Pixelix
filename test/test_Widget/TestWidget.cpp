@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestWidget.cpp
  * @brief  Widget for test purposes.
  * @author Andreas Merkle <web@blue-andi.de>
  */

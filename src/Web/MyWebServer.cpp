@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MyWebServer.cpp
  * @brief  Web server
  * @author Andreas Merkle <web@blue-andi.de>
  */

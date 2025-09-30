@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ViewConfig.h
  * @brief  View configuration
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DDPServer.h
  * @brief  Distributed Display Protocol server
  * @author Andreas Merkle <web@blue-andi.de>
  *

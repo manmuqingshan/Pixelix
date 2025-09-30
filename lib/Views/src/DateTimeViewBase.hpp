@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimeViewBase.hpp
  * @brief  Base class for view with date and time.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

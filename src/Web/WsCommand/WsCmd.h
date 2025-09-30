@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmd.h
  * @brief  Abstract websocket command
  * @author Andreas Merkle <web@blue-andi.de>
  * 

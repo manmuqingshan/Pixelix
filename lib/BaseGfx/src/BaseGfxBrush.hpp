@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxBrush.hpp
  * @brief  Base graphics brush
  * @author Andreas Merkle <web@blue-andi.de>
  *

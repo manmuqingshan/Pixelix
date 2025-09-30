@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IRtc.h
  * @brief  RTC interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueUInt32.h
  * @brief  Key value pair of uint32_t type
  * @author Andreas Merkle <web@blue-andi.de>
  *

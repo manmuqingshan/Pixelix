@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AmbientLight.cpp
  * @brief  Ambient light sensor
  * @author Andreas Merkle <web@blue-andi.de>
  */

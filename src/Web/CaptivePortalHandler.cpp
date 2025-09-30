@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CaptivePortalHandler.cpp
  * @brief  Captive portal request handler
  * @author Andreas Merkle <web@blue-andi.de>
  */

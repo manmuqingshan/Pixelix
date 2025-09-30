@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PluginList.cpp
  * @brief  Plugin List
  * @author Andreas Merkle <web@blue-andi.de>
  * 

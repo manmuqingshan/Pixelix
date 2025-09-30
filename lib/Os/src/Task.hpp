@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Task.hpp
  * @brief  freeRTOS task wrapper
  * @author Andreas Merkle <web@blue-andi.de>
  *

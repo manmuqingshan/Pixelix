@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Slot.cpp
  * @brief  Slot
  * @author Andreas Merkle <web@blue-andi.de>
  */

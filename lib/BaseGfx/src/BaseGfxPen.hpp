@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxPen.hpp
  * @brief  Base graphics pen
  * @author Andreas Merkle <web@blue-andi.de>
  *

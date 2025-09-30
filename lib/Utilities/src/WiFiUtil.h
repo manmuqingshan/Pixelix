@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WiFiUtil.h
  * @brief  WiFi utilities
  * @author Andreas Merkle <web@blue-andi.de>
  *

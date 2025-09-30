@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Sensors.h
  * @brief  Sensors
  * @author Andreas Merkle <web@blue-andi.de>
  * 

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorHeap.h
  * @brief  Heap memory observer driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

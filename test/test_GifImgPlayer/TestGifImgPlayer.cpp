@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestGifImgPlayer.cpp
  * @brief  Test GIF image player.
  * @author Andreas Merkle <web@blue-andi.de>
  */

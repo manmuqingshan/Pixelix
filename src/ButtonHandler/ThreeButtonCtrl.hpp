@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ThreeButtonCtrl.hpp
  * @brief  Three button controller
  * @author Andreas Merkle <web@blue-andi.de>
  * 

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   GruenbeckPlugin.h
  * @brief  Gruenbeck plugin
  * @author Yann Le Glaz <yann_le@web.de>
 

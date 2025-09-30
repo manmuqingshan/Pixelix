@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SysMsgPlugin.h
  * @brief  System message plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

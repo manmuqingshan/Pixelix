@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MultiIconPlugin.h
  * @brief  Multiple icon plugin
  * @author Yann Le Glaz <yann_le@web.de>
  *

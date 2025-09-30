@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ICanvasTextView.h
  * @brief  Canvas and text view interface
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

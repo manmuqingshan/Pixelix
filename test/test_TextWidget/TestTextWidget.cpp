@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestTextWidget.cpp
  * @brief  Test text widget.
  * @author Andreas Merkle <web@blue-andi.de>
  */

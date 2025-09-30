@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WebConfig.h
  * @brief  Webserver configuration
  * @author Andreas Merkle <web@blue-andi.de>
  * 

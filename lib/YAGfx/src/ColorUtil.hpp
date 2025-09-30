@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ColorUtil.hpp
  * @brief  Color utility functions
  * @author Andreas Merkle <web@blue-andi.de>
  * 
@@ -192,6 +193,7 @@ static inline uint16_t to565(uint32_t rgb888)
 }
 
 /**
+ * @file   ColorUtil.hpp
  * @brief Convert RGB565 color to RGB888 color.
  *
  * @param[in] rgb565 RGB565 color value

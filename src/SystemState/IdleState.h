@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IdleState.h
  * @brief  System state: Idle
  * @author Andreas Merkle <web@blue-andi.de>
  * 

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdSlotDuration.h
  * @brief  Websocket command to get/set slot duration
  * @author Andreas Merkle <web@blue-andi.de>
  *

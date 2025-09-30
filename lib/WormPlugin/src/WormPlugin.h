@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WormPlugin.h
  * @brief  Worm demo plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

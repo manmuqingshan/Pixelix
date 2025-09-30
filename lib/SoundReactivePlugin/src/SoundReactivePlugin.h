@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SoundReactivePlugin.h
  * @brief  Sound reactive plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

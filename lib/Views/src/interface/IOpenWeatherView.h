@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IOpenWeatherView.h
  * @brief  OpenWeather view interface
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherView64x64.cpp
  * @brief  OpenWeather view with icon and text for 64x64 LED matrix
  * @author Andreas Merkle <web@blue-andi.de>
  */

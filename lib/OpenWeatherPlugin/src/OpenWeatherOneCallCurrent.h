@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherOneCallCurrent.h
  * @brief  OpenWeather source for One-Call API to retrieve current weather
  * @author Andreas Merkle <web@blue-andi.de>
  *

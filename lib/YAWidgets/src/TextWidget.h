@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TextWidget.h
  * @brief  Text Widget
  * @author Andreas Merkle <web@blue-andi.de>
  *

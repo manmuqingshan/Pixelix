@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ButtonHandler.hpp
  * @brief  Button handler
  * @author Andreas Merkle <web@blue-andi.de>
  * 

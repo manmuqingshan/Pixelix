@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxCanvas.hpp
  * @brief  Basic graphics bitmap canvas
  * @author Andreas Merkle <web@blue-andi.de>
  *

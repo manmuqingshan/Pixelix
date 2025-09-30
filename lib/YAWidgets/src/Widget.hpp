@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Widget.hpp
  * @brief  Base Widget
  * @author Andreas Merkle <web@blue-andi.de>
  * 

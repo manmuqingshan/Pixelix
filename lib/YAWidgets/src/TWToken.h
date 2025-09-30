@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TWToken.h
  * @brief  Text widget token
  * @author Andreas Merkle <web@blue-andi.de>
  *

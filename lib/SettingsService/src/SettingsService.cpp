@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SettingsService.cpp
  * @brief  Settings service
  * @author Andreas Merkle <web@blue-andi.de>
  */
