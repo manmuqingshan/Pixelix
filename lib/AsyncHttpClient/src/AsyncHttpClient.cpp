@@ -852,18 +852,26 @@ void AsyncHttpClient::onData(const uint8_t* data, size_t len)
                     copySize = available;
                 }
 
-                m_rsp.addPayload(&data[index], copySize);
-                m_contentIndex += copySize;
-                index          += copySize;
-
-                if (m_contentLength <= m_contentIndex)
+                if (false == m_rsp.addPayload(&data[index], copySize))
                 {
-                    notifyResponse();
+                    LOG_FATAL("Couldn't allocate memory for payload.");
+                    m_tcpClient.close();
+                    isError = true;
+                }
+                else
+                {
+                    m_contentIndex += copySize;
+                    index          += copySize;
 
-                    m_rspPart = RESPONSE_PART_STATUS_LINE;
-                    m_rsp.clear();
-                    m_contentLength = 0U;
-                    m_contentIndex  = 0U;
+                    if (m_contentLength <= m_contentIndex)
+                    {
+                        notifyResponse();
+
+                        m_rspPart = RESPONSE_PART_STATUS_LINE;
+                        m_rsp.clear();
+                        m_contentLength = 0U;
+                        m_contentIndex  = 0U;
+                    }
                 }
             }
             break;
@@ -1299,14 +1307,24 @@ bool AsyncHttpClient::parseChunkedResponseChunkData(const uint8_t* data, size_t 
         copySize = available;
     }
 
-    m_rsp.addPayload(&data[index], copySize);
-    index        += copySize;
-    m_chunkIndex += copySize;
-
-    if (m_chunkSize <= m_chunkIndex)
+    if (false == m_rsp.addPayload(&data[index], copySize))
     {
+        LOG_FATAL("Couldn't add chunk payload.");
+
+        /* Abort by set EOF. */
         m_chunkIndex = 0U;
-        isDataEOF    = true;
+        isDataEOF = true;
+    }
+    else
+    {
+        index        += copySize;
+        m_chunkIndex += copySize;
+
+        if (m_chunkSize <= m_chunkIndex)
+        {
+            m_chunkIndex = 0U;
+            isDataEOF    = true;
+        }
     }
 
     return isDataEOF;

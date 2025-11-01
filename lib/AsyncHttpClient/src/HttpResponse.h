@@ -135,16 +135,20 @@ public:
      * Extend payload size in bytes.
      *
      * @param[in] size  Size in bytes
+     * 
+     * @return true on success, false otherwise.
      */
-    void extendPayload(size_t size);
+    bool extendPayload(size_t size);
 
     /**
      * Add a complete payload or add it several times partly.
      *
      * @param[in] payload   Complete or partly payload
      * @param[in] size      Payload size in byte
+     * 
+     * @return true on success, false otherwise.
      */
-    void addPayload(const uint8_t* payload, size_t size);
+    bool addPayload(const uint8_t* payload, size_t size);
 
     /**
      * Get HTTP version.

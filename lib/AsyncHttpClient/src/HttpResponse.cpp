@@ -64,9 +64,9 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& rsp)
 {
     if (this != &rsp)
     {
-        m_httpVersion   = rsp.m_httpVersion;
-        m_statusCode    = rsp.m_statusCode;
-        m_reasonPhrase  = rsp.m_reasonPhrase;
+        m_httpVersion  = rsp.m_httpVersion;
+        m_statusCode   = rsp.m_statusCode;
+        m_reasonPhrase = rsp.m_reasonPhrase;
 
         clearPayload();
 
@@ -76,13 +76,13 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& rsp)
 
             if (nullptr == m_payload)
             {
-                m_size = 0U;
+                m_size    = 0U;
                 m_wrIndex = 0U;
             }
             else
             {
                 memcpy(m_payload, rsp.m_payload, rsp.m_size);
-                m_size = rsp.m_size;
+                m_size    = rsp.m_size;
                 m_wrIndex = rsp.m_wrIndex;
             }
         }
@@ -93,7 +93,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& rsp)
         {
             ListOfHeaders::const_iterator it = rsp.m_headers.begin();
 
-            while(it != rsp.m_headers.end())
+            while (it != rsp.m_headers.end())
             {
                 if (nullptr != (*it))
                 {
@@ -122,38 +122,60 @@ void HttpResponse::clear()
 
 void HttpResponse::addStatusLine(const String& line)
 {
-    const char* SP          = " ";
-    int         idx         = 0;
-    int         begin       = 0;
+    const char* SP    = " ";
+    int         idx   = 0;
+    int         begin = 0;
     String      statusCode;
 
     /* Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF */
 
     /* HTTP-Version */
-    idx             = line.indexOf(SP);
-    m_httpVersion   = line.substring(begin, idx);
+    idx = line.indexOf(SP);
 
-    /* Overstep all spaces */
-    while(('\0' != line[idx]) && (' ' == line[idx]))
+    /* Malformed status line? */
+    if (0 > idx)
     {
-        ++idx;
+        m_httpVersion.clear();
+        m_statusCode = 0U;
+        m_reasonPhrase.clear();
     }
-    begin = idx;
-
-    /* Status-Code */
-    idx             = line.indexOf(SP, begin);
-    statusCode      = line.substring(begin, idx);
-    m_statusCode    = statusCode.toInt();
-
-    /* Overstep all spaces */
-    while(('\0' != line[idx]) && (' ' == line[idx]))
+    else
     {
-        ++idx;
-    }
-    begin = idx;
+        m_httpVersion = line.substring(begin, idx);
 
-    /* Reason-Phrase */
-    m_reasonPhrase  = line.substring(begin);
+        /* Overstep all spaces */
+        while (('\0' != line[idx]) && (' ' == line[idx]))
+        {
+            ++idx;
+        }
+        begin = idx;
+
+        /* Status-Code */
+        idx   = line.indexOf(SP, begin);
+
+        /* Malformed status code? */
+        if (0 > idx)
+        {
+            m_httpVersion.clear();
+            m_statusCode = 0U;
+            m_reasonPhrase.clear();
+        }
+        else
+        {
+            statusCode   = line.substring(begin, idx);
+            m_statusCode = statusCode.toInt();
+
+            /* Overstep all spaces */
+            while (('\0' != line[idx]) && (' ' == line[idx]))
+            {
+                ++idx;
+            }
+            begin          = idx;
+
+            /* Reason-Phrase */
+            m_reasonPhrase = line.substring(begin);
+        }
+    }
 }
 
 void HttpResponse::addHeader(const String& line)
@@ -166,35 +188,38 @@ void HttpResponse::addHeader(const String& line)
     }
 }
 
-void HttpResponse::extendPayload(size_t size)
+bool HttpResponse::extendPayload(size_t size)
 {
-    uint8_t* tmp = m_payload;
+    uint8_t* newPayload = new(std::nothrow) uint8_t[m_size + size];
 
-    m_payload = new(std::nothrow) uint8_t[m_size + size];
-
-    if (nullptr != m_payload)
+    if (nullptr != newPayload)
     {
-        m_size += size;
+        if ((nullptr != m_payload) &&
+            (0U < m_wrIndex))
+        {
+            memcpy(newPayload, m_payload, m_wrIndex);
+        }
+
+        if (nullptr != m_payload)
+        {
+            delete[] m_payload;
+        }
+
+        m_payload  = newPayload;
+        m_size    += size;
     }
 
-    if ((nullptr != m_payload) &&
-        (nullptr != tmp))
-    {
-        memcpy(m_payload, tmp, m_wrIndex);
-    }
-
-    if (nullptr != tmp)
-    {
-        delete[] tmp;
-    }
+    return (nullptr != newPayload);
 }
 
-void HttpResponse::addPayload(const uint8_t* payload, size_t size)
+bool HttpResponse::addPayload(const uint8_t* payload, size_t size)
 {
+    bool isSuccess = false;
+
     if ((nullptr == m_payload) ||
         ((m_size - m_wrIndex) < size))
     {
-        extendPayload(size);
+        (void)extendPayload(size);
     }
 
     if ((nullptr != m_payload) &&
@@ -202,7 +227,11 @@ void HttpResponse::addPayload(const uint8_t* payload, size_t size)
     {
         memcpy(&m_payload[m_wrIndex], payload, size);
         m_wrIndex += size;
+
+        isSuccess = true;
     }
+
+    return isSuccess;
 }
 
 String HttpResponse::getHttpVersion() const
@@ -226,10 +255,10 @@ String HttpResponse::getHeader(const String& name)
 
     if (0U < m_headers.size())
     {
-        ListOfHeaders::const_iterator   it      = m_headers.begin();
-        bool                            isFound = false;
+        ListOfHeaders::const_iterator it      = m_headers.begin();
+        bool                          isFound = false;
 
-        while((it != m_headers.end()) && (false == isFound))
+        while ((it != m_headers.end()) && (false == isFound))
         {
             const HttpHeader* header = *it;
 
@@ -269,16 +298,16 @@ void HttpResponse::clearHeaders()
     {
         ListOfHeaders::iterator it = m_headers.begin();
 
-        while(it != m_headers.end())
+        while (it != m_headers.end())
         {
             HttpHeader* header = *it;
-
-            it = m_headers.erase(it);
 
             if (nullptr != header)
             {
                 delete header;
             }
+
+            it = m_headers.erase(it);
         }
     }
 }
