@@ -69,6 +69,19 @@ class BaseGfxPen
 public:
 
     /**
+     * Constructs a base graphics pen.
+     * 
+     * @param[in] gfx Base graphics
+     */
+    BaseGfxPen(BaseGfx<TColor>& gfx) :
+        m_gfx(gfx),
+        m_color(),
+        m_x(0),
+        m_y(0)
+    {
+    }
+
+    /**
      * Destroys a graphics pen.
      */
     ~BaseGfxPen()
@@ -142,7 +155,7 @@ public:
      */
     void lineTo(int16_t x, int16_t y)
     {
-        m_gfx.line(m_x, m_y, x, y, m_color);
+        m_gfx.drawLine(m_x, m_y, x, y, m_color);
 
         m_x = x;
         m_y = y;
@@ -154,19 +167,6 @@ protected:
     TColor              m_color;    /**< Pen color */
     int16_t             m_x;        /**< Pen x-coordinate */
     int16_t             m_y;        /**< Pen y-coordinate */
-
-    /**
-     * Constructs a base graphics pen.
-     * 
-     * @param[in] gfx Base graphics
-     */
-    BaseGfxPen(BaseGfx<TColor>& gfx) :
-        m_gfx(gfx),
-        m_color(),
-        m_x(0),
-        m_y(0)
-    {
-    }
 };
 
 /******************************************************************************
