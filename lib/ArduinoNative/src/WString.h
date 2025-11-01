@@ -95,7 +95,7 @@ public:
      * @param[in] other String to copy
      */
     String(const char* other) :
-        m_stdStr(other)
+        m_stdStr((nullptr == other) ? "" : other)
     {
     }
 
@@ -117,6 +117,30 @@ public:
     String(char c) :
         m_stdStr(1, c)
     {
+    }
+
+    /**
+     * Constructs a string by converting a number.
+     *
+     * @param[in] number Number to convert
+     */
+    String(size_t number) :
+        m_stdStr(std::to_string(number))
+    {
+    }
+
+    /**
+     * Assign a string.
+     *
+     * @param[in] other String, which to assign.
+     *
+     * @return String
+     */
+    String& operator=(const char* other)
+    {
+        m_stdStr = other;
+
+        return *this;
     }
 
     /**
@@ -157,7 +181,7 @@ public:
      */
     bool operator!=(const String& other) const
     {
-       return m_stdStr != other.m_stdStr;
+        return m_stdStr != other.m_stdStr;
     }
 
     /**
@@ -168,7 +192,7 @@ public:
      *
      * @return Character
      */
-    char operator [](unsigned int index) const
+    char operator[](unsigned int index) const
     {
         char singleChar = '\0';
 
@@ -180,31 +204,38 @@ public:
         return singleChar;
     }
 
-    String& operator +=(const String& other)
+    String& operator+=(const char* other)
+    {
+        m_stdStr += other;
+
+        return *this;
+    }
+
+    String& operator+=(const String& other)
     {
         m_stdStr += other.m_stdStr;
 
         return *this;
     }
 
-    String& operator +=(char c)
+    String& operator+=(char c)
     {
         m_stdStr += c;
 
         return *this;
     }
 
-    String& operator +=(int number)
+    String& operator+=(int number)
     {
         m_stdStr += std::to_string(number);
 
         return *this;
     }
 
-    String operator +(const String& other) const
+    String operator+(const String& other) const
     {
-        String tmp = *this;
-        tmp += other;
+        String tmp  = *this;
+        tmp        += other;
 
         return tmp;
     }
@@ -261,9 +292,9 @@ public:
      *
      * @return If string starts with pattern, it will return true otherwise false.
      */
-    unsigned char startsWith(const String &s2) const
+    unsigned char startsWith(const String& s2) const
     {
-        if(length() < s2.length())
+        if (length() < s2.length())
         {
             return 0U;
         }
@@ -279,7 +310,7 @@ public:
      *
      * @return If string starts with pattern, it will return true otherwise false.
      */
-    unsigned char startsWith(const String &s2, unsigned int offset) const
+    unsigned char startsWith(const String& s2, unsigned int offset) const
     {
         return 0 == m_stdStr.rfind(s2.c_str(), 0);
     }
@@ -294,7 +325,7 @@ public:
 
     /**
      * Is string empty?
-     * 
+     *
      * @return If empty, it will return true otherwise false.
      */
     bool isEmpty() const
@@ -304,16 +335,16 @@ public:
 
     /**
      * Get index of given character.
-     * 
+     *
      * @param[in] ch        Character to search for.
      * @param[in] fromIndex Start index for search.
-     * 
+     *
      * @return If found, it will return the index otherwise -1.
      */
     int indexOf(char ch, unsigned int fromIndex) const
     {
-        int     index   = -1;
-        size_t  pos     = m_stdStr.find(ch, fromIndex);
+        int    index = -1;
+        size_t pos   = m_stdStr.find(ch, fromIndex);
 
         if (std::string::npos != pos)
         {
@@ -325,15 +356,15 @@ public:
 
     /**
      * Get last index of given string.
-     * 
+     *
      * @param[in] other   String to search for.
-     * 
+     *
      * @return If found, it will return the index otherwise -1.
      */
     int lastIndexOf(const String& other) const
     {
-        int     index   = -1;
-        size_t  pos     = m_stdStr.find_last_of(other.m_stdStr);
+        int    index = -1;
+        size_t pos   = m_stdStr.find_last_of(other.m_stdStr);
 
         if (std::string::npos != pos)
         {
@@ -345,24 +376,70 @@ public:
 
     /**
      * Compare string case insenstive.
-     * 
+     *
      * @param[in] other   String to compare with.
-     * 
+     *
      * @return If equal, it will return true otherwise false.
      */
     bool equalsIgnoreCase(const String& other) const
     {
-        return  (m_stdStr.length() == other.m_stdStr.length()) &&
-                (std::equal(m_stdStr.begin(), m_stdStr.end(), other.m_stdStr.begin(), icharEquals));
+        return (m_stdStr.length() == other.m_stdStr.length()) &&
+               (std::equal(m_stdStr.begin(), m_stdStr.end(), other.m_stdStr.begin(), icharEquals));
+    }
+
+    /**
+     * Concatenate string literal with String object.
+     * 
+     * @param[in] lhs   String literal
+     * @param[in] rhs   String object
+     *
+     * @return Concatenated string
+     */
+    friend String operator+(const char* lhs, const String& rhs)
+    {
+        String tmp(lhs);
+        tmp += rhs;
+
+        return tmp;
+    }
+
+    /**
+     * Convert string to integer.
+     *
+     * @return Integer value of string.
+     */
+    long toInt(void) const
+    {
+        return std::strtol(m_stdStr.c_str(), nullptr, 10);
+    }
+
+    /**
+     * Convert string to float.
+     *
+     * @return Float value of string.
+     */
+    float toFloat(void) const
+    {
+        return std::strtof(m_stdStr.c_str(), nullptr);
+    }
+
+    /**
+     * Convert string to double.
+     *
+     * @return Double value of string.
+     */
+    double toDouble(void) const
+    {
+        return std::strtod(m_stdStr.c_str(), nullptr);
     }
 
 private:
 
-    std::string m_stdStr;   /**< Internal used std string. */
+    std::string m_stdStr; /**< Internal used std string. */
 
     /**
      * Compare single characters case insensitive.
-     * 
+     *
      * @param[in] ch1   Character 1
      * @param[in] ch2   Character 2
      *
@@ -378,6 +455,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif  /* WSTRING_H */
+#endif /* WSTRING_H */
 
 /** @} */
