@@ -108,17 +108,15 @@ public:
         return isRestartRequested;
     }
 
+private:
+
     /**
-     * @file   MiniTerminal.h
- * @brief Table entry for known terminal commands
-     * 
+     * Table entry for known terminal commands
      */
     struct CmdTableEntry {
         const char *cmdStr;                           /**< Command string.           */
         void (MiniTerminal::*handler)(const char *);  /**< Command handler function. */
     };
-
-private:
 
     static const char   ASCII_BS            = 8;    /**< ASCII backspace value */
     static const char   ASCII_LF            = 10;   /**< ASCII line feed value */
