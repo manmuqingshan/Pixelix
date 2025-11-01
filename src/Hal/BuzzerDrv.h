@@ -80,51 +80,51 @@ public:
 
     /**
      * Play a tone by frequency. Last duty cycle is used.
-     * 
+     *
      * @param[in] freq  Frequency in Hz
      */
     void play(uint32_t freq);
 
     /**
      * Play a tone by frequency and duty cycle.
-     * 
+     *
      * @param[in] freq  Frequency in Hz
-     * @param[in] dc    Duty cycle in percent
+     * @param[in] dc    Duty cycle in digits [0; 1023]
      */
-    void play(uint32_t freq, uint8_t dc);
+    void play(uint32_t freq, uint16_t dc);
 
     /**
      * Change duty cycle.
-     * 
-     * @param[in] dc    Duty cycle in percent
+     *
+     * @param[in] dc    Duty cycle in digits [0; 1023]
      */
-    void changeDutyCycle(uint8_t dc);
+    void changeDutyCycle(uint16_t dc);
 
 private:
 
     /**
      * The PWM channel which to use for the tone generation.
      */
-    static const uint8_t    TONE_PWM_CHANNEL            = 0U;
+    static const uint8_t TONE_PWM_CHANNEL           = 0U;
 
     /**
      * Frequency in Hz used to initialize the PWM. Has no influence on a tone.
      * Its just required for initialization.
      */
-    static const uint32_t   INIT_FREQUENCY              = 1000U;
+    static const uint32_t INIT_FREQUENCY            = 1000U;
 
     /**
      * Number of bits used for the duty cycle.
      */
-    static const uint8_t    DUTY_CYCLE_RESOLUTION_BITS  = 10U;
+    static const uint8_t DUTY_CYCLE_RESOLUTION_BITS = 10U;
 
     /**
-     * Default duty cycle in digits [0; 1023] set to 50 %.
+     * Default duty cycle in digits [0; 1023] set to 25 %.
      */
-    static const uint32_t   DEFAULT_DUTY_CYCLE          = 0x01FF;
+    static const uint32_t DEFAULT_DUTY_CYCLE        = 0x00FF;
 
-    uint8_t     m_isInit;       /**< Is initialized or not? */
-    uint32_t    m_dutyCycle;    /**< Duty cycle in digits [0; 1023] */
+    uint8_t               m_isInit;    /**< Is initialized or not? */
+    uint32_t              m_dutyCycle; /**< Duty cycle in digits [0; 1023] */
 
     /**
      * Construct BuzzerDrv.
@@ -144,13 +144,13 @@ private:
 
     /* Prevent copying */
     BuzzerDrv(const BuzzerDrv&);
-    BuzzerDrv&operator=(const BuzzerDrv&);
+    BuzzerDrv& operator=(const BuzzerDrv&);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* BUZZERDRV_H */
+#endif /* BUZZERDRV_H */
 
 /** @} */
