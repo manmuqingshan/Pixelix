@@ -81,33 +81,14 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& rsp)
             }
             else
             {
-                memcpy(m_payload, rsp.m_payload, rsp.m_size);
+                (void)memcpy(m_payload, rsp.m_payload, rsp.m_size);
                 m_size    = rsp.m_size;
                 m_wrIndex = rsp.m_wrIndex;
             }
         }
 
         clearHeaders();
-
-        if (0U < rsp.m_headers.size())
-        {
-            ListOfHeaders::const_iterator it = rsp.m_headers.begin();
-
-            while (it != rsp.m_headers.end())
-            {
-                if (nullptr != (*it))
-                {
-                    HttpHeader* header = new(std::nothrow) HttpHeader(**it);
-
-                    if (nullptr != header)
-                    {
-                        m_headers.push_back(header);
-                    }
-                }
-
-                ++it;
-            }
-        }
+        m_headers = rsp.m_headers;
     }
 
     return *this;
@@ -180,12 +161,7 @@ void HttpResponse::addStatusLine(const String& line)
 
 void HttpResponse::addHeader(const String& line)
 {
-    HttpHeader* header = new(std::nothrow) HttpHeader(line);
-
-    if (nullptr != header)
-    {
-        m_headers.push_back(header);
-    }
+    m_headers.emplace_back(line);
 }
 
 bool HttpResponse::extendPayload(size_t size)
@@ -228,7 +204,7 @@ bool HttpResponse::addPayload(const uint8_t* payload, size_t size)
         memcpy(&m_payload[m_wrIndex], payload, size);
         m_wrIndex += size;
 
-        isSuccess = true;
+        isSuccess  = true;
     }
 
     return isSuccess;
@@ -255,23 +231,20 @@ String HttpResponse::getHeader(const String& name)
 
     if (0U < m_headers.size())
     {
-        ListOfHeaders::const_iterator it      = m_headers.begin();
-        bool                          isFound = false;
+        ListOfHeaders::const_iterator headerIt = m_headers.begin();
+        bool                          isFound  = false;
 
-        while ((it != m_headers.end()) && (false == isFound))
+        while ((headerIt != m_headers.end()) && (false == isFound))
         {
-            const HttpHeader* header = *it;
+            const HttpHeader& header = *headerIt;
 
-            if (nullptr != header)
+            if (true == header.getName().equalsIgnoreCase(name))
             {
-                if (true == header->getName().equalsIgnoreCase(name))
-                {
-                    value   = header->getValue();
-                    isFound = true;
-                }
+                value   = header.getValue();
+                isFound = true;
             }
 
-            ++it;
+            ++headerIt;
         }
     }
 
@@ -294,22 +267,7 @@ const uint8_t* HttpResponse::getPayload(size_t& size) const
 
 void HttpResponse::clearHeaders()
 {
-    if (0U < m_headers.size())
-    {
-        ListOfHeaders::iterator it = m_headers.begin();
-
-        while (it != m_headers.end())
-        {
-            HttpHeader* header = *it;
-
-            if (nullptr != header)
-            {
-                delete header;
-            }
-
-            it = m_headers.erase(it);
-        }
-    }
+    m_headers.clear();
 }
 
 void HttpResponse::clearPayload()

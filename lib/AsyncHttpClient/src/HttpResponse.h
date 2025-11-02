@@ -192,7 +192,7 @@ public:
 private:
 
     /** This type defines a list of HTTP headers. */
-    typedef std::vector<HttpHeader*> ListOfHeaders;
+    typedef std::vector<HttpHeader> ListOfHeaders;
 
     String          m_httpVersion;  /**< HTTP version */
     uint16_t        m_statusCode;   /**< Status code */
