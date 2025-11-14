@@ -236,7 +236,7 @@ void ClockDrv::setTimeByRtc()
     {
         struct tm timeInfo;
 
-        if (false == m_rtc->getTime(timeInfo))
+        if (true == m_rtc->getTime(timeInfo))
         {
             time_t          timeSinceEpoch  = mktime(&timeInfo);
             struct timeval  tv              = { timeSinceEpoch, 0 };
