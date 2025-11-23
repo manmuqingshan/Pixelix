@@ -412,6 +412,7 @@ void InitState::exit(StateMachine& sm)
              * See http://www.dns-sd.org/serviceTypes.html
              */
             MDNS.addService("http", "tcp", WebConfig::WEBSERVER_PORT);
+            MDNS.addService("pixelix", "tcp", WebConfig::WEBSERVER_PORT);
 
             /* Do some stuff only in wifi station mode. */
             if (false == m_isApModeRequested)
