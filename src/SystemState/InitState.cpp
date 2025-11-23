@@ -373,6 +373,9 @@ void InitState::exit(StateMachine& sm)
         if (false == m_isApModeRequested)
         {
             wifiMode = WIFI_MODE_STA;
+
+            /* Set hostname before wifi station mode is set. */
+            (void)WiFi.setHostname(hostname.c_str());
         }
         else
         {

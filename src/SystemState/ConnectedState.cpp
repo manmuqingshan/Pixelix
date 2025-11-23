@@ -79,12 +79,13 @@
 
 void ConnectedState::entry(StateMachine& sm)
 {
-    SettingsService& settings = SettingsService::getInstance();
-    String           infoStr  = "Hostname: ";
-    String           hostname;
-    String           infoStringIp = "IP: ";
-    String           notifyURL    = "-";
-    bool             isQuiet      = false;
+    SettingsService& settings               = SettingsService::getInstance();
+    String           infoStr                = "Hostname: ";
+    String           infoStringIp           = "IP: ";
+    String           notifyURL              = "-";
+    bool             isQuiet                = false;
+    const uint32_t   DURATION_NON_SCROLLING = 4000U; /* ms */
+    const uint32_t   SCROLLING_REPEAT_NUM   = 2U;
 
     LOG_INFO("Connected.");
 
@@ -93,52 +94,33 @@ void ConnectedState::entry(StateMachine& sm)
     {
         LOG_WARNING("Use default hostname.");
 
-        hostname  = settings.getHostname().getDefault();
         notifyURL = settings.getNotifyURL().getDefault();
         isQuiet   = settings.getQuietMode().getDefault();
     }
     else
     {
-        hostname  = settings.getHostname().getValue();
         notifyURL = settings.getNotifyURL().getValue();
         isQuiet   = settings.getQuietMode().getValue();
 
         settings.close();
     }
 
-    /* Set hostname. Note, wifi must be connected somehow. */
-    if (false == WiFi.setHostname(hostname.c_str()))
+    /* Notify about successful network connection. */
+    DisplayMgr::getInstance().setNetworkStatus(true);
+
+    /* Show hostname and IP. */
+    infoStr += WiFi.getHostname();
+    infoStr += " IP: ";
+    infoStr += WiFi.localIP().toString();
+
+    LOG_INFO(infoStr);
+
+    if (false == isQuiet)
     {
-        String errorStr = "Can't set AP hostname.";
-
-        /* Fatal error */
-        LOG_FATAL(errorStr);
-        SysMsg::getInstance().show(errorStr);
-
-        sm.setState(ErrorState::getInstance());
+        SysMsg::getInstance().show(infoStr, DURATION_NON_SCROLLING, SCROLLING_REPEAT_NUM);
     }
-    else
-    {
-        const uint32_t DURATION_NON_SCROLLING = 4000U; /* ms */
-        const uint32_t SCROLLING_REPEAT_NUM   = 2U;
 
-        /* Notify about successful network connection. */
-        DisplayMgr::getInstance().setNetworkStatus(true);
-
-        /* Show hostname and IP. */
-        infoStr += WiFi.getHostname(); /* Don't believe its the same as set before. */
-        infoStr += " IP: ";
-        infoStr += WiFi.localIP().toString();
-
-        LOG_INFO(infoStr);
-
-        if (false == isQuiet)
-        {
-            SysMsg::getInstance().show(infoStr, DURATION_NON_SCROLLING, SCROLLING_REPEAT_NUM);
-        }
-
-        pushUrl(notifyURL);
-    }
+    pushUrl(notifyURL);
 }
 
 void ConnectedState::process(StateMachine& sm)

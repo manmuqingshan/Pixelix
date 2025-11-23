@@ -241,7 +241,7 @@ void ClockDrv::setTimeByRtc()
             time_t          timeSinceEpoch  = mktime(&timeInfo);
             struct timeval  tv              = { timeSinceEpoch, 0 };
 
-            settimeofday(&tv, nullptr);
+            (void)settimeofday(&tv, nullptr);
         }
     }
 }
