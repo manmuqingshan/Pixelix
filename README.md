@@ -109,7 +109,11 @@ With the [Ulanzi TC001 smart pixel clock](https://www.ulanzi.com/products/ulanzi
 
 ### Recommendation
 
-If you assemble your own Pixelix hardware, its recommended to use a development board with 8 MB flash or more. 4 MB flash modules are still supported, but the functionality is limited. Also recommended is to use a esp32 dual core variant, which provides more processing power.
+If you assemble your own Pixelix hardware, its recommended to use a development board with the following properties:
+
+- 8 MB flash or more. 4 MB flash modules are still supported, but the functionality is limited.
+- A esp32 dual core variant, which provides more processing power.
+- PSRAM for images as internal RAM isn't that much available depended on the configured features.
 
 ### Special Variants
 

@@ -71,6 +71,17 @@ public:
     }
 
     /**
+     * Construct the GIF file loader by copy.
+     *
+     * @param[in] loader    GIF file loader to copy.
+     */
+    GifFileLoader(const GifFileLoader& loader) :
+        IGifLoader(),
+        m_fd(loader.m_fd)
+    {
+    }
+
+    /**
      * Destroy the GIF file loader.
      */
     ~GifFileLoader() override
@@ -79,11 +90,30 @@ public:
     }
 
     /**
+     * Assignment operator.
+     *
+     * @param[in] loader    GIF file loader to copy.
+     *
+     * @return Reference to this loader.
+     */
+    GifFileLoader& operator=(const GifFileLoader& loader)
+    {
+        if (this != &loader)
+        {
+            close();
+
+            m_fd = loader.m_fd;
+        }
+
+        return *this;
+    }
+
+    /**
      * Open a GIF file.
-     * 
-     * @param[in] fs        Filesystem to use
+     *
+     * @param[in] fs        Filesystem to use.
      * @param[in] fileName  Name of the GIF file.
-     * 
+     *
      * @return If successful, it will return true otherwise false.
      */
     bool open(FS& fs, const String& fileName) final
@@ -92,7 +122,7 @@ public:
 
         if (false == m_fd)
         {
-            m_fd = fs.open(fileName);
+            m_fd         = fs.open(fileName);
 
             isSuccessful = m_fd;
         }
@@ -113,10 +143,10 @@ public:
 
     /**
      * Read data from GIF.
-     * 
+     *
      * @param[in] buffer    Buffer to fill.
      * @param[in] size      Buffer size in bytes.
-     * 
+     *
      * @return If successful read, it will return true otherwise false.
      */
     bool read(void* buffer, size_t size) final
@@ -138,7 +168,7 @@ public:
 
     /**
      * Get file position.
-     * 
+     *
      * @return File position
      */
     size_t position() final
@@ -148,10 +178,10 @@ public:
 
     /**
      * Set file position.
-     * 
+     *
      * @param[in] position  File position to set
      * @param[in] mode      The seek mode.
-     * 
+     *
      * @return If successful, it will return true otherwise false.
      */
     bool seek(size_t position, SeekMode mode) final
@@ -161,7 +191,7 @@ public:
 
     /**
      * If file is opened, it will return true otherwise false.
-     * 
+     *
      * @return File status
      */
     operator bool() const final
@@ -171,16 +201,13 @@ public:
 
 private:
 
-    File    m_fd; /**< File descriptor */
-
-    GifFileLoader(const GifFileLoader& other);
-    GifFileLoader& operator=(const GifFileLoader& other);
+    File m_fd; /**< File descriptor */
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* GIF_FILE_LOADER_H */
+#endif /* GIF_FILE_LOADER_H */
 
 /** @} */
