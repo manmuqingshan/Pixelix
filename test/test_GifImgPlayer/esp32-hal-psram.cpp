@@ -25,56 +25,59 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   YAGfxBitmap.h
- * @brief  Yet anoterh GFX bitmap class
+ * @file   esp32-hal-psram.cpp
+ * @brief  Stub for the esp32-hal-psram.h file
  * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup GFX
- *
- * @{
  */
-
-#ifndef YAGFX_BITMAP_H
-#define YAGFX_BITMAP_H
-
-/******************************************************************************
- * Compile Switches
- *****************************************************************************/
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <BaseGfxBitmap.hpp>
-#include <YAColor.h>
-#include <TypedAllocator.hpp>
-#include <PsAllocator.hpp>
+#include "esp32-hal-psram.h"
+#include <stdlib.h>
+
+/******************************************************************************
+ * Compiler Switches
+ *****************************************************************************/
 
 /******************************************************************************
  * Macros
  *****************************************************************************/
 
 /******************************************************************************
- * Types and Classes
+ * Types and classes
  *****************************************************************************/
-
-/** GFX bitmap interface with concrete color. */
-using YAGfxBitmap = BaseGfxBitmap<Color>;
-
-/** GFX static bitmap with concrete color.
- * 
- * @tparam width    Bitmap width in pixels.
- * @tparam height   Bitmap height in pixels.
- */
-template < uint16_t width, uint16_t height >
-using YAGfxStaticBitmap = BaseGfxStaticBitmap<Color, width, height>;
-
-/** GFX dynamic bitmap with concrete color. */
-using YAGfxDynamicBitmap = BaseGfxDynamicBitmap<Color, TypedAllocator<Color, PsAllocator>>;
 
 /******************************************************************************
- * Functions
+ * Prototypes
  *****************************************************************************/
 
-#endif  /* YAGFX_BITMAP_H */
+/******************************************************************************
+ * Local Variables
+ *****************************************************************************/
 
-/** @} */
+/******************************************************************************
+ * Public Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * Protected Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * Private Methods
+ *****************************************************************************/
+
+/******************************************************************************
+ * External Functions
+ *****************************************************************************/
+
+void* ps_malloc(size_t size)
+{
+    /* Stub implementation: just use standard malloc for testing purposes. */
+    return malloc(size);
+}
+
+/******************************************************************************
+ * Local Functions
+ *****************************************************************************/

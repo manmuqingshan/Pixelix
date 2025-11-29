@@ -76,6 +76,7 @@ AsyncHttpClient::AsyncHttpClient() :
     m_processTaskHandle(nullptr),
     m_processTaskExit(false),
     m_processTaskSemaphore(nullptr),
+    m_allocator(),
     m_tcpClient(),
     m_cmdQueue(),
     m_evtQueue(),
@@ -158,7 +159,7 @@ AsyncHttpClient::AsyncHttpClient() :
 
         memset(&evt, 0, sizeof(evt));
         evt.id          = EVENT_ID_DATA;
-        evt.u.data.data = new (std::nothrow) uint8_t[len];
+        evt.u.data.data = m_allocator.allocateArray(len);
 
         if (nullptr == evt.u.data.data)
         {
@@ -562,7 +563,7 @@ void AsyncHttpClient::clearEvtQueue()
         {
             if (nullptr != evt.u.data.data)
             {
-                delete[] evt.u.data.data;
+                m_allocator.deallocateArray(evt.u.data.data);
                 evt.u.data.data = nullptr;
                 evt.u.data.size = 0U;
             }
@@ -665,7 +666,7 @@ void AsyncHttpClient::processEvtQueue()
 
             if (nullptr != evt.u.data.data)
             {
-                delete[] evt.u.data.data;
+                m_allocator.deallocateArray(evt.u.data.data);
                 evt.u.data.data = nullptr;
                 evt.u.data.size = 0U;
             }

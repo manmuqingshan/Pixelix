@@ -45,6 +45,8 @@
  * Includes
  *****************************************************************************/
 #include "IGifLoader.h"
+#include <TypedAllocator.hpp>
+#include <PsAllocator.hpp>
 
 /******************************************************************************
  * Macros
@@ -67,10 +69,29 @@ public:
      */
     GifFileToMemLoader() :
         IGifLoader(),
-        m_fileBuffer(nullptr),
+        m_allocator(),
         m_fileSize(0U),
+        m_fileBuffer(nullptr),
         m_pos(0U)
     {
+    }
+
+    /**
+     * Construct the GIF file loader by copying another loader.
+     *
+     * @param[in] other Loader to copy.
+     */
+    GifFileToMemLoader(const GifFileToMemLoader& other) :
+        IGifLoader(),
+        m_allocator(other.m_allocator),
+        m_fileSize(other.m_fileSize),
+        m_fileBuffer(nullptr),
+        m_pos(other.m_pos)
+    {
+        if (false == copyFileBuffer(other))
+        {
+            close();
+        }
     }
 
     /**
@@ -82,11 +103,40 @@ public:
     }
 
     /**
+     * Assignment operator.
+     *
+     * @param[in] other Loader to copy.
+     *
+     * @return Reference to this loader.
+     */
+    GifFileToMemLoader& operator=(const GifFileToMemLoader& other)
+    {
+        if (this != &other)
+        {
+            close();
+
+            m_allocator = other.m_allocator;
+            m_fileSize  = other.m_fileSize;
+
+            if (false == copyFileBuffer(other))
+            {
+                close();
+            }
+            else
+            {
+                m_pos = other.m_pos;
+            }
+        }
+
+        return *this;
+    }
+
+    /**
      * Open a GIF file, load it to memory and closes it again.
-     * 
+     *
      * @param[in] fs        Filesystem to use
      * @param[in] fileName  Name of the GIF file.
-     * 
+     *
      * @return If successful, it will return true otherwise false.
      */
     bool open(FS& fs, const String& fileName) final
@@ -99,8 +149,8 @@ public:
 
             if (true == fd)
             {
-                m_fileSize      = fd.size();
-                m_fileBuffer    = new(std::nothrow) uint8_t[m_fileSize];
+                m_fileSize   = fd.size();
+                m_fileBuffer = m_allocator.allocateArray(m_fileSize);
 
                 if (nullptr == m_fileBuffer)
                 {
@@ -129,19 +179,19 @@ public:
     {
         if (nullptr != m_fileBuffer)
         {
-            delete[] m_fileBuffer;
-            m_fileBuffer    = nullptr;
-            m_fileSize      = 0U;
-            m_pos           = 0U;
+            m_allocator.deallocateArray(m_fileBuffer);
+            m_fileBuffer = nullptr;
+            m_fileSize   = 0U;
+            m_pos        = 0U;
         }
     }
 
     /**
      * Read data from GIF.
-     * 
+     *
      * @param[in] buffer    Buffer to fill.
      * @param[in] size      Buffer size in bytes.
-     * 
+     *
      * @return If successful read, it will return true otherwise false.
      */
     bool read(void* buffer, size_t size) final
@@ -152,9 +202,9 @@ public:
             (m_fileSize >= (m_pos + size)))
         {
             memcpy(buffer, &m_fileBuffer[m_pos], size);
-            m_pos += size;
+            m_pos        += size;
 
-            isSuccessful = true;
+            isSuccessful  = true;
         }
 
         return isSuccessful;
@@ -162,7 +212,7 @@ public:
 
     /**
      * Get file position.
-     * 
+     *
      * @return File position
      */
     size_t position() final
@@ -172,10 +222,10 @@ public:
 
     /**
      * Set file position.
-     * 
+     *
      * @param[in] position  File position to set
      * @param[in] mode      The seek mode.
-     * 
+     *
      * @return If successful, it will return true otherwise false.
      */
     bool seek(size_t position, SeekMode mode) final
@@ -186,7 +236,7 @@ public:
         {
             if (m_fileSize >= position)
             {
-                m_pos = position;
+                m_pos        = position;
 
                 isSuccessful = true;
             }
@@ -195,16 +245,16 @@ public:
         {
             if (m_fileSize >= (m_pos + position))
             {
-                m_pos += position;
+                m_pos        += position;
 
-                isSuccessful = true;
+                isSuccessful  = true;
             }
         }
         else
         {
             if (m_fileSize >= position)
             {
-                m_pos = m_fileSize - position;
+                m_pos        = m_fileSize - position;
 
                 isSuccessful = true;
             }
@@ -215,7 +265,7 @@ public:
 
     /**
      * If file is opened, it will return true otherwise false.
-     * 
+     *
      * @return File status
      */
     operator bool() const final
@@ -225,18 +275,63 @@ public:
 
 private:
 
-    uint8_t*    m_fileBuffer;   /**< File buffer */
-    size_t      m_fileSize;     /**< File size in byte */
-    size_t      m_pos;          /**< Current read position in byte */
+    /**
+     * Data allocator type for file buffer.
+     */
+    typedef TypedAllocator<uint8_t, PsAllocator> DataAllocator;
 
-    GifFileToMemLoader(const GifFileToMemLoader& other);
-    GifFileToMemLoader& operator=(const GifFileToMemLoader& other);
+    DataAllocator                                m_allocator;  /**< Memory allocator. */
+    size_t                                       m_fileSize;   /**< File size in byte. */
+    uint8_t*                                     m_fileBuffer; /**< File buffer. */
+    size_t                                       m_pos;        /**< Current read position in byte. */
+
+    /**
+     * Copy file buffer from another loader with own memory allocator.
+     * If there is already a file buffer, it will be closed first.
+     *
+     * Position won't be changed.
+     *
+     * @param[in] other Loader to copy.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool copyFileBuffer(const GifFileToMemLoader& other)
+    {
+        bool isSuccessful = false;
+
+        if (nullptr != m_fileBuffer)
+        {
+            m_allocator.deallocateArray(m_fileBuffer);
+            m_fileBuffer = nullptr;
+            m_fileSize   = 0U;
+        }
+
+        m_fileSize = other.m_fileSize;
+
+        if ((nullptr != other.m_fileBuffer) &&
+            (0U < m_fileSize))
+        {
+            m_fileBuffer = m_allocator.allocateArray(m_fileSize);
+
+            if (nullptr == m_fileBuffer)
+            {
+                m_fileSize = 0U;
+            }
+            else
+            {
+                memcpy(m_fileBuffer, other.m_fileBuffer, m_fileSize);
+                isSuccessful = true;
+            }
+        }
+
+        return isSuccessful;
+    }
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* GIF_FILE_TO_MEM_LOADER_H */
+#endif /* GIF_FILE_TO_MEM_LOADER_H */
 
 /** @} */

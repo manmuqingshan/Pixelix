@@ -48,6 +48,8 @@
 #include <AsyncTCP.h>
 #include <Queue.hpp>
 #include <Mutex.hpp>
+#include <TypedAllocator.hpp>
+#include <PsAllocator.hpp>
 
 #include "HttpResponse.h"
 
@@ -336,6 +338,11 @@ private:
         TRAILER         /**< Trailer */
     };
 
+    /**
+     * Data allocator type.
+     */
+    typedef TypedAllocator<uint8_t, PsAllocator> DataAllocator;
+
     /** HTTP port */
     static const uint16_t HTTP_PORT  = 80U;
 
@@ -346,7 +353,7 @@ private:
     bool                  m_processTaskExit;      /**< Flag to signal the process task to exit. */
     SemaphoreHandle_t     m_processTaskSemaphore; /**< Binary semaphore used to signal the process task exited. */
 
-
+    DataAllocator         m_allocator;      /**< Allocator used for received data. */
     AsyncClient           m_tcpClient;      /**< Asynchronous TCP client */
     Queue<Cmd>            m_cmdQueue;       /**< Command queue */
     Queue<Event>          m_evtQueue;       /**< Event queue */
@@ -643,7 +650,7 @@ private:
      * Take global mutex to serialize all AsyncHttpClient's.
      * Attention, the task which takes the global mutex must give it back as well.
      * Its not allowed that one task takes the global mutex and another task gives it back.
-     * 
+     *
      * @return If taken, it will return true otherwise false. If already taken, it will return false.
      */
     bool takeGlobalMutex();
