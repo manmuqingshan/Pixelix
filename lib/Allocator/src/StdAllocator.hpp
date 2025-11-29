@@ -25,7 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   StdAllocator.h
+ * @file   StdAllocator.hpp
  * @brief  Standard memory allocator
  * @author Andreas Merkle <web@blue-andi.de>
  *

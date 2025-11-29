@@ -75,8 +75,6 @@ public:
 
     /**
      * Construct a LZW decoder object.
-     *
-     * @param[in] allocator Memory allocator to use.
      */
     LzwDecoder();
 
