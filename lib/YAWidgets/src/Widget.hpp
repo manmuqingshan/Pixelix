@@ -298,8 +298,8 @@ protected:
 
 private:
 
-    /* Default constructor not allowed. */
-    Widget();
+    /** Default constructor not allowed. */
+    Widget() = delete;
 };
 
 /******************************************************************************

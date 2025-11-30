@@ -319,7 +319,7 @@ private:
      * Set actual configuration in JSON.
      * It will not be stored to configuration file.
      *
-     * @param[in] cfg   Configuration
+     * @param[in] jsonCfg   Configuration
      *
      * @return If successful set, it will return true otherwise false.
      */
@@ -328,14 +328,14 @@ private:
     /**
      * Get persistent configuration in JSON.
      *
-     * @param[out] cfg  Configuration
+     * @param[out] jsonCfg   Configuration
      */
     void getConfiguration(JsonObject& jsonCfg) const final;
 
     /**
      * Set persistent configuration in JSON.
      *
-     * @param[in] cfg   Configuration
+     * @param[in] jsonCfg   Configuration
      *
      * @return If successful set, it will return true otherwise false.
      */

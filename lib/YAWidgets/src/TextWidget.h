@@ -566,15 +566,11 @@ private:
 
     /**
      * Handle fading text out.
-     *
-     * @param[in] gfx Graphic functionality
      */
     void handleFadeOut();
 
     /**
      * Handle fading text in.
-     *
-     * @param[in] gfx Graphic functionality
      */
     void handleFadeIn();
 
@@ -624,7 +620,7 @@ private:
     /**
      * Show formatted text.
      * Format tags:
-     * - #RRGGBB Color in HTML form (RGB888)
+     * - "#RRGGBB" Color in HTML form (RGB888)
      *
      * @param[in] gfx           Graphics, used to draw the characters.
      * @param[in] ast           The abstract syntax tree.

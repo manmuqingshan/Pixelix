@@ -313,7 +313,7 @@ public:
     /**
      * Apply configuration from JSON.
      *
-     * @param[in] jsonCfg Configuration
+     * @param[in] jsonCfg   Configuration
      *
      * @return If successful set, it will return true otherwise false.
      */
