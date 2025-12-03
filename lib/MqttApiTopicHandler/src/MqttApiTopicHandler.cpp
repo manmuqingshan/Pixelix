@@ -91,7 +91,7 @@ void MqttApiTopicHandler::registerTopic(const String& deviceId, const String& en
     /* MQTT service shall be enabled and
      * a device id and topic name shall be given.
      */
-    if ((MqttService::STATE_IDLE != mqttService.getState()) &&
+    if ((MqttTypes::STATE_IDLE != mqttService.getState()) &&
         (false == deviceId.isEmpty()) &&
         (false == topic.isEmpty()))
     {
@@ -125,8 +125,8 @@ void MqttApiTopicHandler::registerTopic(const String& deviceId, const String& en
             /* Is the topic writeable? */
             if (nullptr != setTopicFunc)
             {
-                MqttService&               mqttService = MqttService::getInstance();
-                MqttService::TopicCallback setCallback =
+                MqttService&             mqttService = MqttService::getInstance();
+                MqttTypes::TopicCallback setCallback =
                     [this, topicState](const String& mqttTopic, const uint8_t* payload, size_t size) {
                         if (0U != mqttTopic.endsWith(topicState->topic + MQTT_ENDPOINT_WRITE_ACCESS))
                         {
@@ -162,7 +162,7 @@ void MqttApiTopicHandler::unregisterTopic(const String& deviceId, const String& 
     /* MQTT service shall be enabled and
      * a device id and topic name shall be given.
      */
-    if ((MqttService::STATE_IDLE != mqttService.getState()) &&
+    if ((MqttTypes::STATE_IDLE != mqttService.getState()) &&
         (false == deviceId.isEmpty()) &&
         (false == topic.isEmpty()))
     {
@@ -241,7 +241,7 @@ void MqttApiTopicHandler::process()
          * all topics will be published to be up-to-date.
          */
         if ((false == m_isMqttConnected) &&
-            (MqttService::STATE_CONNECTED == mqttService.getState()))
+            (MqttTypes::STATE_CONNECTED == mqttService.getState()))
 
         {
             m_isMqttConnected = true;
@@ -250,7 +250,7 @@ void MqttApiTopicHandler::process()
             requestToPublishAllTopicStates();
         }
         else if ((true == m_isMqttConnected) &&
-                 (MqttService::STATE_CONNECTED != mqttService.getState()))
+                 (MqttTypes::STATE_CONNECTED != mqttService.getState()))
         {
             m_isMqttConnected = false;
         }
@@ -283,7 +283,7 @@ void MqttApiTopicHandler::notify(const String& deviceId, const String& entityId,
     /* MQTT service shall be enabled and
      * a device id and topic name shall be given.
      */
-    if ((MqttService::STATE_IDLE != mqttService.getState()) &&
+    if ((MqttTypes::STATE_IDLE != mqttService.getState()) &&
         (false == deviceId.isEmpty()) &&
         (false == topic.isEmpty()))
     {

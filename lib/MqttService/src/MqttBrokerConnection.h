@@ -25,8 +25,8 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttService.h
- * @brief  MQTT service
+ * @file   MqttBrokerConnection.h
+ * @brief  MQTT broker connection handler
  * @author Andreas Merkle <web@blue-andi.de>
  *
  * @addtogroup MQTT_SERVICE
@@ -34,17 +34,20 @@
  * @{
  */
 
-#ifndef MQTT_SERVICE_H
-#define MQTT_SERVICE_H
+#ifndef MQTT_BROKER_CONNECTION_H
+#define MQTT_BROKER_CONNECTION_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
 #include <stdint.h>
 #include <IService.hpp>
+#include <PubSubClient.h>
 #include <KeyValueString.h>
+#include <vector>
+#include <SimpleTimer.hpp>
+#include <WiFiClient.h>
 #include "MqttTypes.h"
-#include "MqttBrokerConnection.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -59,40 +62,80 @@
  *****************************************************************************/
 
 /**
- * The MQTT service provides access via MQTT.
+ * The MQTT broker connection handler. It manages the connection to a MQTT broker.
+ * Provides publish and subscribe functionality. The subscribe functionality
+ * supports one subscriber per topic.
  */
-class MqttService : public IService
+class MqttBrokerConnection
 {
 public:
 
     /**
-     * Get the MQTT service instance.
-     *
-     * @return MQTT service instance
+     * Constructs the MqttBrokerConnection instance.
      */
-    static MqttService& getInstance()
+    MqttBrokerConnection() :
+        m_clientId(),
+        m_url(),
+        m_user(),
+        m_password(),
+        m_port(MQTT_PORT),
+        m_willTopic(),
+        m_birthPayload(),
+        m_lastWillPayload(),
+        m_wifiClient(nullptr),
+        m_mqttClient(),
+        m_state(MqttTypes::STATE_IDLE),
+        m_subscriberList(),
+        m_reconnectTimer()
     {
-        static MqttService instance; /* idiom */
-
-        return instance;
     }
 
     /**
-     * Start the service.
+     * Destroys the MqttBrokerConnection instance.
+     */
+    ~MqttBrokerConnection()
+    {
+        disconnect();
+    }
+
+    /**
+     * Process the connection by calling periodically this method.
+     */
+    void process();
+
+    /**
+     * Set will topic and payloads for the MQTT birth and last will message.
+     * Must be set before connect() is called.
      *
-     * @return If successful started, it will return true otherwise false.
+     * @param[in] willTopic         Will topic.
+     * @param[in] birthPayload      Birth payload.
+     * @param[in] lastWillPayload   Last will payload.
      */
-    bool start() final;
+    void setLastWillTopic(const String& willTopic, const String& birthPayload, const String& lastWillPayload)
+    {
+        m_willTopic       = willTopic;
+        m_birthPayload    = birthPayload;
+        m_lastWillPayload = lastWillPayload;
+    }
 
     /**
-     * Stop the service.
+     * Connect to the MQTT broker.
+     *
+     * @param[in] clientId      The MQTT client identifier.
+     * @param[in] mqttBrokerUrl The MQTT broker URL.
+     * @param[in] port          The MQTT broker port. Default is 1883.
+     * @param[in] user          The user name. Default is empty.
+     * @param[in] password      The password. Default is empty.
+     * @param[in] useTLS        Use TLS connection. Default is false.
+     *
+     * @return If successful connected, it will return true otherwise false.
      */
-    void stop() final;
+    bool connect(const String& clientId, const String& mqttBrokerUrl, uint16_t port = MQTT_PORT, const String& user = "", const String& password = "", bool useTLS = false);
 
     /**
-     * Process the service.
+     * Disconnect from the MQTT broker.
      */
-    void process() final;
+    void disconnect();
 
     /**
      * Get current MQTT connection state.
@@ -161,50 +204,82 @@ public:
 
 private:
 
+    /**
+     * Subscriber information
+     */
+    struct Subscriber
+    {
+        String                   topic;    /**< The subscriber topic */
+        MqttTypes::TopicCallback callback; /**< The subscriber callback */
+
+        /**
+         * Constructs the Subscriber instance.
+         *
+         * @param[in] topic     The subscriber topic.
+         * @param[in] callback  The subscriber callback.
+         */
+        Subscriber(const String& topic, MqttTypes::TopicCallback callback) :
+            topic(topic),
+            callback(callback)
+        {
+        }
+
+        /**
+         * Default constructor is not supported.
+         */
+        Subscriber() = delete;
+    };
+
+    /**
+     * This type defines a list of subscribers.
+     */
+    typedef std::vector<Subscriber> SubscriberList;
+
     /** MQTT port */
-    static const uint16_t MQTT_PORT = 1883U;
+    static const uint16_t MQTT_PORT               = 1883U;
 
-    /** MQTT broker URL key */
-    static const char* KEY_MQTT_BROKER_URL;
-
-    /** MQTT broker URL name */
-    static const char* NAME_MQTT_BROKER_URL;
-
-    /** MQTT broker URL default value */
-    static const char* DEFAULT_MQTT_BROKER_URL;
+    /**
+     * MQTT socket timeout in s. Keep it low to improve systems responsiveness.
+     * Otherwise a reconnect may take a while and blocks any other activities.
+     * The same for reading and writing to the socket.
+     */
+    static const uint16_t MQTT_SOCK_TIMEOUT       = 1U;
 
     /** MQTT broker URL min. length */
-    static const size_t MIN_VALUE_MQTT_BROKER_URL  = 0U;
+    static const size_t MIN_VALUE_MQTT_BROKER_URL = 0U;
 
     /** MQTT broker URL max. length */
-    static const size_t  MAX_VALUE_MQTT_BROKER_URL = 64U;
-
-    KeyValueString       m_mqttBrokerUrlSetting; /**< URL of the MQTT broker setting */
-    MqttBrokerConnection m_brokerConnection;     /**< MQTT broker connection */
-    String               m_hostname;             /**< MQTT hostname */
+    static const size_t MAX_VALUE_MQTT_BROKER_URL = 64U;
 
     /**
-     * Constructs the service instance.
+     * Reconnect period in ms.
      */
-    MqttService() :
-        IService(),
-        m_mqttBrokerUrlSetting(KEY_MQTT_BROKER_URL, NAME_MQTT_BROKER_URL, DEFAULT_MQTT_BROKER_URL, MIN_VALUE_MQTT_BROKER_URL, MAX_VALUE_MQTT_BROKER_URL),
-        m_brokerConnection(),
-        m_hostname()
-    {
-    }
+    static const uint32_t RECONNECT_PERIOD        = SIMPLE_TIMER_SECONDS(10U);
 
     /**
-     * Destroys the service instance.
+     * Max. MQTT client buffer size in byte.
+     * Received MQTT messages greather than this will be skipped.
      */
-    ~MqttService()
-    {
-        /* Never called. */
-    }
+    static const size_t MAX_BUFFER_SIZE           = 2048U;
+
+
+    String              m_clientId;        /**< MQTT client identifier */
+    String              m_url;             /**< URL of the MQTT broker */
+    String              m_user;            /**< MQTT authentication: user name */
+    String              m_password;        /**< MQTT authentication: password */
+    uint16_t            m_port;            /**< MQTT port */
+    String              m_willTopic;       /**< Will topic */
+    String              m_birthPayload;    /**< Birth payload */
+    String              m_lastWillPayload; /**< Last will payload */
+    WiFiClient*         m_wifiClient;      /**< WiFi client */
+    PubSubClient        m_mqttClient;      /**< MQTT client */
+    MqttTypes::State    m_state;           /**< Connection state */
+    SubscriberList      m_subscriberList;  /**< List of subscribers */
+    SimpleTimer         m_reconnectTimer;  /**< Timer used for periodically reconnecting. */
 
     /* An instance shall not be copied. */
-    MqttService(const MqttService& service);
-    MqttService& operator=(const MqttService& service);
+    MqttBrokerConnection(const MqttBrokerConnection& service);
+    MqttBrokerConnection& operator=(const MqttBrokerConnection& service);
 
     /**
      * Handles the DISCONNECTED state.
@@ -215,11 +290,6 @@ private:
      * Handles the CONNECTED state.
      */
     void connectedState();
-
-    /**
-     * Handles the IDLE state.
-     */
-    void idleState();
 
     /**
      * MQTT receive callback.
@@ -239,13 +309,8 @@ private:
      * Parse MQTT broker URL and derive the raw URL, the user and password.
      *
      * @param[in] mqttBrokerUrl The MQTT broker URL.
-     * @param[out] url          The raw MQTT broker URL.
-     * @param[out] port         The MQTT broker port.
-     * @param[out] user         The MQTT broker user.
-     * @param[out] password     The MQTT broker password.
-     * @param[out] useTLS       Use TLS connection?
      */
-    void parseMqttBrokerUrl(const String& mqttBrokerUrl, String& url, uint16_t& port, String& user, String& password, bool& useTLS);
+    void parseMqttBrokerUrl(const String& mqttBrokerUrl);
 };
 
 /******************************************************************************
@@ -256,6 +321,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif /* MQTT_SERVICE_H */
+#endif /* MQTT_BROKER_CONNECTION_H */
 
 /** @} */

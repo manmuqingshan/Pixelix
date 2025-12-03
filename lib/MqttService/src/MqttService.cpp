@@ -84,29 +84,29 @@ bool MqttService::start()
     }
     else
     {
-        String mqttBrokerUrl = m_mqttBrokerUrlSetting.getValue();
+        String   mqttBrokerUrl = m_mqttBrokerUrlSetting.getValue();
+        String   url;
+        uint16_t port = 0U;
+        String   user;
+        String   password;
+        bool     useTLS = false;
 
         /* Determine URL, user and password. */
-        parseMqttBrokerUrl(mqttBrokerUrl);
+        parseMqttBrokerUrl(mqttBrokerUrl, url, port, user, password, useTLS);
 
         m_hostname = settings.getHostname().getValue();
 
         settings.close();
 
-        if (false == m_url.isEmpty())
+        if (false == url.isEmpty())
         {
-            (void)m_mqttClient.setServer(m_url.c_str(), m_port);
-            (void)m_mqttClient.setCallback([this](char* topic, uint8_t* payload, uint32_t length) {
-                this->rxCallback(topic, payload, length);
-            });
-            (void)m_mqttClient.setBufferSize(MAX_BUFFER_SIZE);
-            (void)m_mqttClient.setSocketTimeout(MQTT_SOCK_TIMEOUT);
+            m_brokerConnection.setLastWillTopic(m_hostname + "/status", "online", "offline");
 
-            m_state = STATE_DISCONNECTED;
-        }
-        else
-        {
-            m_state = STATE_IDLE;
+            if (false == m_brokerConnection.connect(m_hostname, url, port, user, password, useTLS))
+            {
+                LOG_ERROR("Couldn't start MQTT broker connection.");
+                isSuccessful = false;
+            }
         }
     }
 
@@ -125,150 +125,52 @@ bool MqttService::start()
 void MqttService::stop()
 {
     SettingsService& settings  = SettingsService::getInstance();
-    String           willTopic = m_hostname + "/status";
-
-    /* Provide offline status */
-    (void)m_mqttClient.publish(willTopic.c_str(), "offline", true);
 
     settings.unregisterSetting(&m_mqttBrokerUrlSetting);
-    m_mqttClient.disconnect();
-    m_state = STATE_IDLE;
-    m_reconnectTimer.stop();
+    
+    m_brokerConnection.disconnect();
 
     LOG_INFO("MQTT service stopped.");
 }
 
 void MqttService::process()
 {
-    switch (m_state)
-    {
-    case STATE_DISCONNECTED:
-        disconnectedState();
-        break;
-
-    case STATE_CONNECTED:
-        connectedState();
-        break;
-
-    case STATE_IDLE:
-        idleState();
-        break;
-
-    default:
-        break;
-    }
+    m_brokerConnection.process();
 }
 
-MqttService::State MqttService::getState() const
+MqttTypes::State MqttService::getState() const
 {
-    return m_state;
+    return m_brokerConnection.getState();
 }
 
 bool MqttService::publish(const String& topic, const String& msg, bool retained)
 {
-    return publish(topic.c_str(), msg.c_str(), retained);
+    return m_brokerConnection.publish(topic, msg, retained);
 }
 
 bool MqttService::publish(const char* topic, const char* msg, bool retained)
 {
-    return m_mqttClient.publish(topic, msg, retained);
+    return m_brokerConnection.publish(topic, msg, retained);
 }
 
-bool MqttService::subscribe(const String& topic, TopicCallback callback)
+bool MqttService::subscribe(const String& topic, MqttTypes::TopicCallback callback)
 {
-    return subscribe(topic.c_str(), callback);
+    return m_brokerConnection.subscribe(topic, callback);
 }
 
-bool MqttService::subscribe(const char* topic, TopicCallback callback)
+bool MqttService::subscribe(const char* topic, MqttTypes::TopicCallback callback)
 {
-    bool isSuccessful = false;
-
-    if (nullptr != topic)
-    {
-        SubscriberList::const_iterator it;
-
-        /* Register a topic only once! */
-        for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
-        {
-            if (nullptr != (*it))
-            {
-                if (0 == strcmp((*it)->topic.c_str(), topic))
-                {
-                    break;
-                }
-            }
-        }
-
-        if (it == m_subscriberList.end())
-        {
-            Subscriber* subscriber = new (std::nothrow) Subscriber;
-
-            if (nullptr != subscriber)
-            {
-                subscriber->topic    = topic;
-                subscriber->callback = callback;
-
-                if (false == m_mqttClient.connected())
-                {
-                    m_subscriberList.push_back(subscriber);
-                    isSuccessful = true;
-                }
-                else
-                {
-                    if (false == m_mqttClient.subscribe(topic))
-                    {
-                        LOG_WARNING("MQTT topic subscription not possible: %s", topic);
-                    }
-                    else
-                    {
-                        m_subscriberList.push_back(subscriber);
-                        isSuccessful = true;
-                    }
-                }
-
-                if (false == isSuccessful)
-                {
-                    delete subscriber;
-                    subscriber = nullptr;
-                }
-            }
-        }
-    }
-
-    return isSuccessful;
+    return m_brokerConnection.subscribe(topic, callback);
 }
 
 void MqttService::unsubscribe(const String& topic)
 {
-    unsubscribe(topic.c_str());
+    m_brokerConnection.unsubscribe(topic);
 }
 
 void MqttService::unsubscribe(const char* topic)
 {
-    if (nullptr != topic)
-    {
-        SubscriberList::iterator it = m_subscriberList.begin();
-
-        while (m_subscriberList.end() != it)
-        {
-            if (nullptr != (*it))
-            {
-                if (0 == strcmp((*it)->topic.c_str(), topic))
-                {
-                    Subscriber* subscriber = *it;
-
-                    (void)m_mqttClient.unsubscribe(subscriber->topic.c_str());
-
-                    (void)m_subscriberList.erase(it);
-                    delete subscriber;
-
-                    break;
-                }
-            }
-
-            ++it;
-        }
-    }
+    m_brokerConnection.unsubscribe(topic);
 }
 
 /******************************************************************************
@@ -279,187 +181,76 @@ void MqttService::unsubscribe(const char* topic)
  * Private Methods
  *****************************************************************************/
 
-void MqttService::disconnectedState()
-{
-    if (true == WiFi.isConnected())
-    {
-        bool connectNow = false;
-
-        /* Connect immediately after service is started initially? */
-        if (false == m_reconnectTimer.isTimerRunning())
-        {
-            connectNow = true;
-
-            m_reconnectTimer.start(RECONNECT_PERIOD);
-        }
-        else if (true == m_reconnectTimer.isTimeout())
-        {
-            connectNow = true;
-        }
-        else
-        {
-            ;
-        }
-
-        if (true == connectNow)
-        {
-            bool   isConnected = false;
-            String willTopic   = m_hostname + "/status";
-
-            /* Authentication necessary? */
-            if (false == m_user.isEmpty())
-            {
-                LOG_INFO("Connect to %s as %s with %s.", m_url.c_str(), m_user.c_str(), m_hostname.c_str());
-
-                isConnected = m_mqttClient.connect(m_hostname.c_str(), m_user.c_str(), m_password.c_str(), willTopic.c_str(), 0, true, "offline");
-            }
-            /* Connect anonymous */
-            else
-            {
-                LOG_INFO("Connect anonymous to %s with %s.", m_url.c_str(), m_hostname.c_str());
-
-                isConnected = m_mqttClient.connect(m_hostname.c_str(), nullptr, nullptr, willTopic.c_str(), 0, true, "offline");
-            }
-
-            /* Connection to broker failed? */
-            if (false == isConnected)
-            {
-                /* Try to reconnect later. */
-                m_reconnectTimer.restart();
-            }
-            /* Connection to broker successful. */
-            else
-            {
-                LOG_INFO("Connection to MQTT broker established.");
-
-                m_state = STATE_CONNECTED;
-                m_reconnectTimer.stop();
-
-                /* Provide online status */
-                (void)m_mqttClient.publish(willTopic.c_str(), "online", true);
-
-                resubscribe();
-            }
-        }
-    }
-}
-
-void MqttService::connectedState()
-{
-    /* Connection with broker lost? */
-    if (false == m_mqttClient.loop())
-    {
-        LOG_INFO("Connection to MQTT broker disconnected.");
-        m_state = STATE_DISCONNECTED;
-
-        /* Try to reconnect later. */
-        m_reconnectTimer.restart();
-    }
-}
-
-void MqttService::idleState()
-{
-    /* Nothing to do. */
-}
-
-void MqttService::rxCallback(char* topic, uint8_t* payload, uint32_t length)
-{
-    SubscriberList::const_iterator it;
-
-    for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
-    {
-        if (nullptr != (*it))
-        {
-            if (0 == strcmp((*it)->topic.c_str(), topic))
-            {
-                Subscriber* subscriber = *it;
-
-                subscriber->callback(topic, payload, length);
-                break;
-            }
-        }
-    }
-}
-
-void MqttService::resubscribe()
-{
-    SubscriberList::const_iterator it;
-
-    for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
-    {
-        if (nullptr != (*it))
-        {
-            Subscriber* subscriber = *it;
-
-            if (false == m_mqttClient.subscribe(subscriber->topic.c_str()))
-            {
-                LOG_WARNING("MQTT topic subscription not possible: %s", subscriber->topic.c_str());
-            }
-        }
-    }
-}
-
-void MqttService::parseMqttBrokerUrl(const String& mqttBrokerUrl)
+void MqttService::parseMqttBrokerUrl(const String& mqttBrokerUrl, String& url, uint16_t& port, String& user, String& password, bool& useTLS)
 {
     int32_t idx = mqttBrokerUrl.indexOf("://");
 
     /* The MQTT broker URL format:
-     * [mqtt://][<USER>:<PASSWORD>@]<BROKER-URL>[:<PORT>]
+     * [mqtt[s]://][<USER>:<PASSWORD>@]<BROKER-URL>[:<PORT>]
      */
-    m_url       = mqttBrokerUrl;
+    url         = mqttBrokerUrl;
+    useTLS      = false;
 
-    /* Remove protocol, we don't care about. */
     if (0 <= idx)
     {
-        m_url.remove(0U, idx + 3);
+        String protocol = url.substring(0U, idx);
+
+        /* MQTT over TLS? */
+        if (0 == protocol.compareTo("mqtts"))
+        {
+            useTLS = true;
+        }
+
+        /* Remove protocol from URL. */
+        url.remove(0U, idx + 3);
     }
 
     /* User and passwort */
-    idx = m_url.indexOf("@");
+    idx = url.indexOf("@");
 
-    m_user.clear();
-    m_password.clear();
+    user.clear();
+    password.clear();
 
     if (0 <= idx)
     {
-        int32_t dividerIdx = m_url.indexOf(":");
+        int32_t dividerIdx = url.indexOf(":");
 
         /* Only user name with empty password? */
         if (0 > dividerIdx)
         {
-            m_user = m_url.substring(0U, idx);
+            user = url.substring(0U, idx);
         }
         /* At least one character for a user name must exist. */
         else if (0 < dividerIdx)
         {
-            m_user = m_url.substring(0U, dividerIdx);
+            user = url.substring(0U, dividerIdx);
 
             /* Password not empty? */
             if (idx > (dividerIdx + 1))
             {
-                m_password = m_url.substring(dividerIdx + 1, idx);
+                password = url.substring(dividerIdx + 1, idx);
             }
         }
 
-        m_url.remove(0U, idx + 1);
+        url.remove(0U, idx + 1);
     }
 
     /* Port */
-    idx    = m_url.indexOf(":");
+    idx  = url.indexOf(":");
 
-    m_port = MQTT_PORT;
+    port = MQTT_PORT;
 
     if (0 <= idx)
     {
-        String  portStr = m_url.substring(idx + 1);
+        String  portStr = url.substring(idx + 1);
         int32_t port    = portStr.toInt();
 
         if (0 <= port)
         {
-            m_port = static_cast<uint16_t>(port);
+            port = static_cast<uint16_t>(port);
         }
 
-        m_url.remove(idx);
+        url.remove(idx);
     }
 }
 
