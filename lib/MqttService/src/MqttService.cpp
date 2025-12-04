@@ -124,10 +124,10 @@ bool MqttService::start()
 
 void MqttService::stop()
 {
-    SettingsService& settings  = SettingsService::getInstance();
+    SettingsService& settings = SettingsService::getInstance();
 
     settings.unregisterSetting(&m_mqttBrokerUrlSetting);
-    
+
     m_brokerConnection.disconnect();
 
     LOG_INFO("MQTT service stopped.");
@@ -243,11 +243,11 @@ void MqttService::parseMqttBrokerUrl(const String& mqttBrokerUrl, String& url, u
     if (0 <= idx)
     {
         String  portStr = url.substring(idx + 1);
-        int32_t port    = portStr.toInt();
+        int32_t portNum = portStr.toInt();
 
-        if (0 <= port)
+        if ((0 <= portNum) && (portNum <= UINT16_MAX))
         {
-            port = static_cast<uint16_t>(port);
+            port = static_cast<uint16_t>(portNum);
         }
 
         url.remove(idx);

@@ -207,35 +207,6 @@ private:
     MqttService& operator=(const MqttService& service);
 
     /**
-     * Handles the DISCONNECTED state.
-     */
-    void disconnectedState();
-
-    /**
-     * Handles the CONNECTED state.
-     */
-    void connectedState();
-
-    /**
-     * Handles the IDLE state.
-     */
-    void idleState();
-
-    /**
-     * MQTT receive callback.
-     *
-     * @param[in] topic     The topic name.
-     * @param[in] payload   The payload of the topic.
-     * @param[in] length    Payload length in byte.
-     */
-    void rxCallback(char* topic, uint8_t* payload, uint32_t length);
-
-    /**
-     * Resubscribe all topics.
-     */
-    void resubscribe();
-
-    /**
      * Parse MQTT broker URL and derive the raw URL, the user and password.
      *
      * @param[in] mqttBrokerUrl The MQTT broker URL.

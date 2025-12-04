@@ -107,6 +107,7 @@ bool MqttBrokerConnection::connect(const String& clientId, const String& mqttBro
 
         if (nullptr != m_wifiClient)
         {
+            m_clientId = clientId;
             m_url      = mqttBrokerUrl;
             m_port     = port;
             m_user     = user;
@@ -274,19 +275,19 @@ void MqttBrokerConnection::disconnectedState()
 
         if (true == connectNow)
         {
-            bool   isConnected = false;
+            bool isConnected = false;
 
             /* Authentication necessary? */
             if (false == m_user.isEmpty())
             {
-                LOG_INFO("Connect to %s as %s with %s.", m_url.c_str(), m_user.c_str(), m_clientId.c_str());
+                LOG_INFO("Connect to %s:%u as %s with %s.", m_url.c_str(), m_port, m_user.c_str(), m_clientId.c_str());
 
                 isConnected = m_mqttClient.connect(m_clientId.c_str(), m_user.c_str(), m_password.c_str(), m_willTopic.c_str(), 0, true, m_lastWillPayload.c_str());
             }
             /* Connect anonymous */
             else
             {
-                LOG_INFO("Connect anonymous to %s with %s.", m_url.c_str(), m_clientId.c_str());
+                LOG_INFO("Connect anonymous to %s:%u with %s.", m_url.c_str(), m_port, m_clientId.c_str());
 
                 isConnected = m_mqttClient.connect(m_clientId.c_str(), nullptr, nullptr, m_willTopic.c_str(), 0, true, m_lastWillPayload.c_str());
             }

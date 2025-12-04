@@ -236,31 +236,25 @@ private:
     typedef std::vector<Subscriber> SubscriberList;
 
     /** MQTT port */
-    static const uint16_t MQTT_PORT               = 1883U;
+    static const uint16_t MQTT_PORT         = 1883U;
 
     /**
      * MQTT socket timeout in s. Keep it low to improve systems responsiveness.
      * Otherwise a reconnect may take a while and blocks any other activities.
      * The same for reading and writing to the socket.
      */
-    static const uint16_t MQTT_SOCK_TIMEOUT       = 1U;
-
-    /** MQTT broker URL min. length */
-    static const size_t MIN_VALUE_MQTT_BROKER_URL = 0U;
-
-    /** MQTT broker URL max. length */
-    static const size_t MAX_VALUE_MQTT_BROKER_URL = 64U;
+    static const uint16_t MQTT_SOCK_TIMEOUT = 1U;
 
     /**
      * Reconnect period in ms.
      */
-    static const uint32_t RECONNECT_PERIOD        = SIMPLE_TIMER_SECONDS(10U);
+    static const uint32_t RECONNECT_PERIOD  = SIMPLE_TIMER_SECONDS(10U);
 
     /**
      * Max. MQTT client buffer size in byte.
      * Received MQTT messages greather than this will be skipped.
      */
-    static const size_t MAX_BUFFER_SIZE           = 2048U;
+    static const size_t MAX_BUFFER_SIZE     = 2048U;
 
 
     String              m_clientId;        /**< MQTT client identifier */
