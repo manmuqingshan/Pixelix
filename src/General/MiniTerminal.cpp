@@ -34,7 +34,7 @@
  * Includes
  *****************************************************************************/
 #include "MiniTerminal.h"
-#include "RestartState.h"
+#include "RestartMgr.h"
 
 #include <Util.h>
 #include <SettingsService.h>
@@ -66,10 +66,10 @@
 static const char RESTART[]                                  = "restart";
 
 /** Command: write wifi passphrase */
-static const char WRITE_WIFI_PASSPHRASE[]                    = "write wifi passphrase ";
+static const char WRITE_WIFI_PASSPHRASE[]                    = "write wifi passphrase";
 
 /** Command: write wifi ssid */
-static const char WRITE_WIFI_SSID[]                          = "write wifi ssid ";
+static const char WRITE_WIFI_SSID[]                          = "write wifi ssid";
 
 /** Command: get ip */
 static const char GET_IP[]                                   = "get ip";
@@ -196,7 +196,16 @@ void MiniTerminal::executeCommand(const char* cmdLine)
 
         if (0 == strncmp(cmdLine, entry.cmdStr, len))
         {
-            (this->*entry.handler)(&cmdLine[len]);
+            const char* par = &cmdLine[len];
+
+            /* Skip leading whitespaces. */
+            while ((' ' == *par) || ('\t' == *par))
+            {
+                ++par;
+            }
+
+            /* Execute the command with its parameters. */
+            (this->*entry.handler)(par);
             break;
         }
     }
@@ -209,9 +218,36 @@ void MiniTerminal::executeCommand(const char* cmdLine)
 
 void MiniTerminal::cmdRestart(const char* par)
 {
-    UTIL_NOT_USED(par);
-    m_isRestartRequested = true;
-    writeSuccessful();
+    const uint32_t               RESTART_DELAY = 100U; /* ms */
+    RestartMgr&                  restartMgr    = RestartMgr::getInstance();
+    RestartMgr::RestartReqStatus status        = RestartMgr::RESTART_REQ_STATUS_ERR;
+
+    /* Just restart the application? */
+    if ((nullptr == par) ||
+        ('\0' == *par))
+    {
+        status = restartMgr.reqRestart(RESTART_DELAY, false);
+    }
+    /* Restart and jump to updater? */
+    else if (0 == strcmp(par, "updater"))
+    {
+        status = restartMgr.reqRestart(RESTART_DELAY, true);
+    }
+    /* Invalid parameter. */
+    else
+    {
+        /* Nothing to do. */
+        ;
+    }
+
+    if (RestartMgr::RESTART_REQ_STATUS_OK != status)
+    {
+        writeError("Failed to request restart.\n");
+    }
+    else
+    {
+        writeSuccessful();
+    }
 }
 
 void MiniTerminal::cmdWriteWifiPassphrase(const char* par)
