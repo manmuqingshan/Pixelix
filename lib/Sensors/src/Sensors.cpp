@@ -42,6 +42,7 @@
 #include <SensorBattery.h>
 #include <SensorHeap.h>
 #include <SensorWiFi.h>
+#include <SensorSystem.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -140,6 +141,18 @@
 #define SENSOR_ID_WIFI      SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_HEAP)
 #endif  /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
 
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+/**
+ * System sensor id.
+ */
+#define SENSOR_ID_SYSTEM    SENSOR_ID_NEXT(SENSOR_ID_WIFI)
+#else   /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+/**
+ * System sensor id. (not applicable).
+ */
+#define SENSOR_ID_SYSTEM    SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_WIFI)
+#endif  /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+
 /******************************************************************************
  * Types and classes
  *****************************************************************************/
@@ -194,6 +207,13 @@ static SensorWiFi       gWiFi;
 
 #endif /* IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE) */
 
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+
+/** System sensor. */
+static SensorSystem       gSystem;
+
+#endif /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+
 /** A list with all registered sensors. */
 static ISensor*         gSensors[] =
 {
@@ -220,6 +240,10 @@ static ISensor*         gSensors[] =
 #if IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE)
     &gWiFi,
 #endif /* IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+    &gSystem,
+#endif /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
 
     nullptr
 };

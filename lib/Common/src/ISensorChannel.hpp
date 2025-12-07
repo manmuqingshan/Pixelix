@@ -68,6 +68,7 @@ public:
     enum DataType
     {
         DATA_TYPE_INVALID = 0, /**< Invalid data type */
+        DATA_TYPE_UINT64,      /**< 64 bit unsigned integer */
         DATA_TYPE_UINT32,      /**< 32 bit unsigned integer */
         DATA_TYPE_INT32,       /**< 32 bit signed integer */
         DATA_TYPE_FLOAT32,     /**< 32 bit float */
@@ -87,7 +88,8 @@ public:
         TYPE_FREE_HEAP_BYTES,            /**< Size in [bytes] */
         TYPE_MIN_FREE_HEAP_BYTES,        /**< Size in [bytes] */
         TYPE_MAX_ALLOC_HEAP_BYTES,       /**< Size in [bytes] */
-        TYPE_SIGNAL_STRENGTH_DBM         /**< Signal strength in [dBm] */
+        TYPE_SIGNAL_STRENGTH_DBM,        /**< Signal strength in [dBm] */
+        TYPE_UPTIME_S                    /**< Uptime in [s] */
     };
 
     /**
@@ -167,6 +169,10 @@ public:
 
         case ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM:
             name = "signalStrength";
+            break;
+
+        case ISensorChannel::TYPE_UPTIME_S:
+            name = "uptime";
             break;
 
         default:
