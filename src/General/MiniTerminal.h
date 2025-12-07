@@ -74,8 +74,7 @@ public:
     MiniTerminal(Stream& stream) :
         m_stream(stream),
         m_input(),
-        m_writeIndex(0U),
-        m_isRestartRequested(false)
+        m_writeIndex(0U)
     {
         /* Don't wait for any input. */
         m_stream.setTimeout(0U);
@@ -93,20 +92,6 @@ public:
      * It will handle the stream input.
      */
     void process();
-
-    /**
-     * Is restart requested?
-     * 
-     * @return If restart requested, it will return true otherwise false.
-     */
-    bool isRestartRequested()
-    {
-        bool isRestartRequested = m_isRestartRequested;
-
-        m_isRestartRequested = false;
-
-        return isRestartRequested;
-    }
 
 private:
 
@@ -128,7 +113,6 @@ private:
     Stream& m_stream;                   /**< In/Out-stream. */
     char    m_input[INPUT_BUFFER_SIZE]; /**< Input command line buffer. */
     size_t  m_writeIndex;               /**< Write index to the command line buffer. */
-    bool    m_isRestartRequested;       /**< Restart requested? */
 
     static const CmdTableEntry m_cmdTable[]; /**< Table with supported commands. */
 

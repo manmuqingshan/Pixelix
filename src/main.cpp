@@ -239,11 +239,6 @@ void loop()
     /* Process terminal */
     gTerminal.process();
 
-    if (true == gTerminal.isRestartRequested())
-    {
-        (void)restartMgr.reqRestart(0U, false);
-    }
-
     /* Handle delayed restart request. */
     restartMgr.process();
 

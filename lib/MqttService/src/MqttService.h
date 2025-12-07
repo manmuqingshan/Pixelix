@@ -42,12 +42,9 @@
  *****************************************************************************/
 #include <stdint.h>
 #include <IService.hpp>
-#include <WiFi.h>
-#include <PubSubClient.h>
 #include <KeyValueString.h>
-#include <functional>
-#include <vector>
-#include <SimpleTimer.hpp>
+#include "MqttTypes.h"
+#include "MqttBrokerConnection.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -67,21 +64,6 @@
 class MqttService : public IService
 {
 public:
-
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
-
-    /**
-     * MQTT service states.
-     */
-    enum State
-    {
-        STATE_DISCONNECTED = 0, /**< No connection to a MQTT broker */
-        STATE_CONNECTED,        /**< Connected with a MQTT broker */
-        STATE_IDLE              /**< Service is idle */
-    };
 
     /**
      * Get the MQTT service instance.
@@ -117,7 +99,7 @@ public:
      *
      * @return MQTT connection state
      */
-    State getState() const;
+    MqttTypes::State getState() const;
 
     /**
      * Publish a message for a topic.
@@ -150,7 +132,7 @@ public:
      *
      * @return If successful subscribed, it will return true otherwise false.
      */
-    bool subscribe(const String& topic, TopicCallback callback);
+    bool subscribe(const String& topic, MqttTypes::TopicCallback callback);
 
     /**
      * Subscribe for a topic. The callback will be called every time a message
@@ -161,7 +143,7 @@ public:
      *
      * @return If successful subscribed, it will return true otherwise false.
      */
-    bool subscribe(const char* topic, TopicCallback callback);
+    bool subscribe(const char* topic, MqttTypes::TopicCallback callback);
 
     /**
      * Unsubscribe topic.
@@ -179,29 +161,8 @@ public:
 
 private:
 
-    /**
-     * Subscriber information
-     */
-    struct Subscriber
-    {
-        String        topic;    /**< The subscriber topic */
-        TopicCallback callback; /**< The subscriber callback */
-    };
-
-    /**
-     * This type defines a list of subscribers.
-     */
-    typedef std::vector<Subscriber*> SubscriberList;
-
     /** MQTT port */
-    static const uint16_t MQTT_PORT         = 1883U;
-
-    /**
-     * MQTT socket timeout in s. Keep it low to improve systems responsiveness.
-     * Otherwise a reconnect may take a while and blocks any other activities.
-     * The same for reading and writing to the socket.
-     */
-    static const uint16_t MQTT_SOCK_TIMEOUT = 1U;
+    static const uint16_t MQTT_PORT = 1883U;
 
     /** MQTT broker URL key */
     static const char* KEY_MQTT_BROKER_URL;
@@ -213,33 +174,14 @@ private:
     static const char* DEFAULT_MQTT_BROKER_URL;
 
     /** MQTT broker URL min. length */
-    static const size_t MIN_VALUE_MQTT_BROKER_URL = 0U;
+    static const size_t MIN_VALUE_MQTT_BROKER_URL  = 0U;
 
     /** MQTT broker URL max. length */
-    static const size_t MAX_VALUE_MQTT_BROKER_URL = 64U;
+    static const size_t  MAX_VALUE_MQTT_BROKER_URL = 64U;
 
-    /**
-     * Reconnect period in ms.
-     */
-    static const uint32_t RECONNECT_PERIOD        = SIMPLE_TIMER_SECONDS(10U);
-
-    /**
-     * Max. MQTT client buffer size in byte.
-     * Received MQTT messages greather than this will be skipped.
-     */
-    static const size_t MAX_BUFFER_SIZE           = 2048U;
-
-    KeyValueString      m_mqttBrokerUrlSetting; /**< URL of the MQTT broker setting */
-    String              m_url;                  /**< URL of the MQTT broker */
-    String              m_user;                 /**< MQTT authentication: user name */
-    String              m_password;             /**< MQTT authentication: password */
-    String              m_hostname;             /**< MQTT hostname */
-    uint16_t            m_port;                 /**< MQTT port */
-    WiFiClient          m_wifiClient;           /**< WiFi client */
-    PubSubClient        m_mqttClient;           /**< MQTT client */
-    State               m_state;                /**< Connection state */
-    SubscriberList      m_subscriberList;       /**< List of subscribers */
-    SimpleTimer         m_reconnectTimer;       /**< Timer used for periodically reconnecting. */
+    KeyValueString       m_mqttBrokerUrlSetting; /**< URL of the MQTT broker setting */
+    MqttBrokerConnection m_brokerConnection;     /**< MQTT broker connection */
+    String               m_hostname;             /**< MQTT hostname */
 
     /**
      * Constructs the service instance.
@@ -247,16 +189,8 @@ private:
     MqttService() :
         IService(),
         m_mqttBrokerUrlSetting(KEY_MQTT_BROKER_URL, NAME_MQTT_BROKER_URL, DEFAULT_MQTT_BROKER_URL, MIN_VALUE_MQTT_BROKER_URL, MAX_VALUE_MQTT_BROKER_URL),
-        m_url(),
-        m_user(),
-        m_password(),
-        m_hostname(),
-        m_port(MQTT_PORT),
-        m_wifiClient(),
-        m_mqttClient(m_wifiClient),
-        m_state(STATE_DISCONNECTED),
-        m_subscriberList(),
-        m_reconnectTimer()
+        m_brokerConnection(),
+        m_hostname()
     {
     }
 
@@ -273,40 +207,16 @@ private:
     MqttService& operator=(const MqttService& service);
 
     /**
-     * Handles the DISCONNECTED state.
-     */
-    void disconnectedState();
-
-    /**
-     * Handles the CONNECTED state.
-     */
-    void connectedState();
-
-    /**
-     * Handles the IDLE state.
-     */
-    void idleState();
-
-    /**
-     * MQTT receive callback.
-     *
-     * @param[in] topic     The topic name.
-     * @param[in] payload   The payload of the topic.
-     * @param[in] length    Payload length in byte.
-     */
-    void rxCallback(char* topic, uint8_t* payload, uint32_t length);
-
-    /**
-     * Resubscribe all topics.
-     */
-    void resubscribe();
-
-    /**
      * Parse MQTT broker URL and derive the raw URL, the user and password.
      *
      * @param[in] mqttBrokerUrl The MQTT broker URL.
+     * @param[out] url          The raw MQTT broker URL.
+     * @param[out] port         The MQTT broker port.
+     * @param[out] user         The MQTT broker user.
+     * @param[out] password     The MQTT broker password.
+     * @param[out] useTLS       Use TLS connection?
      */
-    void parseMqttBrokerUrl(const String& mqttBrokerUrl);
+    void parseMqttBrokerUrl(const String& mqttBrokerUrl, String& url, uint16_t& port, String& user, String& password, bool& useTLS);
 };
 
 /******************************************************************************

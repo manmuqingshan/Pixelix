@@ -308,13 +308,6 @@ private:
     bool setConfiguration(const JsonObjectConst& jsonCfg) final;
 
     /**
-     * Request new data.
-     *
-     * @return If successful it will return true otherwise false.
-     */
-    bool startHttpRequest(void);
-
-    /**
      * Get value from JSON source by the filter.
      * It will be called recursively and can handle nested JSON objects and arrays.
      *
@@ -323,11 +316,6 @@ private:
      * @param[out]  values  Array of values in JSON format
      */
     void getJsonValueByFilter(JsonVariantConst src, JsonVariantConst filter, JsonArray& values);
-
-    /**
-     * Clear the task proxy queue.
-     */
-    void clearQueue();
 
     /**
      * Subscribe MQTT topic to be informed about value changes.

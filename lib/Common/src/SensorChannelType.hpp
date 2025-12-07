@@ -266,6 +266,9 @@ public:
     }
 };
 
+/** Sensor, which provides data as 64 bit unsigned integer. */
+typedef SensorChannelType<uint64_t, ISensorChannel::DATA_TYPE_UINT64> SensorChannelUInt64;
+
 /** Sensor, which provides data as 32 bit unsigned integer. */
 typedef SensorChannelType<uint32_t, ISensorChannel::DATA_TYPE_UINT32> SensorChannelUInt32;
 

@@ -66,13 +66,13 @@
                                 <strong>Important:</strong> Updating the filesystem will erase all your configuration data. Before proceeding, make sure to create a backup of your configuration to avoid losing any settings.
                             </div>
                         </p>
-                        <button class="btn btn-light" type="button" onclick="goToPixelixUpdaterPressed()">Go to PixelixUpdater</button>
+                        <button class="btn btn-light" type="button" onclick="goToPixelixUpdaterPressed()" disabled>Go to PixelixUpdater</button>
                     </div>
 
                     <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
                         <br />
                         <p>Backup the configuration.</p>
-                        <button class="btn btn-light" id="buttonBackup" type="button" onclick="backup();">Save As</button>
+                        <button class="btn btn-light" id="buttonBackup" type="button" onclick="backup();" disabled>Save As</button>
                     </div>
 
                     <div class="tab-pane fade" id="restore" role="tabpanel" aria-labelledby="restore-tab">
@@ -80,7 +80,7 @@
                         <p>Restore the configuration.</p>
                         <div class="input-group">
                             <input type="file" class="form-control" id="backupFile" accept=".zip">
-                            <button class="btn btn-light" type="button" onclick="restore();">Restore</button>
+                            <button class="btn btn-light" type="button" onclick="restore();" disabled>Restore</button>
                         </div>
                         <div class="progress">
                             <div id="progressBarRestore" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
@@ -339,25 +339,26 @@
 
              /* Request change of active partition. */
             function sendPartitionChangeRequest() {
+                var intervalId = 0;
+
                 disableUI();
-                
+                                
                 utils.makeRequest({
                     method: "POST",
                     url: "/rest/api/v1/partitionChange",
                     isJsonResponse: true
                 }).then(function(rsp) {
                     let seconds = 10;
-                    dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
 
-                    const intervalId = setInterval(() => {
+                    intervalId = setInterval(() => {
                         seconds--;
-                        if (seconds > 0) {
-                            dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
-                        } else {
-                            clearInterval(intervalId);
-                            location.reload();
-                        }
+                        dialog.updateMessage(`<p>Reload in ${seconds}s</p>`);
                     }, 1000);
+
+                    return dialog.showInfo(`<p>Reload in ${seconds}s</p>`, true);
+                }).then(function() {
+                    clearInterval(intervalId);
+                    location.reload();
                 }).catch(function(rsp) {
                     dialog.showError("<p>Error: " + rsp + "</p>")
                     enableUI();
