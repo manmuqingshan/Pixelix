@@ -59,6 +59,9 @@
 
 /**
  * Clock driver.
+ * 
+ * The time zone configured in the settings is used for local time operations.
+ * The utc time is stored in the RTC if available.
  */
 class ClockDrv
 {
@@ -85,7 +88,7 @@ public:
     void init(IRtc* rtc);
 
     /**
-     * Get the local time by considering device time zone.
+     * Get the local time.
      *
      * @param[out] timeInfo Time information.
      *
@@ -94,19 +97,10 @@ public:
     bool getTime(struct tm& timeInfo);
 
     /**
-     * Get the current time in UTC.
-     *
-     * @param[out] timeInfo Time information.
-     *
-     * @return If time is not synchronized, it will return false otherwise true.
-     */
-    bool getUtcTime(struct tm& timeInfo);
-
-    /**
-     * Get the local time by considering the time zone.
+     * Get the time by considering the given time zone.
      *
      * @param[in]   tz          Time zone string
-     * @param[out]  timeInfo    Local time information
+     * @param[out]  timeInfo    Time information
      * 
      * @return If time is not synchronized, it will return false otherwise true.
      */
@@ -118,11 +112,6 @@ private:
      * The minimum time zone string size (incl. string termination).
      */
     static const size_t     TZ_MIN_SIZE             = 60U;
-
-    /**
-     * Use UTC time zone by default.
-     */
-    static const char*      TZ_UTC;
 
     /**
      * Period for time synchronization by NTP in ms.
@@ -165,7 +154,7 @@ private:
      */
     ClockDrv() :
         m_isClockDrvInitialized(false),
-        m_timeZone(TZ_UTC),
+        m_timeZone(),
         m_internalTimeZoneBuffer(nullptr),
         m_ntpServerAddress{0},
         m_rtc(nullptr),
