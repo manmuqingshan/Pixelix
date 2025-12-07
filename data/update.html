@@ -339,25 +339,26 @@
 
              /* Request change of active partition. */
             function sendPartitionChangeRequest() {
+                var intervalId = 0;
+
                 disableUI();
-                
+                                
                 utils.makeRequest({
                     method: "POST",
                     url: "/rest/api/v1/partitionChange",
                     isJsonResponse: true
                 }).then(function(rsp) {
                     let seconds = 10;
-                    dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
 
-                    const intervalId = setInterval(() => {
+                    intervalId = setInterval(() => {
                         seconds--;
-                        if (seconds > 0) {
-                            dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
-                        } else {
-                            clearInterval(intervalId);
-                            location.reload();
-                        }
+                        dialog.updateMessage(`<p>Reload in ${seconds}s</p>`);
                     }, 1000);
+
+                    return dialog.showInfo(`<p>Reload in ${seconds}s</p>`, true);
+                }).then(function() {
+                    clearInterval(intervalId);
+                    location.reload();
                 }).catch(function(rsp) {
                     dialog.showError("<p>Error: " + rsp + "</p>")
                     enableUI();

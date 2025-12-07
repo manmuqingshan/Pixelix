@@ -127,3 +127,7 @@ dialog.showYesNo = function(title, message, onYes, onNo, isBlocking) {
 
     return dialog._show(title, message, isBlocking);
 };
+
+dialog.updateMessage = function(message) {
+    $("#dialogBody").html(message);
+};
