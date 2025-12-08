@@ -72,7 +72,9 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& rsp)
 
         if (nullptr != rsp.m_payload)
         {
-            m_payload = new(std::nothrow) uint8_t[rsp.m_size];
+            DataAllocator allocator;
+
+            m_payload = allocator.allocateArray(rsp.m_size);
 
             if (nullptr == m_payload)
             {
@@ -166,7 +168,8 @@ void HttpResponse::addHeader(const String& line)
 
 bool HttpResponse::extendPayload(size_t size)
 {
-    uint8_t* newPayload = new(std::nothrow) uint8_t[m_size + size];
+    DataAllocator allocator;
+    uint8_t*      newPayload = allocator.allocateArray(m_size + size);
 
     if (nullptr != newPayload)
     {
@@ -178,7 +181,7 @@ bool HttpResponse::extendPayload(size_t size)
 
         if (nullptr != m_payload)
         {
-            delete[] m_payload;
+            allocator.deallocateArray(m_payload);
         }
 
         m_payload  = newPayload;
@@ -274,7 +277,9 @@ void HttpResponse::clearPayload()
 {
     if (nullptr != m_payload)
     {
-        delete[] m_payload;
+        DataAllocator allocator;
+
+        allocator.deallocateArray(m_payload);
         m_payload = nullptr;
     }
 

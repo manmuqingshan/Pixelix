@@ -46,6 +46,8 @@
  *****************************************************************************/
 #include <WString.h>
 #include <vector>
+#include <TypedAllocator.hpp>
+#include <PsAllocator.hpp>
 
 #include "HttpHeader.h"
 
@@ -190,6 +192,11 @@ public:
     const uint8_t* getPayload(size_t& size) const;
 
 private:
+
+    /**
+     * Data allocator type.
+     */
+    typedef TypedAllocator<uint8_t, PsAllocator> DataAllocator;
 
     /** This type defines a list of HTTP headers. */
     typedef std::vector<HttpHeader> ListOfHeaders;
