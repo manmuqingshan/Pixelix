@@ -405,7 +405,7 @@ void MqttApiTopicHandler::write(const String& deviceId, const String& entityId, 
             }
             else
             {
-                String  fileBase64 = jsonFileBase64.as<String>();
+                String  fileBase64 = jsonFileBase64.as<const char*>();
                 size_t  fileSize   = 0U;
                 int32_t decodeRet  = mbedtls_base64_decode(nullptr, 0U, &fileSize, reinterpret_cast<const unsigned char*>(fileBase64.c_str()), fileBase64.length());
 

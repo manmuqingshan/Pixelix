@@ -79,11 +79,11 @@ extern bool Util::strToUInt8(const char* str, uint8_t& value)
 
     if (nullptr != str)
     {
-        char*           endPtr  = nullptr;
-        unsigned long   tmp     = 0UL;
+        char*         endPtr = nullptr;
+        unsigned long tmp    = 0UL;
 
-        errno = 0;
-        tmp = strtoul(str, &endPtr, 0);
+        errno                = 0;
+        tmp                  = strtoul(str, &endPtr, 0);
 
         if ((0 == errno) &&
             (nullptr != endPtr) &&
@@ -91,7 +91,7 @@ extern bool Util::strToUInt8(const char* str, uint8_t& value)
             (str != endPtr) &&
             (UINT8_MAX >= tmp))
         {
-            value = static_cast<uint8_t>(tmp);
+            value   = static_cast<uint8_t>(tmp);
             success = true;
         }
     }
@@ -110,11 +110,11 @@ extern bool Util::strToUInt16(const char* str, uint16_t& value)
 
     if (nullptr != str)
     {
-        char*           endPtr  = nullptr;
-        unsigned long   tmp     = 0UL;
+        char*         endPtr = nullptr;
+        unsigned long tmp    = 0UL;
 
-        errno = 0;
-        tmp = strtoul(str, &endPtr, 0);
+        errno                = 0;
+        tmp                  = strtoul(str, &endPtr, 0);
 
         if ((0 == errno) &&
             (nullptr != endPtr) &&
@@ -122,7 +122,7 @@ extern bool Util::strToUInt16(const char* str, uint16_t& value)
             (str != endPtr) &&
             (UINT16_MAX >= tmp))
         {
-            value = static_cast<uint16_t>(tmp);
+            value   = static_cast<uint16_t>(tmp);
             success = true;
         }
     }
@@ -141,11 +141,11 @@ extern bool Util::strToInt16(const char* str, int16_t& value)
 
     if (nullptr != str)
     {
-        char*   endPtr  = nullptr;
-        long    tmp     = 0L;
+        char* endPtr = nullptr;
+        long  tmp    = 0L;
 
-        errno = 0;
-        tmp = strtol(str, &endPtr, 0);
+        errno        = 0;
+        tmp          = strtol(str, &endPtr, 0);
 
         if ((0 == errno) &&
             (nullptr != endPtr) &&
@@ -153,7 +153,7 @@ extern bool Util::strToInt16(const char* str, int16_t& value)
             (str != endPtr) &&
             (INT16_MAX >= tmp))
         {
-            value = static_cast<int16_t>(tmp);
+            value   = static_cast<int16_t>(tmp);
             success = true;
         }
     }
@@ -172,11 +172,11 @@ extern bool Util::strToUInt32(const char* str, uint32_t& value)
 
     if (nullptr != str)
     {
-        char*           endPtr  = nullptr;
-        unsigned long   tmp     = 0UL;
+        char*         endPtr = nullptr;
+        unsigned long tmp    = 0UL;
 
-        errno = 0;
-        tmp = strtoul(str, &endPtr, 0);
+        errno                = 0;
+        tmp                  = strtoul(str, &endPtr, 0);
 
         if ((0 == errno) &&
             (nullptr != endPtr) &&
@@ -184,7 +184,7 @@ extern bool Util::strToUInt32(const char* str, uint32_t& value)
             (str != endPtr) &&
             (UINT32_MAX >= tmp))
         {
-            value = static_cast<uint32_t>(tmp);
+            value   = static_cast<uint32_t>(tmp);
             success = true;
         }
     }
@@ -203,11 +203,11 @@ extern bool Util::strToInt32(const char* str, int32_t& value)
 
     if (nullptr != str)
     {
-        char*   endPtr  = nullptr;
-        long    tmp     = 0L;
+        char* endPtr = nullptr;
+        long  tmp    = 0L;
 
-        errno = 0;
-        tmp = strtol(str, &endPtr, 0);
+        errno        = 0;
+        tmp          = strtol(str, &endPtr, 0);
 
         if ((0 == errno) &&
             (nullptr != endPtr) &&
@@ -215,7 +215,7 @@ extern bool Util::strToInt32(const char* str, int32_t& value)
             (str != endPtr) &&
             (INT32_MAX >= tmp))
         {
-            value = static_cast<int32_t>(tmp);
+            value   = static_cast<int32_t>(tmp);
             success = true;
         }
     }
@@ -230,26 +230,30 @@ extern bool Util::strToInt32(const String& str, int32_t& value)
 
 extern String Util::uint32ToHex(uint32_t value)
 {
-    char buffer[9];  /* Contains a 32-bit value in hex */
+    char buffer[9]; /* Contains a 32-bit value in hex */
 
     (void)snprintf(buffer, UTIL_ARRAY_NUM(buffer), "%x", value);
 
     return String(buffer);
 }
 
-extern uint32_t Util::hexToUInt32(const String& str)
+extern uint32_t Util::hexToUInt32(const char* str)
 {
-    uint32_t    value   = 0U;
-    uint32_t    idx     = 0U;
-    bool        isError = false;
+    const size_t STR_LEN  = strlen(str);
+    uint32_t     value   = 0U;
+    uint32_t     idx     = 0U;
+    bool         isError = false;
 
-    if ((true == str.startsWith("0x")) ||
-        (true == str.startsWith("0X")))
+    if ('0' == str[0U])
     {
-        idx = 2U;
+        if (('x' == str[1U]) ||
+            ('X' == str[1U]))
+        {
+            idx = 2U;
+        }
     }
 
-    while((str.length() > idx) && (false == isError))
+    while ((STR_LEN > idx) && (false == isError))
     {
         value *= 16U;
 
@@ -270,7 +274,7 @@ extern uint32_t Util::hexToUInt32(const String& str)
         }
         else
         {
-            value = 0U;
+            value   = 0U;
             isError = true;
         }
 
@@ -278,6 +282,11 @@ extern uint32_t Util::hexToUInt32(const String& str)
     }
 
     return value;
+}
+
+extern uint32_t Util::hexToUInt32(const String& str)
+{
+    return hexToUInt32(str.c_str());
 }
 
 String Util::colorToHtml(const Color& color)
@@ -289,16 +298,21 @@ String Util::colorToHtml(const Color& color)
     return String(buffer);
 }
 
-Color Util::colorFromHtml(const String& htmlColor)
+Color Util::colorFromHtml(const char* htmlColor)
 {
     Color color;
 
     if ('#' == htmlColor[0])
     {
-        color = Util::hexToUInt32(htmlColor.substring(1U));
+        color = Util::hexToUInt32(&htmlColor[1U]);
     }
 
     return color;
+}
+
+Color Util::colorFromHtml(const String& htmlColor)
+{
+    return colorFromHtml(htmlColor.c_str());
 }
 
 bool Util::isFormatSpecifierInStr(const String& str, char specifier)

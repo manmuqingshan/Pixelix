@@ -157,7 +157,7 @@ void OpenWeatherCurrent::parse(const JsonDocument& jsonDoc)
 
     if (false == jsonIcon.isNull())
     {
-        m_weatherIconId = jsonIcon.as<String>();
+        m_weatherIconId = jsonIcon.as<const char*>();
     }
 }
 

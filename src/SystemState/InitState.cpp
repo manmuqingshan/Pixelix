@@ -539,7 +539,7 @@ bool InitState::isFsCompatible()
 
         if (false == jsonVersion.isNull())
         {
-            String fileSystemVersion = jsonVersion.as<String>();
+            String fileSystemVersion = jsonVersion.as<const char*>();
             String firmwareVersion   = Version::getSoftwareVersion();
 
             /* Note that the firmware version may have a additional postfix.

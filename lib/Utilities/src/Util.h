@@ -207,6 +207,16 @@ extern String uint32ToHex(uint32_t value);
  *
  * @return 32 bit unsigned integer value
  */
+extern uint32_t hexToUInt32(const char* str);
+
+/**
+ * Convert hex string to uint32_t. String may has the prefix "0x" or not.
+ * If conversion fails, it will return 0.
+ *
+ * @param[in] str   String which contains a hex number
+ *
+ * @return 32 bit unsigned integer value
+ */
 extern uint32_t hexToUInt32(const String& str);
 
 /**
@@ -247,6 +257,15 @@ constexpr T max(T valA, T valB)
  * @return Color in HTML format
  */
 extern String colorToHtml(const Color& color);
+
+/**
+ * Convert color from HTML format.
+ *
+ * @param[in] htmlColor Color in HTML format
+ *
+ * @return Color
+ */
+extern Color colorFromHtml(const char* htmlColor);
 
 /**
  * Convert color from HTML format.

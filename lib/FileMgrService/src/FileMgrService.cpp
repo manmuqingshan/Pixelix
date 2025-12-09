@@ -419,7 +419,7 @@ bool FileMgrService::uploadTopic(const String& topic, const JsonObjectConst& val
         /* File upload? */
         if (false == jsonFullPath.isNull())
         {
-            String fullPath = jsonFullPath.as<String>();
+            String fullPath = jsonFullPath.as<const char*>();
 
             if (false == fullPath.isEmpty())
             {
@@ -594,7 +594,7 @@ bool FileMgrService::load()
 
             if (true == jsonFullPath.is<String>())
             {
-                entry->fullPath = jsonFullPath.as<String>();
+                entry->fullPath = jsonFullPath.as<const char*>();
             }
 
             ++fileId;

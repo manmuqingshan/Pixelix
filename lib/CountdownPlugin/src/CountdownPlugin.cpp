@@ -130,13 +130,13 @@ bool CountdownPlugin::setTopic(const String& topic, const JsonObjectConst& value
 
         if (false == jsonDescPlural.isNull())
         {
-            jsonCfg["descPlural"] = jsonDescPlural.as<String>();
+            jsonCfg["descPlural"] = jsonDescPlural.as<const char*>();
             isSuccessful          = true;
         }
 
         if (false == jsonDescSingular.isNull())
         {
-            jsonCfg["descSingular"] = jsonDescSingular.as<String>();
+            jsonCfg["descSingular"] = jsonDescSingular.as<const char*>();
             isSuccessful            = true;
         }
 
@@ -275,11 +275,11 @@ bool CountdownPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         {
             status = false;
         }
-        else if (0U == jsonDescPlural.as<String>().length())
+        else if (0U == strlen(jsonDescPlural.as<const char*>()))
         {
             status = false;
         }
-        else if (0U == jsonDescSingular.as<String>().length())
+        else if (0U == strlen(jsonDescSingular.as<const char*>()))
         {
             status = false;
         }
@@ -290,8 +290,8 @@ bool CountdownPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
             m_targetDate.day                 = day;
             m_targetDate.month               = month;
             m_targetDate.year                = year;
-            m_targetDateInformation.plural   = jsonDescPlural.as<String>();
-            m_targetDateInformation.singular = jsonDescSingular.as<String>();
+            m_targetDateInformation.plural   = jsonDescPlural.as<const char*>();
+            m_targetDateInformation.singular = jsonDescSingular.as<const char*>();
 
             m_hasTopicChanged                = true;
 

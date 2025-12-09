@@ -129,25 +129,25 @@ bool OpenMeteoPlugin::setTopic(const String& topic, const JsonObjectConst& value
 
         if (false == jsonLatitude.isNull())
         {
-            jsonCfg["latitude"] = jsonLatitude.as<String>();
+            jsonCfg["latitude"] = jsonLatitude.as<const char*>();
             isSuccessful        = true;
         }
 
         if (false == jsonLongitude.isNull())
         {
-            jsonCfg["longitude"] = jsonLongitude.as<String>();
+            jsonCfg["longitude"] = jsonLongitude.as<const char*>();
             isSuccessful         = true;
         }
 
         if (false == jsonTemperatureUnit.isNull())
         {
-            jsonCfg["temperatureUnit"] = jsonTemperatureUnit.as<String>();
+            jsonCfg["temperatureUnit"] = jsonTemperatureUnit.as<const char*>();
             isSuccessful               = true;
         }
 
         if (false == jsonWindSpeedUnit.isNull())
         {
-            jsonCfg["windSpeedUnit"] = jsonWindSpeedUnit.as<String>();
+            jsonCfg["windSpeedUnit"] = jsonWindSpeedUnit.as<const char*>();
             isSuccessful             = true;
         }
 
@@ -391,10 +391,10 @@ bool OpenMeteoPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
             m_updatePeriod = SIMPLE_TIMER_MINUTES(m_updatePeriod);
         }
 
-        m_latitude        = jsonLatitude.as<String>();
-        m_longitude       = jsonLongitude.as<String>();
-        m_temperatureUnit = jsonTemperatureUnit.as<String>();
-        m_windUnit        = jsonWindSpeedUnit.as<String>();
+        m_latitude        = jsonLatitude.as<const char*>();
+        m_longitude       = jsonLongitude.as<const char*>();
+        m_temperatureUnit = jsonTemperatureUnit.as<const char*>();
+        m_windUnit        = jsonWindSpeedUnit.as<const char*>();
 
         m_view.setWeatherInfo(jsonWeatherInfo.as<uint32_t>());
         setViewUnits();

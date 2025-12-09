@@ -141,7 +141,7 @@ bool IconTextPlugin::setTopic(const String& topic, const JsonObjectConst& value)
 
         if (false == jsonText.isNull())
         {
-            jsonCfg["text"] = jsonText.as<String>();
+            jsonCfg["text"] = jsonText.as<const char*>();
             isSuccessful    = true;
         }
 
@@ -360,7 +360,7 @@ bool IconTextPlugin::setActualConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
         FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
-        String                     newFormatText = jsonText.as<String>();
+        String                     newFormatText = jsonText.as<const char*>();
 
         if (m_iconFileId != newIconFileId)
         {

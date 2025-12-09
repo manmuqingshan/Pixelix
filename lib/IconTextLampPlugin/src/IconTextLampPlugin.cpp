@@ -181,7 +181,7 @@ bool IconTextLampPlugin::setTopic(const String& topic, const JsonObjectConst& va
 
         if (false == jsonText.isNull())
         {
-            jsonCfg["text"] = jsonText.as<String>();
+            jsonCfg["text"] = jsonText.as<const char*>();
             isSuccessful    = true;
         }
 
@@ -234,7 +234,7 @@ bool IconTextLampPlugin::setTopic(const String& topic, const JsonObjectConst& va
             (_IconTextLampPlugin::View::MAX_LAMPS > lampId) &&
             (false == jsonSet.isNull()))
         {
-            String state = jsonSet.as<String>();
+            String state = jsonSet.as<const char*>();
 
             if (state == "off")
             {
@@ -486,7 +486,7 @@ bool IconTextLampPlugin::setActualConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
         FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
-        String                     newFormatText = jsonText.as<String>();
+        String                     newFormatText = jsonText.as<const char*>();
 
         if (m_iconFileId != newIconFileId)
         {

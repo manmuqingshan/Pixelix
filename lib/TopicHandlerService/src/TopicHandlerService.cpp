@@ -156,12 +156,12 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
 
                     if (true == jsonTopicName.is<String>())
                     {
-                        topicName = jsonTopicName.as<String>();
+                        topicName = jsonTopicName.as<const char*>();
                     }
 
                     if (true == jsonTopicAccess.is<String>())
                     {
-                        topicAccess = jsonTopicAccess.as<String>();
+                        topicAccess = jsonTopicAccess.as<const char*>();
                     }
 
                     if (true == jsonExtraVar.is<JsonObjectConst>())
@@ -170,7 +170,7 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
                     }
                     else if (true == jsonExtraVar.is<String>())
                     {
-                        extraFileName = jsonExtraVar.as<String>();
+                        extraFileName = jsonExtraVar.as<const char*>();
                     }
                     else
                     {
@@ -181,7 +181,7 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
                 /* Only topic name is available */
                 else if (true == jsonTopic.is<String>())
                 {
-                    topicName = jsonTopic.as<String>();
+                    topicName = jsonTopic.as<const char*>();
                 }
                 else
                 {
@@ -244,13 +244,13 @@ void TopicHandlerService::unregisterTopics(const String& deviceId, const String&
 
                     if (true == jsonTopicName.is<String>())
                     {
-                        topicName = jsonTopicName.as<String>();
+                        topicName = jsonTopicName.as<const char*>();
                     }
                 }
                 /* Only topic name is available */
                 else if (true == jsonTopic.is<String>())
                 {
-                    topicName = jsonTopic.as<String>();
+                    topicName = jsonTopic.as<const char*>();
                 }
                 else
                 {

@@ -109,7 +109,7 @@ bool GruenbeckPlugin::setTopic(const String& topic, const JsonObjectConst& value
 
         if (false == jsonIpAddress.isNull())
         {
-            jsonCfg["ipAddress"] = jsonIpAddress.as<String>();
+            jsonCfg["ipAddress"] = jsonIpAddress.as<const char*>();
             isSuccessful         = true;
         }
 
@@ -294,7 +294,7 @@ bool GruenbeckPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
 
-        m_ipAddress = jsonIpAddress.as<String>();
+        m_ipAddress = jsonIpAddress.as<const char*>();
 
         /* Force update on display */
         m_requestTimer.start(UPDATE_PERIOD_SHORT);
@@ -378,7 +378,7 @@ void GruenbeckPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     {
         String restCapacity  = "{hc}";
 
-        restCapacity        += jsonRestCapacity.as<String>();
+        restCapacity        += jsonRestCapacity.as<const char*>();
         restCapacity        += "%";
 
         m_view.setFormatText(restCapacity);

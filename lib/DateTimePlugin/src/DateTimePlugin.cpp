@@ -274,13 +274,13 @@ bool DateTimePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         MutexGuard<MutexRecursive> guard(m_mutex);
 
         m_mode       = static_cast<Mode>(jsonMode.as<uint8_t>());
-        m_timeFormat = jsonTimeFormat.as<String>();
-        m_dateFormat = jsonDateFormat.as<String>();
-        m_timeZone   = jsonTimeZone.as<String>();
+        m_timeFormat = jsonTimeFormat.as<const char*>();
+        m_dateFormat = jsonDateFormat.as<const char*>();
+        m_timeZone   = jsonTimeZone.as<const char*>();
 
         status       = m_view.setStartOfWeek(jsonStartOfWeek.as<uint8_t>());
-        m_view.setDayOnColor(Util::colorFromHtml(jsonDayOnColor.as<String>()));
-        m_view.setDayOffColor(Util::colorFromHtml(jsonDayOffColor.as<String>()));
+        m_view.setDayOnColor(Util::colorFromHtml(jsonDayOnColor.as<const char*>()));
+        m_view.setDayOffColor(Util::colorFromHtml(jsonDayOffColor.as<const char*>()));
         m_view.setViewMode(static_cast<IDateTimeView::ViewMode>(jsonViewMode.as<uint8_t>()));
 
         m_hasTopicChanged = true;
@@ -326,19 +326,19 @@ bool DateTimePlugin::mergeConfiguration(JsonObject& jsonMerged, const JsonObject
 
     if (false == jsonTimeFormat.isNull())
     {
-        jsonMerged["timeFormat"] = jsonTimeFormat.as<String>();
+        jsonMerged["timeFormat"] = jsonTimeFormat.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonDateFormat.isNull())
     {
-        jsonMerged["dateFormat"] = jsonDateFormat.as<String>();
+        jsonMerged["dateFormat"] = jsonDateFormat.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonTimeZone.isNull())
     {
-        jsonMerged["timeZone"] = jsonTimeZone.as<String>();
+        jsonMerged["timeZone"] = jsonTimeZone.as<const char*>();
         isSuccessful           = true;
     }
 
@@ -350,13 +350,13 @@ bool DateTimePlugin::mergeConfiguration(JsonObject& jsonMerged, const JsonObject
 
     if (false == jsonDayOnColor.isNull())
     {
-        jsonMerged["dayOnColor"] = jsonDayOnColor.as<String>();
+        jsonMerged["dayOnColor"] = jsonDayOnColor.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonDayOffColor.isNull())
     {
-        jsonMerged["dayOffColor"] = jsonDayOffColor.as<String>();
+        jsonMerged["dayOffColor"] = jsonDayOffColor.as<const char*>();
         isSuccessful              = true;
     }
 

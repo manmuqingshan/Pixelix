@@ -120,19 +120,19 @@ bool SunrisePlugin::setTopic(const String& topic, const JsonObjectConst& value)
 
         if (false == jsonLongitude.isNull())
         {
-            jsonCfg["longitude"] = jsonLongitude.as<String>();
+            jsonCfg["longitude"] = jsonLongitude.as<const char*>();
             isSuccessful         = true;
         }
 
         if (false == jsonLatitude.isNull())
         {
-            jsonCfg["latitude"] = jsonLatitude.as<String>();
+            jsonCfg["latitude"] = jsonLatitude.as<const char*>();
             isSuccessful        = true;
         }
 
         if (false == jsonTimeFormat.isNull())
         {
-            jsonCfg["timeFormat"] = jsonTimeFormat.as<String>();
+            jsonCfg["timeFormat"] = jsonTimeFormat.as<const char*>();
             isSuccessful          = true;
         }
 
@@ -320,9 +320,9 @@ bool SunrisePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
 
-        m_longitude  = jsonLon.as<String>();
-        m_latitude   = jsonLat.as<String>();
-        m_timeFormat = jsonTimeFormat.as<String>();
+        m_longitude  = jsonLon.as<const char*>();
+        m_latitude   = jsonLat.as<const char*>();
+        m_timeFormat = jsonTimeFormat.as<const char*>();
 
         /* Force update on display */
         m_requestTimer.start(UPDATE_PERIOD_SHORT);
@@ -428,8 +428,8 @@ void SunrisePlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     }
     else
     {
-        String sunrise         = jsonSunrise.as<String>();
-        String sunset          = jsonSunset.as<String>();
+        String sunrise         = jsonSunrise.as<const char*>();
+        String sunset          = jsonSunset.as<const char*>();
 
         sunrise                = addCurrentTimeZoneValues(sunrise);
         sunset                 = addCurrentTimeZoneValues(sunset);

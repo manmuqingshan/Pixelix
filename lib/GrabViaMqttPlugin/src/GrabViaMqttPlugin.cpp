@@ -127,7 +127,7 @@ bool GrabViaMqttPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonPath.isNull())
         {
-            jsonCfg["path"] = jsonPath.as<String>();
+            jsonCfg["path"] = jsonPath.as<const char*>();
             isSuccessful    = true;
         }
 
@@ -147,7 +147,7 @@ bool GrabViaMqttPlugin::setTopic(const String& topic, const JsonObjectConst& val
             {
                 const size_t         JSON_DOC_FILTER_SIZE = 256U;
                 DynamicJsonDocument  jsonDocFilter(JSON_DOC_FILTER_SIZE);
-                DeserializationError result = deserializeJson(jsonDocFilter, jsonFilter.as<String>());
+                DeserializationError result = deserializeJson(jsonDocFilter, jsonFilter.as<const char*>());
 
                 if (DeserializationError::Ok == result)
                 {
@@ -181,7 +181,7 @@ bool GrabViaMqttPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonFormat.isNull())
         {
-            jsonCfg["format"] = jsonFormat.as<String>();
+            jsonCfg["format"] = jsonFormat.as<const char*>();
             isSuccessful      = true;
         }
 
@@ -339,15 +339,15 @@ bool GrabViaMqttPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         MutexGuard<MutexRecursive> guard(m_mutex);
         FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
 
-        if (m_path != jsonPath.as<String>())
+        if (m_path != jsonPath.as<const char*>())
         {
             unsubscribe();
             reqInit = true;
         }
 
-        m_path       = jsonPath.as<String>();
+        m_path       = jsonPath.as<const char*>();
         m_filter     = jsonFilter;
-        m_format     = jsonFormat.as<String>();
+        m_format     = jsonFormat.as<const char*>();
         m_multiplier = jsonMultiplier.as<float>();
         m_offset     = jsonOffset.as<float>();
 
@@ -565,7 +565,7 @@ void GrabViaMqttPlugin::mqttTopicCallback(const String& topic, const uint8_t* pa
                 const size_t BUFFER_SIZE = 128U;
                 char         buffer[BUFFER_SIZE];
 
-                (void)snprintf(buffer, sizeof(buffer), m_format.c_str(), jsonValue.as<String>().c_str());
+                (void)snprintf(buffer, sizeof(buffer), m_format.c_str(), jsonValue.as<const char*>());
 
                 outputStr += buffer;
             }

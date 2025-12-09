@@ -140,19 +140,19 @@ bool OpenWeatherPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonApiKey.isNull())
         {
-            jsonCfg["apiKey"] = jsonApiKey.as<String>();
+            jsonCfg["apiKey"] = jsonApiKey.as<const char*>();
             isSuccessful      = true;
         }
 
         if (false == jsonLatitude.isNull())
         {
-            jsonCfg["latitude"] = jsonLatitude.as<String>();
+            jsonCfg["latitude"] = jsonLatitude.as<const char*>();
             isSuccessful        = true;
         }
 
         if (false == jsonLongitude.isNull())
         {
-            jsonCfg["longitude"] = jsonLongitude.as<String>();
+            jsonCfg["longitude"] = jsonLongitude.as<const char*>();
             isSuccessful         = true;
         }
 
@@ -164,7 +164,7 @@ bool OpenWeatherPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonUnits.isNull())
         {
-            jsonCfg["units"] = jsonUnits.as<String>();
+            jsonCfg["units"] = jsonUnits.as<const char*>();
             isSuccessful     = true;
         }
 
@@ -502,10 +502,10 @@ bool OpenWeatherPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         }
         else
         {
-            m_sourceCurrent->setApiKey(jsonApiKey.as<String>());
-            m_sourceCurrent->setLatitude(jsonLatitude.as<String>());
-            m_sourceCurrent->setLongitude(jsonLongitude.as<String>());
-            m_sourceCurrent->setUnits(jsonUnits.as<String>());
+            m_sourceCurrent->setApiKey(jsonApiKey.as<const char*>());
+            m_sourceCurrent->setLatitude(jsonLatitude.as<const char*>());
+            m_sourceCurrent->setLongitude(jsonLongitude.as<const char*>());
+            m_sourceCurrent->setUnits(jsonUnits.as<const char*>());
 
             setViewUnits();
         }
@@ -518,10 +518,10 @@ bool OpenWeatherPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
             }
             else
             {
-                m_sourceForecast->setApiKey(jsonApiKey.as<String>());
-                m_sourceForecast->setLatitude(jsonLatitude.as<String>());
-                m_sourceForecast->setLongitude(jsonLongitude.as<String>());
-                m_sourceForecast->setUnits(jsonUnits.as<String>());
+                m_sourceForecast->setApiKey(jsonApiKey.as<const char*>());
+                m_sourceForecast->setLatitude(jsonLatitude.as<const char*>());
+                m_sourceForecast->setLongitude(jsonLongitude.as<const char*>());
+                m_sourceForecast->setUnits(jsonUnits.as<const char*>());
             }
         }
 

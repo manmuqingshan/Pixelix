@@ -437,7 +437,7 @@ bool SignalDetectorPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         }
 
         m_view.setFormatText(jsonText.as<String>());
-        m_pushUrl         = jsonPushUrl.as<String>();
+        m_pushUrl         = jsonPushUrl.as<const char*>();
 
         m_hasTopicChanged = true;
     }

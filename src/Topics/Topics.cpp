@@ -347,7 +347,7 @@ static bool setDisplayState(const String& topic, const JsonObjectConst& value)
     if (false == jsonState.isNull())
     {
         bool   displayOn = false;
-        String state     = jsonState.as<String>();
+        String state     = jsonState.as<const char*>();
 
         if (true == state.equalsIgnoreCase("off"))
         {

@@ -129,13 +129,13 @@ bool GrabViaRestPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonMethod.isNull())
         {
-            jsonCfg["method"] = jsonMethod.as<String>();
+            jsonCfg["method"] = jsonMethod.as<const char*>();
             isSuccessful      = true;
         }
 
         if (false == jsonUrl.isNull())
         {
-            jsonCfg["url"] = jsonUrl.as<String>();
+            jsonCfg["url"] = jsonUrl.as<const char*>();
             isSuccessful   = true;
         }
 
@@ -155,7 +155,7 @@ bool GrabViaRestPlugin::setTopic(const String& topic, const JsonObjectConst& val
             {
                 const size_t         JSON_DOC_FILTER_SIZE = 256U;
                 DynamicJsonDocument  jsonDocFilter(JSON_DOC_FILTER_SIZE);
-                DeserializationError result = deserializeJson(jsonDocFilter, jsonFilter.as<String>());
+                DeserializationError result = deserializeJson(jsonDocFilter, jsonFilter.as<const char*>());
 
                 if (DeserializationError::Ok == result)
                 {
@@ -189,7 +189,7 @@ bool GrabViaRestPlugin::setTopic(const String& topic, const JsonObjectConst& val
 
         if (false == jsonFormat.isNull())
         {
-            jsonCfg["format"] = jsonFormat.as<String>();
+            jsonCfg["format"] = jsonFormat.as<const char*>();
             isSuccessful      = true;
         }
 
@@ -441,10 +441,10 @@ bool GrabViaRestPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         MutexGuard<MutexRecursive> guard(m_mutex);
         FileMgrService::FileId     newIconFileId = jsonIconFileId.as<FileMgrService::FileId>();
 
-        m_method                                 = jsonMethod.as<String>();
-        m_url                                    = jsonUrl.as<String>();
+        m_method                                 = jsonMethod.as<const char*>();
+        m_url                                    = jsonUrl.as<const char*>();
         m_filter                                 = jsonFilter;
-        m_format                                 = jsonFormat.as<String>();
+        m_format                                 = jsonFormat.as<const char*>();
         m_multiplier                             = jsonMultiplier.as<float>();
         m_offset                                 = jsonOffset.as<float>();
 
@@ -705,7 +705,7 @@ void GrabViaRestPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
             const size_t BUFFER_SIZE = 128U;
             char         buffer[BUFFER_SIZE];
 
-            (void)snprintf(buffer, sizeof(buffer), m_format.c_str(), jsonValue.as<String>().c_str());
+            (void)snprintf(buffer, sizeof(buffer), m_format.c_str(), jsonValue.as<const char*>());
 
             outputStr += buffer;
         }

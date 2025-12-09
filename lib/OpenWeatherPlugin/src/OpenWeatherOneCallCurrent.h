@@ -114,6 +114,16 @@ public:
     }
 
     /**
+     * Set the API key.
+     * 
+     * @param[in] apiKey    The API key which to set.
+     */
+    void setApiKey(const char* apiKey) final
+    {
+        m_apiKey = apiKey;
+    }
+
+    /**
      * Get the latitude.
      * 
      * @return Latitude
@@ -129,6 +139,16 @@ public:
      * @param[in] latitude  The latitude which to set.
      */
     void setLatitude(const String& latitude) final
+    {
+        m_latitude = latitude;
+    }
+
+    /**
+     * Set thel latidue.
+     * 
+     * @param[in] latitude  The latitude which to set.
+     */
+    void setLatitude(const char* latitude) final
     {
         m_latitude = latitude;
     }
@@ -154,6 +174,16 @@ public:
     }
 
     /**
+     * Set the longitude.
+     * 
+     * @param[in] longitude The longitude which to set.
+     */
+    void setLongitude(const char* longitude) final
+    {
+        m_longitude = longitude;
+    }
+
+    /**
      * Get the units which are used for temperature and
      * wind speed.
      * 
@@ -170,6 +200,16 @@ public:
      * @param[in] units The units which to set.
      */
     void setUnits(const String& units) final
+    {
+        m_units = units;
+    }
+
+    /**
+     * Set the units to use temperature and wind speed.
+     * 
+     * @param[in] units The units which to set.
+     */
+    void setUnits(const char* units) final
     {
         m_units = units;
     }

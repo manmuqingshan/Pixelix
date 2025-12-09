@@ -243,7 +243,7 @@ void OpenWeatherForecast::parse(const JsonDocument& jsonDoc)
 
         if (false == jsonIcon.isNull())
         {
-            m_weatherInfo[day].weatherIconId = jsonIcon.as<String>();
+            m_weatherInfo[day].weatherIconId = jsonIcon.as<const char*>();
         }
     }
 }

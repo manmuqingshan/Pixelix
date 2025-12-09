@@ -108,7 +108,7 @@ bool VolumioPlugin::setTopic(const String& topic, const JsonObjectConst& value)
 
         if (false == jsonHost.isNull())
         {
-            jsonCfg["host"] = jsonHost.as<String>();
+            jsonCfg["host"] = jsonHost.as<const char*>();
             isSuccessful    = true;
         }
 
@@ -309,7 +309,7 @@ bool VolumioPlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     {
         MutexGuard<MutexRecursive> guard(m_mutex);
 
-        m_volumioHost = jsonHost.as<String>();
+        m_volumioHost = jsonHost.as<const char*>();
 
         /* Force update on display */
         m_requestTimer.start(UPDATE_PERIOD_SHORT);
@@ -439,11 +439,11 @@ void VolumioPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
     {
         JsonVariantConst jsonArtist   = jsonDoc["artist"];
         JsonVariantConst jsonDuration = jsonDoc["duration"];
-        String           status       = jsonStatus.as<String>();
+        String           status       = jsonStatus.as<const char*>();
         String           artist;
-        String           title     = jsonTitle.as<String>();
+        String           title     = jsonTitle.as<const char*>();
         uint32_t         seekValue = jsonSeek.as<uint32_t>();
-        String           service   = jsonService.as<String>();
+        String           service   = jsonService.as<const char*>();
         String           infoOnDisplay;
         uint32_t         pos   = 0U;
         VolumioState     state = STATE_UNKNOWN;
@@ -451,7 +451,7 @@ void VolumioPlugin::handleWebResponse(const DynamicJsonDocument& jsonDoc)
         /* Artist may exist */
         if (true == jsonArtist.is<String>())
         {
-            artist = jsonArtist.as<String>();
+            artist = jsonArtist.as<const char*>();
         }
 
         if (true == title.isEmpty())

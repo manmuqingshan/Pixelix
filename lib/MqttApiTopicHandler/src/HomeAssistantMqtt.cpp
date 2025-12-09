@@ -152,7 +152,7 @@ void HomeAssistantMqtt::registerMqttDiscovery(const String& deviceId, const Stri
         /* Filename for the HA discovery info available? */
         else if (true == jsonHomeAssistant.is<String>())
         {
-            String discoveryInfoFileName = jsonHomeAssistant.as<String>();
+            String discoveryInfoFileName = jsonHomeAssistant.as<const char*>();
 
             if (false == discoveryInfoFileName.isEmpty())
             {
@@ -401,7 +401,7 @@ bool HomeAssistantMqtt::loadDiscoveryInfo(JsonDocument& jsonDoc, const String& f
                 }
                 else
                 {
-                    String component = jsonComponent.as<String>();
+                    String component = jsonComponent.as<const char*>();
 
                     /* Component shall not be empty and
                      * shall not contain a comma, because it is used as delimiter.
@@ -473,7 +473,7 @@ void HomeAssistantMqtt::publishAutoDiscoveryInfo(MqttDiscoveryInfo& mqttDiscover
         for (idx = 0U; idx < discoveryInfoArrayCount; ++idx)
         {
             JsonObjectConst discoveryInfo        = jsonDiscoveryInfoArray[idx];
-            String          component            = discoveryInfo["component"].as<String>();
+            String          component            = discoveryInfo["component"].as<const char*>();
             JsonObjectConst jsonDiscovery        = discoveryInfo["discovery"];
             int8_t          discoveryEntityIndex = (1U == discoveryInfoArrayCount) ? -1 : idx;
             String          objectId             = getObjectId(mqttDiscoveryInfo.entityId, mqttDiscoveryInfo.topic, discoveryEntityIndex);
