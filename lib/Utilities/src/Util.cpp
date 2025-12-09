@@ -36,6 +36,7 @@
 #include "Util.h"
 #include <stdio.h>
 #include <cctype>
+#include <string.h>
 
 /******************************************************************************
  * Compiler Switches
