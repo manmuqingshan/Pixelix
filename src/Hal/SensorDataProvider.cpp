@@ -121,7 +121,7 @@ static const SensorTopic gSensorTopics[SENSOR_TOPICS_COUNT] = {
         10000U },
     { ISensorChannel::TYPE_UPTIME_S,
         "/extra/uptime.json",
-        1000U },
+        10000U },
 };
 
 /** The runtime sensor topic data. */
