@@ -313,7 +313,7 @@ bool DateTimeView64x64::setConfiguration(const JsonObjectConst& jsonCfg)
                 }
                 else
                 {
-                    m_analogColors[idx] = Util::colorFromHtml(color);
+                    m_analogColors[idx] = Util::colorFromHtml(color.as<const char*>());
                 }
             }
         }
