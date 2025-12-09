@@ -101,6 +101,12 @@
 
 #endif
 
+/**
+ * Task watchdog timeout in seconds. See CONFIG_ESP_TASK_WDT_TIMEOUT_S for original
+ * configuration.
+ */
+#define TASK_WDT_TIMEOUT_S (10U)
+
 /******************************************************************************
  * Types and Classes
  *****************************************************************************/
@@ -206,8 +212,10 @@ void setup()
      */
     ButtonDrv::getInstance().registerObserver(gButtonHandler);
 
+    /* Initialize task watchdog. */
+    (void)esp_task_wdt_init(TASK_WDT_TIMEOUT_S, false);
+
     /* Enable task watchdog for the loop task.
-     * See CONFIG_ESP_TASK_WDT_TIMEOUT_S for the timeout value.
      *
      * The task watchdog is used to detect a deadlock of the main loop.
      * If the main loop does not reset the watchdog, it will trigger a reset.
