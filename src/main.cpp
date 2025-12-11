@@ -213,7 +213,7 @@ void setup()
     ButtonDrv::getInstance().registerObserver(gButtonHandler);
 
     /* Initialize task watchdog. */
-    (void)esp_task_wdt_init(TASK_WDT_TIMEOUT_S, false);
+    (void)esp_task_wdt_init(TASK_WDT_TIMEOUT_S, true);
 
     /* Enable task watchdog for the loop task.
      *
