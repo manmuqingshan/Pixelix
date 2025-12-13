@@ -185,8 +185,10 @@ private:
     /**
      * Update the time by the RTC.
      * If no RTC is available, nothing will happen.
+     * 
+     * @return true if time is set by RTC, otherwise false.
      */
-    void setTimeByRtc();
+    bool setTimeByRtc();
 
     /**
      * Update the RTC by the time.

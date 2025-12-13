@@ -156,7 +156,7 @@ void ClockDrv::init(IRtc* rtc)
 
 bool ClockDrv::getTime(struct tm& timeInfo)
 {
-    const uint32_t WAIT_TIME_MS = 0U;
+    const uint32_t WAIT_TIME_MS = 10U;
 
     syncTimeByRtc();
 
@@ -165,7 +165,7 @@ bool ClockDrv::getTime(struct tm& timeInfo)
 
 bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 {
-    const uint32_t WAIT_TIME_MS = 0U;
+    const uint32_t WAIT_TIME_MS = 10U;
     bool           result       = false;
 
     syncTimeByRtc();
@@ -231,8 +231,10 @@ void ClockDrv::fillUpWithSpaces(char* str, size_t size)
     str[size - 1U] = '\0';
 }
 
-void ClockDrv::setTimeByRtc()
+bool ClockDrv::setTimeByRtc()
 {
+    bool isSuccessful = false;
+
     if (nullptr != m_rtc)
     {
         struct tm timeInfo;
@@ -245,8 +247,12 @@ void ClockDrv::setTimeByRtc()
 
             /* Set UTC. */
             (void)settimeofday(&tv, nullptr);
+
+            isSuccessful = true;
         }
     }
+
+    return isSuccessful;
 }
 
 void ClockDrv::setRtcByTime()
@@ -276,13 +282,26 @@ void ClockDrv::syncTimeByRtc()
         {
             sync = true;
         }
+        else
+        {
+            /* Nothing to do. */
+            ;
+        }
 
         if (true == sync)
         {
-            LOG_INFO("Sync time by RTC.");
+            /* RTC not initialized yet or not available? */
+            if (false == setTimeByRtc())
+            {
+                /* Force update in the next call again by stopping the timer. */
+                m_syncTimeByRtcTimer.stop();
+            }
+            else
+            {
+                LOG_INFO("Time synchronized by RTC.");
 
-            setTimeByRtc();
-            m_syncTimeByRtcTimer.restart();
+                m_syncTimeByRtcTimer.restart();
+            }
         }
     }
 }
@@ -305,9 +324,10 @@ void ClockDrv::syncRtcByTime()
 
         if (true == sync)
         {
-            LOG_INFO("Sync RTC by time.");
-
             setRtcByTime();
+
+            LOG_INFO("RTC synchronized by time.");
+            
             m_syncRtcByNtpTimer.restart();
         }
     }
