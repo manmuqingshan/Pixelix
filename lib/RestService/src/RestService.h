@@ -42,7 +42,6 @@
  *****************************************************************************/
 #include <IService.hpp>
 #include <AsyncHttpClient.h>
-#include <TaskProxy.hpp>
 #include <Mutex.hpp>
 #include <ArduinoJson.h>
 #include <map>
