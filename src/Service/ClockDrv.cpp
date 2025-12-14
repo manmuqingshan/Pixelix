@@ -67,34 +67,23 @@ extern void sntpCallback(struct timeval* tv);
  * Public Methods
  *****************************************************************************/
 
-void ClockDrv::init(IRtc* rtc)
+void ClockDrv::init()
 {
     SettingsService& settings = SettingsService::getInstance();
     char             tzBuffer[TZ_MIN_SIZE];
     String           ntpServerAddress;
 
-    /* Handle RTC */
-    m_rtc = rtc;
-
-    if (nullptr == m_rtc)
+    /* Check whether RTC is available and initialize it. */
+    if (false == m_rtc.begin())
     {
         LOG_INFO("No RTC is available.");
     }
     else
     {
-        /* Check whether RTC is available and initialize it. */
-        if (false == m_rtc->begin())
-        {
-            LOG_INFO("No RTC is available.");
-            m_rtc = nullptr;
-        }
-        else
-        {
-            LOG_INFO("RTC is available.");
+        LOG_INFO("RTC is available.");
 
-            /* Synchronize time by RTC at startup. */
-            syncTimeByRtc();
-        }
+        /* Synchronize time by RTC at startup. */
+        syncTimeByRtc();
     }
 
     /* Get the GMT offset, daylight saving enabled/disabled and NTP server address from persistent memory. */
@@ -157,6 +146,7 @@ void ClockDrv::init(IRtc* rtc)
 bool ClockDrv::getTime(struct tm& timeInfo)
 {
     const uint32_t WAIT_TIME_MS = 10U;
+    bool           result       = false;
 
     syncTimeByRtc();
 
@@ -233,23 +223,42 @@ void ClockDrv::fillUpWithSpaces(char* str, size_t size)
 
 bool ClockDrv::setTimeByRtc()
 {
-    bool isSuccessful = false;
+    bool      isSuccessful = false;
+    struct tm timeInfo;
 
-    if (nullptr != m_rtc)
+    /* Get UTC from RTC. */
+    if (true == m_rtc.getTime(timeInfo))
     {
-        struct tm timeInfo;
+        time_t         tLocal;
+        time_t         tRev;
+        time_t         tDiff;
+        time_t         tUtc;
+        struct timeval tv;
 
-        /* Get UTC from RTC. */
-        if (true == m_rtc->getTime(timeInfo))
-        {
-            time_t         timeSinceEpoch = mktime(&timeInfo);
-            struct timeval tv             = { timeSinceEpoch, 0 };
+        /* https://github.com/espressif/esp-idf/issues/10876
+         * https://stackoverflow.com/questions/48566198/how-to-convert-utc-date-to-time-t
+         */
+        timeInfo.tm_isdst = 0; /* Not daylight saving time. */
+        tLocal            = mktime(&timeInfo);
+        timeInfo          = *gmtime(&tLocal);
+        timeInfo.tm_isdst = 0; /* Not daylight saving time. */
+        tRev              = mktime(&timeInfo);
+        tDiff             = tLocal - tRev;
+        tUtc              = tLocal + tDiff;
+        tv                = { tUtc, 0 };
 
-            /* Set UTC. */
-            (void)settimeofday(&tv, nullptr);
+        LOG_INFO("Update time by RTC: %04u-%02u-%02u %02u:%02u:%02u UTC",
+            static_cast<uint32_t>(timeInfo.tm_year + 1900),
+            static_cast<uint32_t>(timeInfo.tm_mon + 1),
+            static_cast<uint32_t>(timeInfo.tm_mday),
+            static_cast<uint32_t>(timeInfo.tm_hour),
+            static_cast<uint32_t>(timeInfo.tm_min),
+            static_cast<uint32_t>(timeInfo.tm_sec));
 
-            isSuccessful = true;
-        }
+        /* Set UTC. */
+        (void)settimeofday(&tv, nullptr);
+
+        isSuccessful = true;
     }
 
     return isSuccessful;
@@ -257,79 +266,73 @@ bool ClockDrv::setTimeByRtc()
 
 void ClockDrv::setRtcByTime()
 {
-    if (nullptr != m_rtc)
-    {
-        /* Get UTC. */
-        time_t    now      = time(nullptr);
-        struct tm timeInfo = *gmtime(&now);
+    time_t    now      = time(nullptr); /* Get local time. */
+    struct tm timeInfo = *gmtime(&now); /* Get UTC from local time. */
 
-        m_rtc->setTime(timeInfo);
-    }
+    LOG_INFO("Update RTC by time: %04u-%02u-%02u %02u:%02u:%02u UTC",
+        static_cast<uint32_t>(timeInfo.tm_year + 1900),
+        static_cast<uint32_t>(timeInfo.tm_mon + 1),
+        static_cast<uint32_t>(timeInfo.tm_mday),
+        static_cast<uint32_t>(timeInfo.tm_hour),
+        static_cast<uint32_t>(timeInfo.tm_min),
+        static_cast<uint32_t>(timeInfo.tm_sec));
+
+    m_rtc.setTime(timeInfo);
 }
 
 void ClockDrv::syncTimeByRtc()
 {
-    if (nullptr != m_rtc)
-    {
-        bool sync = false;
+    bool sync = false;
 
-        if (false == m_syncTimeByRtcTimer.isTimerRunning())
+    if (false == m_syncTimeByRtcTimer.isTimerRunning())
+    {
+        m_syncTimeByRtcTimer.start(SYNC_TIME_BY_RTC_PERIOD);
+        sync = true;
+    }
+    else if (true == m_syncTimeByRtcTimer.isTimeout())
+    {
+        sync = true;
+    }
+    else
+    {
+        /* Nothing to do. */
+        ;
+    }
+
+    if (true == sync)
+    {
+        /* RTC not initialized yet or not available? */
+        if (false == setTimeByRtc())
         {
-            m_syncTimeByRtcTimer.start(SYNC_TIME_BY_RTC_PERIOD);
-            sync = true;
-        }
-        else if (true == m_syncTimeByRtcTimer.isTimeout())
-        {
-            sync = true;
+            /* Force update in the next call again by stopping the timer. */
+            m_syncTimeByRtcTimer.stop();
         }
         else
         {
-            /* Nothing to do. */
-            ;
-        }
-
-        if (true == sync)
-        {
-            /* RTC not initialized yet or not available? */
-            if (false == setTimeByRtc())
-            {
-                /* Force update in the next call again by stopping the timer. */
-                m_syncTimeByRtcTimer.stop();
-            }
-            else
-            {
-                LOG_INFO("Time synchronized by RTC.");
-
-                m_syncTimeByRtcTimer.restart();
-            }
+            m_syncTimeByRtcTimer.restart();
         }
     }
 }
 
 void ClockDrv::syncRtcByTime()
 {
-    if (nullptr != m_rtc)
+    bool sync = false;
+
+    if (false == m_syncRtcByNtpTimer.isTimerRunning())
     {
-        bool sync = false;
+        m_syncRtcByNtpTimer.start(SYNC_RTC_BY_TIME_PERIOD);
+        sync = true;
+    }
+    else if (true == m_syncRtcByNtpTimer.isTimeout())
+    {
+        sync = true;
+    }
 
-        if (false == m_syncRtcByNtpTimer.isTimerRunning())
-        {
-            m_syncRtcByNtpTimer.start(SYNC_RTC_BY_TIME_PERIOD);
-            sync = true;
-        }
-        else if (true == m_syncRtcByNtpTimer.isTimeout())
-        {
-            sync = true;
-        }
+    if (true == sync)
+    {
+        setRtcByTime();
 
-        if (true == sync)
-        {
-            setRtcByTime();
-
-            LOG_INFO("RTC synchronized by time.");
-            
-            m_syncRtcByNtpTimer.restart();
-        }
+        m_syncRtcByNtpTimer.restart();
     }
 }
 
@@ -349,16 +352,13 @@ extern void sntpCallback(struct timeval* tv)
 
     (void)tv;
 
-    if (nullptr != clockDrv.m_rtc)
-    {
-        /* As long as updates from NTP are received, no synchronization from the RTC
-         * to the local timer shall be done.
-         */
-        clockDrv.m_syncTimeByRtcTimer.restart();
+    /* As long as updates from NTP are received, no synchronization from the RTC
+     * to the local timer shall be done.
+     */
+    clockDrv.m_syncTimeByRtcTimer.restart();
 
-        /* Synchronize RTC by time. */
-        clockDrv.syncRtcByTime();
-    }
+    /* Synchronize RTC by time. */
+    clockDrv.syncRtcByTime();
 }
 
 /******************************************************************************

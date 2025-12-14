@@ -45,8 +45,7 @@
  * Includes
  *****************************************************************************/
 #include "Arduino.h"
-#include <IRtc.h>
-
+#include <RtcDrv.hpp>
 #include <SimpleTimer.hpp>
 
 /******************************************************************************
@@ -59,7 +58,7 @@
 
 /**
  * Clock driver.
- * 
+ *
  * The time zone configured in the settings is used for local time operations.
  * The utc time is stored in the RTC if available.
  */
@@ -81,11 +80,8 @@ public:
 
     /**
      * Initialize the ClockDrv.
-     * If no RTC is available, use nullptr for the rtc parameter.
-     *
-     * @param[in] rtc   Real time clock driver
      */
-    void init(IRtc* rtc);
+    void init();
 
     /**
      * Get the local time.
@@ -101,7 +97,7 @@ public:
      *
      * @param[in]   tz          Time zone string
      * @param[out]  timeInfo    Time information
-     * 
+     *
      * @return If time is not synchronized, it will return false otherwise true.
      */
     bool getTzTime(const char* tz, struct tm& timeInfo);
@@ -111,37 +107,37 @@ private:
     /**
      * The minimum time zone string size (incl. string termination).
      */
-    static const size_t     TZ_MIN_SIZE             = 60U;
+    static const size_t TZ_MIN_SIZE               = 60U;
 
     /**
      * Period for time synchronization by NTP in ms.
      */
-    static const uint32_t   SYNC_TIME_BY_NTP_PERIOD = SIMPLE_TIMER_HOURS(12U);
+    static const uint32_t SYNC_TIME_BY_NTP_PERIOD = SIMPLE_TIMER_HOURS(12U);
 
     /**
      * Period for time synchronization by RTC in ms.
      */
-    static const int32_t    SYNC_TIME_BY_RTC_PERIOD = SIMPLE_TIMER_HOURS(1U);
+    static const int32_t SYNC_TIME_BY_RTC_PERIOD  = SIMPLE_TIMER_HOURS(1U);
 
     /**
      * Period for RTC synchronization by time in ms.
      */
-    static const uint32_t   SYNC_RTC_BY_TIME_PERIOD = SIMPLE_TIMER_DAYS(2U);
+    static const uint32_t SYNC_RTC_BY_TIME_PERIOD = SIMPLE_TIMER_DAYS(2U);
 
     /** Flag indicating a initialized clock driver. */
-    bool        m_isClockDrvInitialized;
+    bool m_isClockDrvInitialized;
 
     /** Device time zone */
-    String      m_timeZone;
+    String m_timeZone;
 
     /** newlib's internal time zone buffer. */
-    char*       m_internalTimeZoneBuffer;
+    char* m_internalTimeZoneBuffer;
 
     /** NTP server address, used by sntp. Don't remove it! */
-    char        m_ntpServerAddress[32U];
+    char m_ntpServerAddress[32U];
 
     /** Real time clock */
-    IRtc*       m_rtc;
+    RtcDrv m_rtc;
 
     /** Timer used to synchronize the time by the RTC. */
     SimpleTimer m_syncTimeByRtcTimer;
@@ -156,8 +152,8 @@ private:
         m_isClockDrvInitialized(false),
         m_timeZone(),
         m_internalTimeZoneBuffer(nullptr),
-        m_ntpServerAddress{0},
-        m_rtc(nullptr),
+        m_ntpServerAddress{ 0 },
+        m_rtc(),
         m_syncTimeByRtcTimer(),
         m_syncRtcByNtpTimer()
     {
@@ -172,11 +168,11 @@ private:
 
     /* Prevent copying */
     ClockDrv(const ClockDrv&);
-    ClockDrv&operator=(const ClockDrv&);
+    ClockDrv& operator=(const ClockDrv&);
 
     /**
      * Fill string up with spaces.
-     * 
+     *
      * @param[in, out]  str         String which to fill up.
      * @param[in]       size        String buffer size in byte (incl. termination)
      */
@@ -185,7 +181,7 @@ private:
     /**
      * Update the time by the RTC.
      * If no RTC is available, nothing will happen.
-     * 
+     *
      * @return true if time is set by RTC, otherwise false.
      */
     bool setTimeByRtc();
@@ -213,13 +209,13 @@ private:
     void syncRtcByTime();
 
     /* Allow the SNTP callback to synchronize the RTC by the NTP. */
-    friend void sntpCallback(struct timeval *tv);
+    friend void sntpCallback(struct timeval* tv);
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* CLOCKDRV_H */
+#endif /* CLOCKDRV_H */
 
 /** @} */

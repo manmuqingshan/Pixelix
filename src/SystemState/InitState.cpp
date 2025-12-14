@@ -171,7 +171,7 @@ void InitState::entry(StateMachine& sm)
     else
     {
         /* Initialize clock driver */
-        ClockDrv::getInstance().init(&m_rtcDrv);
+        ClockDrv::getInstance().init();
 
         /* Initialize sensors */
         SensorDataProvider::getInstance().begin();
