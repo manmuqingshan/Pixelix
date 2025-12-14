@@ -68,7 +68,7 @@
  * In general the task function and the process() method shall be cooperative,
  * because the internal low level task handles the task exit request.
  *
- * @tparam T
+ * @tparam T   Type of the task parameters.
  */
 template <typename T>
 class Task
@@ -86,10 +86,10 @@ public:
      * Constructs the task with a empty task function.
      * Its expected that the derived class will override the process() method.
      *
-     * @param[in] name         Name of the task.
-     * @param[in] stackSize    Stack size in bytes. Optional, default is 4096 bytes.
-     * @param[in] priority     Task priority. Optional, default is 1.
-     * @param[in] core         Core on which the task shall run. Optional, default is APP_CPU_NUM.
+     * @param[in] name      Name of the task.
+     * @param[in] stackSize Stack size in bytes. Optional, default is 4096 bytes.
+     * @param[in] priority  Task priority. Optional, default is 1.
+     * @param[in] core      Core on which the task shall run. Optional, default is APP_CPU_NUM.
      */
     Task(const char* name, uint32_t stackSize = DEFAULT_STACK_SIZE, UBaseType_t priority = DEFAULT_PRIORITY, BaseType_t core = DEFAULT_CORE) :
         m_name(name),
@@ -106,14 +106,15 @@ public:
 
     /**
      * Constructs the task with a custom task function.
+     * 
      * The default process() method will not be called, but the provided task
      * function will be called periodically.
      *
-     * @param[in] name         Name of the task.
-     * @param[in] function    Task function to be called periodically.
-     * @param[in] stackSize    Stack size in bytes. Optional, default is 4096 bytes.
-     * @param[in] priority     Task priority. Optional, default is 1.
-     * @param[in] core         Core on which the task shall run. Optional, default is APP_CPU_NUM.
+     * @param[in] name      Name of the task.
+     * @param[in] function  Task function to be called periodically.
+     * @param[in] stackSize Stack size in bytes. Optional, default is 4096 bytes.
+     * @param[in] priority  Task priority. Optional, default is 1.
+     * @param[in] core      Core on which the task shall run. Optional, default is APP_CPU_NUM.
      */
     Task(const char* name, TaskFunction function, uint32_t stackSize = DEFAULT_STACK_SIZE, UBaseType_t priority = DEFAULT_PRIORITY, BaseType_t core = DEFAULT_CORE) :
         m_name(name),
