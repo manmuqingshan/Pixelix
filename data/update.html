@@ -340,6 +340,7 @@
              /* Request change of active partition. */
             function sendPartitionChangeRequest() {
                 var intervalId = 0;
+                var seconds = 10;
 
                 disableUI();
                                 
@@ -348,14 +349,24 @@
                     url: "/rest/api/v1/partitionChange",
                     isJsonResponse: true
                 }).then(function(rsp) {
-                    let seconds = 10;
+                    return dialog.showInfo(`<p>Reload in ${seconds}s</p>`);
+                }).then(function() {
+                    return new Promise(function(resolve) {
+                        intervalId = setInterval(() => {
+                            if (0 < seconds) {
+                                seconds--;
+                                dialog.updateMessage(`<p>Reload in ${seconds}s</p>`);
+                            }
 
-                    intervalId = setInterval(() => {
-                        seconds--;
-                        dialog.updateMessage(`<p>Reload in ${seconds}s</p>`);
-                    }, 1000);
+                            if (0 === seconds) {
+                                resolve();
+                            }
+                        }, 1000);
 
-                    return dialog.showInfo(`<p>Reload in ${seconds}s</p>`, true);
+                        $("#modalDialog .btn-secondary").click(function() {
+                            resolve();
+                        });
+                    });
                 }).then(function() {
                     clearInterval(intervalId);
                     location.reload();
