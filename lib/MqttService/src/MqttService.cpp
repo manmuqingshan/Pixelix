@@ -60,7 +60,7 @@
 
 /* Initialize MQTT service variables */
 const char* MqttService::KEY_MQTT_BROKER_URL     = "mqtt_broker_url";
-const char* MqttService::NAME_MQTT_BROKER_URL    = "MQTT broker URL [user:password@]host[:port]";
+const char* MqttService::NAME_MQTT_BROKER_URL    = "MQTT broker URL [mqtt[s]][user:password@]host[:port]";
 const char* MqttService::DEFAULT_MQTT_BROKER_URL = "";
 
 /******************************************************************************

@@ -177,7 +177,7 @@ private:
     static const size_t MIN_VALUE_MQTT_BROKER_URL  = 0U;
 
     /** MQTT broker URL max. length */
-    static const size_t  MAX_VALUE_MQTT_BROKER_URL = 64U;
+    static const size_t  MAX_VALUE_MQTT_BROKER_URL = 96U;
 
     KeyValueString       m_mqttBrokerUrlSetting; /**< URL of the MQTT broker setting */
     MqttBrokerConnection m_brokerConnection;     /**< MQTT broker connection */
