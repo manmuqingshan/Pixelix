@@ -167,7 +167,7 @@ void HttpService::process()
     }
 }
 
-HttpService::HttpJobId HttpService::get(const char* url, IHttpResponseHandler* handler)
+HttpJobId HttpService::get(const char* url, IHttpResponseHandler* handler)
 {
     HttpJobId         jobId = INVALID_HTTP_JOB_ID;
     MutexGuard<Mutex> guard(m_mutex);
@@ -189,7 +189,7 @@ HttpService::HttpJobId HttpService::get(const char* url, IHttpResponseHandler* h
     return jobId;
 }
 
-HttpService::HttpJobId HttpService::post(const char* url, const uint8_t* payload, size_t size, IHttpResponseHandler* handler)
+HttpJobId HttpService::post(const char* url, const uint8_t* payload, size_t size, IHttpResponseHandler* handler)
 {
     HttpJobId         jobId = INVALID_HTTP_JOB_ID;
     MutexGuard<Mutex> guard(m_mutex);
@@ -301,7 +301,7 @@ void HttpService::abortJob(HttpJobId jobId)
  * Private Methods
  *****************************************************************************/
 
-HttpService::HttpJobId HttpService::generateJobId()
+HttpJobId HttpService::generateJobId()
 {
     /* Increment job ID counter and avoid invalid job ID.
      * Its a simple wrap around counter, because the chance of job ID collision
