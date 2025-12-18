@@ -65,6 +65,16 @@ public:
 
     /**
      * Constructs the file response handler.
+     */
+    HttpFileResponseHandler() :
+        m_filePath(nullptr),
+        m_file(),
+        m_isError(false)
+    {
+    }
+
+    /**
+     * Constructs the file response handler.
      *
      * @param[in] filePath  Path of the file where the payload will be written to.
      */
@@ -83,6 +93,26 @@ public:
     }
 
     /**
+     * Get file path.
+     *
+     * @return File path
+     */
+    const char* getFilePath() const
+    {
+        return m_filePath;
+    }
+
+    /**
+     * Set file path.
+     * 
+     * @param[in] filePath  File path
+     */
+    void setFilePath(const char* filePath)
+    {
+        m_filePath = filePath;
+    }
+
+    /**
      * This method will be called when a HTTP response is available.
      *
      * @param[in] index     Index of the response chunk, starting from 0.
@@ -97,11 +127,6 @@ private:
     const char* m_filePath; /**< Path of the file where the payload will be written to. */
     File        m_file;     /**< File handle. */
     bool        m_isError;  /**< Indicates that an error occurred during file creation. */
-
-    /**
-     * Disable default constructor.
-     */
-    HttpFileResponseHandler()                                                  = delete;
 
     /**
      * Disable copy constructor.
