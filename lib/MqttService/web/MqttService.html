@@ -149,9 +149,9 @@
                                         .val(mqttSetting.port);
                 var $labelPort = $("<label for='" + id + "Port'>Port</label>");
 
-                var $username = $("<input type='text' class='form-control' id='" + id + "Username' />")
-                                        .val(mqttSetting.username);
-                var $labelUsername = $("<label for='" + id + "Username'>Username</label>");
+                var $user = $("<input type='text' class='form-control' id='" + id + "User' />")
+                                        .val(mqttSetting.user);
+                var $labelUser = $("<label for='" + id + "User'>User</label>");
 
                 var $password = $("<input type='password' class='form-control' id='" + id + "Password' />")
                                         .val(mqttSetting.password);
@@ -208,8 +208,8 @@
                 $row1.append(
                     $("<div class='col-6'></div>")
                     .append(createFormGroup([
-                        $labelUsername,
-                        $username
+                        $labelUser,
+                        $user
                     ]))
                 );
 
@@ -284,7 +284,7 @@
                         broker: $("#mqtt" + idx + "Broker").val(),
                         port: parseInt($("#mqtt" + idx + "Port").val()),
                         clientId: $("#mqtt" + idx + "ClientId").val(),
-                        username: $("#mqtt" + idx + "Username").val(),
+                        user: $("#mqtt" + idx + "User").val(),
                         password: $("#mqtt" + idx + "Password").val(),
                         rootCaCert: $("#mqtt" + idx + "RootCaCert").val(),
                         clientCert: $("#mqtt" + idx + "ClientCert").val(),
