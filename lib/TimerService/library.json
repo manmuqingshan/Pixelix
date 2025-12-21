@@ -18,6 +18,8 @@
     }, {
         "name": "Service"
     }, {
+        "name": "TopicHandlerService"
+    }, {
         "name": "Utilities"
     }, {
         "name": "Views"
