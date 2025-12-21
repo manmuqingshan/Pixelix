@@ -127,7 +127,11 @@
 
             function createMqttSetting(id, mqttSetting) {
                 var $block = $("<div class='h-100 p-2 bg-body-tertiary border rounded-3 mt-2'></div>");
-                var $row = $("<div class='row'></div>")
+                var $row0 = $("<div class='row'></div>")
+                var $row1 = $("<div class='row'></div>")
+                var $row2 = $("<div class='row'></div>")
+                var $row3 = $("<div class='row'></div>")
+                var $row4 = $("<div class='row'></div>")
                 
                 var $checkboxEnabled = $("<input type='checkbox' class='form-check-input' id='" + id + "Enabled' />")
                                         .prop("checked", mqttSetting.enabled);
@@ -165,23 +169,27 @@
                                         .val(mqttSetting.clientKey);
                 var $labelClientKey = $("<label for='" + id + "ClientKey'>Client Key</label>");
 
-                $block.append($row);
+                $block.append($row0);
+                $block.append($row1);
+                $block.append($row2);
+                $block.append($row3);
+                $block.append($row4);
 
-                $row.append(
+                $row0.append(
                     $("<div class='col'></div>")
                     .append(createFormCheck([
                         $checkboxEnabled, $labelEnabled
                     ]))
                 );
 
-                $row.append(
+                $row0.append(
                     $("<div class='col'></div>")
                     .append(createFormCheck([
                         $useTls, $labelUseTls
                     ]))
                 );
 
-                $row.append(
+                $row0.append(
                     $("<div class='col'></div>")
                     .append(createFormGroup([
                         $labelBroker,
@@ -189,7 +197,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row0.append(
                     $("<div class='col'></div>")
                     .append(createFormGroup([
                         $labelPort,
@@ -197,7 +205,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row1.append(
                     $("<div class='col-6'></div>")
                     .append(createFormGroup([
                         $labelUsername,
@@ -205,7 +213,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row1.append(
                     $("<div class='col-6'></div>")
                     .append(createFormGroup([
                         $labelPassword,
@@ -213,7 +221,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row2.append(
                     $("<div class='col-12'></div>")
                     .append(createFormGroup([
                         $labelRootCaCert,
@@ -221,7 +229,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row3.append(
                     $("<div class='col-12'></div>")
                     .append(createFormGroup([
                         $labelClientCert,
@@ -229,7 +237,7 @@
                     ]))
                 );
 
-                $row.append(
+                $row4.append(
                     $("<div class='col-12'></div>")
                     .append(createFormGroup([
                         $labelClientKey,
