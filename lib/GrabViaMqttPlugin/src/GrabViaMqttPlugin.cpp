@@ -455,7 +455,7 @@ void GrabViaMqttPlugin::subscribe()
 
     if (false == m_path.isEmpty())
     {
-        (void)mqttService.subscribe(m_path,
+        (void)mqttService.subscribe(MqttService::PRIMARY_MQTT_INST, m_path,
             [this](const String& topic, const uint8_t* payload, size_t size) {
                 this->mqttTopicCallback(topic, payload, size);
             });
@@ -468,7 +468,7 @@ void GrabViaMqttPlugin::unsubscribe()
 
     if (false == m_path.isEmpty())
     {
-        mqttService.unsubscribe(m_path);
+        mqttService.unsubscribe(MqttService::PRIMARY_MQTT_INST, m_path);
     }
 }
 
