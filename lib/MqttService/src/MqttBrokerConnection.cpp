@@ -84,13 +84,21 @@ void MqttBrokerConnection::process()
     }
 }
 
-bool MqttBrokerConnection::connect(const String& clientId, const String& mqttBrokerUrl, uint16_t port, const String& user, const String& password, bool useTLS)
+bool MqttBrokerConnection::setupClient(bool useTls, const char* rootCaCert, const char* clientCert, const char* clientKey)
 {
     bool isSuccessful = false;
 
+    if (nullptr != m_wifiClient)
+    {
+        disconnect();
+
+        delete m_wifiClient;
+        m_wifiClient = nullptr;
+    }
+
     if (nullptr == m_wifiClient)
     {
-        if (false == useTLS)
+        if (false == useTls)
         {
             m_wifiClient = new (std::nothrow) WiFiClient();
         }
@@ -100,30 +108,57 @@ bool MqttBrokerConnection::connect(const String& clientId, const String& mqttBro
 
             if (nullptr != secureClient)
             {
-                secureClient->setInsecure();
+                if (nullptr == rootCaCert)
+                {
+                    secureClient->setInsecure();
+                }
+                else
+                {
+                    secureClient->setCACert(rootCaCert);
+                }
+
+                if ((nullptr != clientCert) && (nullptr != clientKey))
+                {
+                    secureClient->setCertificate(clientCert);
+                    secureClient->setPrivateKey(clientKey);
+                }
+
                 m_wifiClient = secureClient;
             }
         }
 
         if (nullptr != m_wifiClient)
         {
-            m_clientId = clientId;
-            m_url      = mqttBrokerUrl;
-            m_port     = port;
-            m_user     = user;
-            m_password = password;
-            m_state    = MqttTypes::STATE_DISCONNECTED;
+            isSuccessful = true;
+        }
+    }
 
-            (void)m_mqttClient.setClient(*m_wifiClient);
-            (void)m_mqttClient.setServer(m_url.c_str(), m_port);
-            (void)m_mqttClient.setCallback([this](char* topic, uint8_t* payload, uint32_t length) {
-                this->rxCallback(topic, payload, length);
-            });
-            (void)m_mqttClient.setBufferSize(MAX_BUFFER_SIZE);
-            (void)m_mqttClient.setSocketTimeout(MQTT_SOCK_TIMEOUT);
+    return isSuccessful;
+}
 
+bool MqttBrokerConnection::connect(const String& clientId, const String& broker, uint16_t port, const String& user, const String& password)
+{
+    bool isSuccessful = false;
+
+    if (nullptr != m_wifiClient)
+    {
+        m_clientId = clientId;
+        m_url      = broker;
+        m_port     = port;
+        m_user     = user;
+        m_password = password;
+        m_state    = MqttTypes::STATE_DISCONNECTED;
+
+        (void)m_mqttClient.setClient(*m_wifiClient);
+        (void)m_mqttClient.setServer(m_url.c_str(), m_port);
+        (void)m_mqttClient.setCallback([this](char* topic, uint8_t* payload, uint32_t length) {
+            this->rxCallback(topic, payload, length);
+        });
+        (void)m_mqttClient.setSocketTimeout(MQTT_SOCK_TIMEOUT);
+
+        if (true == m_mqttClient.setBufferSize(MAX_BUFFER_SIZE))
+        {
             /* The connection establishment takes part during process() method. */
-
             isSuccessful = true;
         }
     }
@@ -140,9 +175,6 @@ void MqttBrokerConnection::disconnect()
         (void)m_mqttClient.disconnect();
 
         m_state = MqttTypes::STATE_IDLE;
-
-        delete m_wifiClient;
-        m_wifiClient = nullptr;
     }
 }
 
@@ -295,6 +327,8 @@ void MqttBrokerConnection::disconnectedState()
             /* Connection to broker failed? */
             if (false == isConnected)
             {
+                logMqttClientState();
+
                 /* Try to reconnect later. */
                 m_reconnectTimer.restart();
             }
@@ -352,6 +386,58 @@ void MqttBrokerConnection::resubscribe()
         {
             LOG_WARNING("MQTT topic subscription not possible: %s", (*it).topic.c_str());
         }
+    }
+}
+
+void MqttBrokerConnection::logMqttClientState()
+{
+    int32_t rc = m_mqttClient.state();
+
+    switch (rc)
+    {
+    case MQTT_CONNECTION_TIMEOUT:
+        LOG_ERROR("MQTT client state: CONNECTION_TIMEOUT");
+        break;
+
+    case MQTT_CONNECTION_LOST:
+        LOG_ERROR("MQTT client state: CONNECTION_LOST");
+        break;
+
+    case MQTT_CONNECT_FAILED:
+        LOG_ERROR("MQTT client state: CONNECT_FAILED");
+        break;
+
+    case MQTT_DISCONNECTED:
+        LOG_INFO("MQTT client state: DISCONNECTED");
+        break;
+
+    case MQTT_CONNECTED:
+        LOG_INFO("MQTT client state: CONNECTED");
+        break;
+
+    case MQTT_CONNECT_BAD_PROTOCOL:
+        LOG_ERROR("MQTT client state: CONNECT_BAD_PROTOCOL");
+        break;
+
+    case MQTT_CONNECT_BAD_CLIENT_ID:
+        LOG_ERROR("MQTT client state: CONNECT_BAD_CLIENT_ID");
+        break;
+
+    case MQTT_CONNECT_UNAVAILABLE:
+        LOG_ERROR("MQTT client state: CONNECT_UNAVAILABLE");
+        break;
+
+    case MQTT_CONNECT_BAD_CREDENTIALS:
+        LOG_ERROR("MQTT client state: CONNECT_BAD_CREDENTIALS");
+        break;
+
+    case MQTT_CONNECT_UNAUTHORIZED:
+        LOG_ERROR("MQTT client state: CONNECT_UNAUTHORIZED");
+        break;
+
+    default:
+        LOG_ERROR("MQTT client state: UNKNOWN (%d)", rc);
+        break;
     }
 }
 

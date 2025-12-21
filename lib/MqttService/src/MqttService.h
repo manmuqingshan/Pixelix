@@ -42,9 +42,11 @@
  *****************************************************************************/
 #include <stdint.h>
 #include <IService.hpp>
-#include <KeyValueString.h>
+#include <Mutex.hpp>
+
 #include "MqttTypes.h"
 #include "MqttBrokerConnection.h"
+#include "MqttSetting.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -97,100 +99,108 @@ public:
     /**
      * Get current MQTT connection state.
      *
+     * @param[in] instance MQTT instance index.
+     *
      * @return MQTT connection state
      */
-    MqttTypes::State getState() const;
+    MqttTypes::State getState(uint8_t instance) const;
 
     /**
      * Publish a message for a topic.
      *
+     * @param[in] instance  MQTT instance index.
      * @param[in] topic     Message topic
      * @param[in] msg       Message itself
      * @param[in] retained  Retained message? Default is false.
      *
      * @return If successful published, it will return true otherwise false.
      */
-    bool publish(const String& topic, const String& msg, bool retained = false);
+    bool publish(uint8_t instance, const String& topic, const String& msg, bool retained = false);
 
     /**
      * Publish a message for a topic.
      *
+     * @param[in] instance  MQTT instance index.
      * @param[in] topic     Message topic
      * @param[in] msg       Message itself
      * @param[in] retained  Retained message? Default is false.
      *
      * @return If successful published, it will return true otherwise false.
      */
-    bool publish(const char* topic, const char* msg, bool retained = false);
+    bool publish(uint8_t instance, const char* topic, const char* msg, bool retained = false);
 
     /**
      * Subscribe for a topic. The callback will be called every time a message
      * is received for the topic.
      *
+     * @param[in] instance  MQTT instance index.
      * @param[in] topic     The topic which to subscribe for.
      * @param[in] callback  The callback which to call for any received topic message.
      *
      * @return If successful subscribed, it will return true otherwise false.
      */
-    bool subscribe(const String& topic, MqttTypes::TopicCallback callback);
+    bool subscribe(uint8_t instance, const String& topic, MqttTypes::TopicCallback callback);
 
     /**
      * Subscribe for a topic. The callback will be called every time a message
      * is received for the topic.
      *
+     * @param[in] instance  MQTT instance index.
      * @param[in] topic     The topic which to subscribe for.
      * @param[in] callback  The callback which to call for any received topic message.
      *
      * @return If successful subscribed, it will return true otherwise false.
      */
-    bool subscribe(const char* topic, MqttTypes::TopicCallback callback);
+    bool subscribe(uint8_t instance, const char* topic, MqttTypes::TopicCallback callback);
 
     /**
      * Unsubscribe topic.
      *
-     * @param[in] topic The topic which to unsubscribe.
+     * @param[in] instance  MQTT instance index.
+     * @param[in] topic     The topic which to unsubscribe.
      */
-    void unsubscribe(const String& topic);
+    void unsubscribe(uint8_t instance, const String& topic);
 
     /**
      * Unsubscribe topic.
      *
-     * @param[in] topic The topic which to unsubscribe.
+     * @param[in] instance  MQTT instance index.
+     * @param[in] topic     The topic which to unsubscribe.
      */
-    void unsubscribe(const char* topic);
+    void unsubscribe(uint8_t instance, const char* topic);
+
+    /**
+     * Primary MQTT instance index.
+     */
+    static const uint8_t PRIMARY_MQTT_INST = 0U;
+
+    /**
+     * Maximum MQTT instance count.
+     */
+    static const uint8_t MAX_MQTT_COUNT    = 1U;
 
 private:
 
-    /** MQTT port */
-    static const uint16_t MQTT_PORT = 1883U;
+    static const char*   FILE_NAME; /**< File name of the MQTT settings. */
+    static const char*   TOPIC;     /**< Topic for MQTT settings. */
+    static const char*   ENTITY_ID; /**< Entity id for MQTT settings. */
 
-    /** MQTT broker URL key */
-    static const char* KEY_MQTT_BROKER_URL;
-
-    /** MQTT broker URL name */
-    static const char* NAME_MQTT_BROKER_URL;
-
-    /** MQTT broker URL default value */
-    static const char* DEFAULT_MQTT_BROKER_URL;
-
-    /** MQTT broker URL min. length */
-    static const size_t MIN_VALUE_MQTT_BROKER_URL  = 0U;
-
-    /** MQTT broker URL max. length */
-    static const size_t  MAX_VALUE_MQTT_BROKER_URL = 96U;
-
-    KeyValueString       m_mqttBrokerUrlSetting; /**< URL of the MQTT broker setting */
-    MqttBrokerConnection m_brokerConnection;     /**< MQTT broker connection */
-    String               m_hostname;             /**< MQTT hostname */
+    Mutex                m_mutex;                             /**< Mutex to protect the settings. */
+    String               m_deviceId;                          /**< Device id. */
+    MqttSetting          m_settings[MAX_MQTT_COUNT];          /**< MQTT settings. */
+    bool                 m_hasSettingsChanged;                /**< Has any MQTT setting changed since last request? */
+    MqttBrokerConnection m_brokerConnections[MAX_MQTT_COUNT]; /**< MQTT broker connections. */
 
     /**
      * Constructs the service instance.
      */
     MqttService() :
         IService(),
-        m_mqttBrokerUrlSetting(KEY_MQTT_BROKER_URL, NAME_MQTT_BROKER_URL, DEFAULT_MQTT_BROKER_URL, MIN_VALUE_MQTT_BROKER_URL, MAX_VALUE_MQTT_BROKER_URL),
-        m_brokerConnection(),
-        m_hostname()
+        m_mutex(),
+        m_deviceId(),
+        m_settings(),
+        m_hasSettingsChanged(true),
+        m_brokerConnections()
     {
     }
 
@@ -207,16 +217,52 @@ private:
     MqttService& operator=(const MqttService& service);
 
     /**
-     * Parse MQTT broker URL and derive the raw URL, the user and password.
-     *
-     * @param[in] mqttBrokerUrl The MQTT broker URL.
-     * @param[out] url          The raw MQTT broker URL.
-     * @param[out] port         The MQTT broker port.
-     * @param[out] user         The MQTT broker user.
-     * @param[out] password     The MQTT broker password.
-     * @param[out] useTLS       Use TLS connection?
+     * Clear all MQTT settings.
      */
-    void parseMqttBrokerUrl(const String& mqttBrokerUrl, String& url, uint16_t& port, String& user, String& password, bool& useTLS);
+    void clear();
+
+    /**
+     * Load MQTT settings from file.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool loadSettings();
+
+    /**
+     * Save MQTT settings to file.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool saveSettings();
+
+    /**
+     * Get MQTT settings.
+     *
+     * @param[in]       topic       The topic name.
+     * @param[in,out]   jsonValue   The JSON value.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool getTopic(const String& topic, JsonObject& jsonValue);
+
+    /**
+     * Has any MQTT setting changed since last request?
+     *
+     * @param[in] topic The topic name.
+     *
+     * @return If changed, it will return true otherwise false.
+     */
+    bool hasTopicChanged(const String& topic);
+
+    /**
+     * Set MQTT settings.
+     *
+     * @param[in] topic The topic name.
+     * @param[in] value The JSON value.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool setTopic(const String& topic, const JsonObjectConst& value);
 };
 
 /******************************************************************************

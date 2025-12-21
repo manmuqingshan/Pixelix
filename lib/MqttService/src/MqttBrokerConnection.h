@@ -96,6 +96,12 @@ public:
     ~MqttBrokerConnection()
     {
         disconnect();
+
+        if (nullptr != m_wifiClient)
+        {
+            delete m_wifiClient;
+            m_wifiClient = nullptr;
+        }
     }
 
     /**
@@ -119,18 +125,31 @@ public:
     }
 
     /**
+     * Setup the MQTT client with TLS configuration.
+     * Must be called before connect() is called.
+     * If a connection is already established, it will be disconnected.
+     *
+     * @param[in] useTls        Use TLS connection.
+     * @param[in] rootCaCert    Root CA certificate.
+     * @param[in] clientCert    Client certificate.
+     * @param[in] clientKey     Client key.
+     *
+     * @return If successful, it will return true otherwise false.
+     */
+    bool setupClient(bool useTls, const char* rootCaCert, const char* clientCert, const char* clientKey);
+
+    /**
      * Connect to the MQTT broker.
      *
      * @param[in] clientId      The MQTT client identifier.
-     * @param[in] mqttBrokerUrl The MQTT broker URL.
+     * @param[in] broker        The MQTT broker host.
      * @param[in] port          The MQTT broker port. Default is 1883.
      * @param[in] user          The user name. Default is empty.
      * @param[in] password      The password. Default is empty.
-     * @param[in] useTLS        Use TLS connection. Default is false.
      *
      * @return If successful connected, it will return true otherwise false.
      */
-    bool connect(const String& clientId, const String& mqttBrokerUrl, uint16_t port = MQTT_PORT, const String& user = "", const String& password = "", bool useTLS = false);
+    bool connect(const String& clientId, const String& broker, uint16_t port = MQTT_PORT, const String& user = "", const String& password = "");
 
     /**
      * Disconnect from the MQTT broker.
@@ -300,11 +319,9 @@ private:
     void resubscribe();
 
     /**
-     * Parse MQTT broker URL and derive the raw URL, the user and password.
-     *
-     * @param[in] mqttBrokerUrl The MQTT broker URL.
+     * Log the current MQTT client state.
      */
-    void parseMqttBrokerUrl(const String& mqttBrokerUrl);
+    void logMqttClientState();
 };
 
 /******************************************************************************

@@ -67,12 +67,12 @@ namespace MqttTypes
     /**
      * MQTT connection states.
      */
-    enum State
+    typedef enum
     {
         STATE_IDLE = 0,     /**< Connection is idle */
         STATE_DISCONNECTED, /**< No connection to a MQTT broker */
         STATE_CONNECTED     /**< Connected with a MQTT broker */
-    };
+    } State;
 
 } /* MQTT types */
 
