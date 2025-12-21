@@ -48,7 +48,8 @@
             <!-- Main view -->
             <div class="container">
                 <h1 class="mt-5">Settings</h1>
-                <p>Note, some settings may only be applied after a system restart.</p>
+                <p>Setting changes need a restart to take effect.</p>
+                <p><button class="btn btn-light" type="button" onclick="restart();" disabled>Restart</button></p>
                 <p id="settings"></p>
             </div>
         </main>
@@ -79,6 +80,26 @@
         <script>
             var restClient  = new pixelix.rest.Client();
             var data = [];
+
+            /* Disable all UI elements. */
+            function disableUI() {
+                $("main :button").prop("disabled", true);
+            }
+
+            /* Enable all UI elements. */
+            function enableUI() {
+                $("main :button").prop("disabled", false);
+            }
+
+            function restart() {
+                disableUI();
+
+                restClient.restart().then(function(rsp) {
+                    return dialog.showInfo("<p>Ok.</p>");
+                }).catch(function(err) {
+                    return dialog.showError("<p>Error: " + err + "</p>");
+                });
+            }
 
             function store(id) {
                 var $input = $("#" + id);
@@ -225,6 +246,10 @@
                         /* Reset */
                         $formCheck = null;
                     }
+                }). then(function() {
+                    enableUI();
+                }).catch(function(err) {
+                    return dialog.showError("<p>Error: " + err + "</p>");
                 });
             });
         </script>
