@@ -25,24 +25,25 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttTypes.h
- * @brief  MQTT types
- * @author Andreas Merkle <web@blue-andi.de>
+ * @file   HttpServiceTypes.h
+ * @brief  HTTP service types
+ * @author Andreas Merkle (web@blue-andi.de)
  *
- * @addtogroup MQTT_SERVICE
+ * @addtogroup HTTP_SERVICE
  *
  * @{
  */
 
-#ifndef MQTT_TYPES_H
-#define MQTT_TYPES_H
+#ifndef HTTP_SERVICE_TYPES_H
+#define HTTP_SERVICE_TYPES_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
 #include <stdint.h>
-#include <functional>
-#include <WString.h>
+#include <stddef.h>
+#include <HTTPClient.h>
+#include "IHttpResponseHandler.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -56,34 +57,79 @@
  * Types and Classes
  *****************************************************************************/
 
-/** MQTT types */
-namespace MqttTypes
+/**
+ * Type definition for HTTP job id.
+ */
+typedef uint32_t HttpJobId;
+
+/**
+ * This type defines the HTTP methods.
+ */
+typedef enum
 {
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
+    HTTP_METHOD_GET, /**< HTTP GET method */
+    HTTP_METHOD_POST /**< HTTP POST method */
 
-    /**
-     * MQTT connection states.
-     */
-    typedef enum
-    {
-        STATE_IDLE = 0,     /**< Connection is idle */
-        STATE_DISCONNECTED, /**< No connection to a MQTT broker */
-        STATE_CONNECTED     /**< Connected with a MQTT broker */
-    } State;
+} HttpMethod;
 
-} /* MQTT types */
+/**
+ * This type defins a HTTP request structure.
+ * This structure is used to send HTTP requests to the worker task.
+ *
+ * Attention, constructor and destructor of the members are not called!
+ */
+typedef struct
+{
+    HttpJobId             jobId;   /**< Job id of the HTTP request/response. */
+    const char*           url;     /**< URL of the HTTP request. */
+    HttpMethod            method;  /**< HTTP method of the request. */
+    const uint8_t*        payload; /**< Payload of the HTTP request (only for POST). */
+    size_t                size;    /**< Size of the payload in byte (only for POST). */
+    IHttpResponseHandler* handler; /**< Optional response handler which will be called when the response is available. */
+
+} WorkerRequest;
+
+/**
+ * This type defines a worker response structure.
+ * This structure is used to send back the HTTP response from the worker task.
+ *
+ * Attention, constructor and destructor of the members are not called!
+ */
+typedef struct
+{
+    HttpJobId    jobId;      /**< Job id of the HTTP request/response. */
+    t_http_codes statusCode; /**< HTTP status code of the response. */
+    uint8_t*     payload;    /**< Payload of the HTTP response. */
+    size_t       size;       /**< Size of the payload in byte. */
+
+} WorkerResponse;
+
+/**
+ * This type defines the worker queues, that are
+ * task safe to be used from the worker task.
+ */
+typedef struct
+{
+    Queue<WorkerRequest>  requestQueue;    /**< Queue to store pending HTTP requests. */
+    Queue<WorkerResponse> responseQueue;   /**< Queue to store received HTTP responses. */
+    Queue<HttpJobId>      abortJobQueue;   /**< Queue to store job ids to abort. */
+    Queue<HttpJobId>      abortedJobQueue; /**< Queue to store aborted job ids. */
+
+} WorkerQueues;
 
 /******************************************************************************
  * Variables
  *****************************************************************************/
 
+/**
+ * Invalid HTTP job id.
+ */
+static constexpr HttpJobId INVALID_HTTP_JOB_ID = 0U;
+
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif /* MQTT_TYPES_H */
+#endif /* HTTP_SERVICE_TYPES_H */
 
 /** @} */

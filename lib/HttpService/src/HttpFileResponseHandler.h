@@ -25,24 +25,24 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttTypes.h
- * @brief  MQTT types
- * @author Andreas Merkle <web@blue-andi.de>
+ * @file   HttpFileResponseHandler.h
+ * @brief  HTTP file response handler
+ * @author Andreas Merkle (web@blue-andi.de)
  *
- * @addtogroup MQTT_SERVICE
+ * @addtogroup HTTP_SERVICE
  *
  * @{
  */
 
-#ifndef MQTT_TYPES_H
-#define MQTT_TYPES_H
+#ifndef HTTP_FILE_RESPONSE_HANDLER_H
+#define HTTP_FILE_RESPONSE_HANDLER_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <functional>
-#include <WString.h>
+#include <FileSystem.h>
+
+#include "IHttpResponseHandler.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -56,25 +56,94 @@
  * Types and Classes
  *****************************************************************************/
 
-/** MQTT types */
-namespace MqttTypes
+/**
+ * HTTP response handler that writes the payload into a file.
+ */
+class HttpFileResponseHandler : public IHttpResponseHandler
 {
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
+public:
 
     /**
-     * MQTT connection states.
+     * Constructs the file response handler.
      */
-    typedef enum
+    HttpFileResponseHandler() :
+        m_filePath(nullptr),
+        m_file(),
+        m_isError(false)
     {
-        STATE_IDLE = 0,     /**< Connection is idle */
-        STATE_DISCONNECTED, /**< No connection to a MQTT broker */
-        STATE_CONNECTED     /**< Connected with a MQTT broker */
-    } State;
+    }
 
-} /* MQTT types */
+    /**
+     * Constructs the file response handler.
+     *
+     * @param[in] filePath  Path of the file where the payload will be written to.
+     */
+    HttpFileResponseHandler(const char* filePath) :
+        m_filePath(filePath),
+        m_file(),
+        m_isError(false)
+    {
+    }
+
+    /**
+     * Destroys the file response handler.
+     */
+    virtual ~HttpFileResponseHandler()
+    {
+    }
+
+    /**
+     * Get file path.
+     *
+     * @return File path
+     */
+    const char* getFilePath() const
+    {
+        return m_filePath;
+    }
+
+    /**
+     * Set file path.
+     * 
+     * @param[in] filePath  File path
+     */
+    void setFilePath(const char* filePath)
+    {
+        m_filePath = filePath;
+    }
+
+    /**
+     * This method will be called when a HTTP response is available.
+     *
+     * @param[in] index     Index of the response chunk, starting from 0.
+     * @param[in] isFinal   Indicates that this is the final chunk.
+     * @param[in] payload   Payload of the HTTP response.
+     * @param[in] size      Size of the payload in byte.
+     */
+    void onResponse(uint32_t index, bool isFinal, const uint8_t* payload, size_t size) final;
+
+private:
+
+    const char* m_filePath; /**< Path of the file where the payload will be written to. */
+    File        m_file;     /**< File handle. */
+    bool        m_isError;  /**< Indicates that an error occurred during file creation. */
+
+    /**
+     * Disable copy constructor.
+     *
+     * @param[in] handler   Handler to copy.
+     */
+    HttpFileResponseHandler(const HttpFileResponseHandler& handler)            = delete;
+
+    /**
+     * Disable assignment operator.
+     *
+     * @param[in] handler   Handler to assign.
+     *
+     * @return Assigned handler.
+     */
+    HttpFileResponseHandler& operator=(const HttpFileResponseHandler& handler) = delete;
+};
 
 /******************************************************************************
  * Variables
@@ -84,6 +153,6 @@ namespace MqttTypes
  * Functions
  *****************************************************************************/
 
-#endif /* MQTT_TYPES_H */
+#endif /* HTTP_FILE_RESPONSE_HANDLER_H */
 
 /** @} */

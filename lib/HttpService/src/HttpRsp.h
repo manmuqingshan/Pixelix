@@ -25,24 +25,23 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttTypes.h
- * @brief  MQTT types
- * @author Andreas Merkle <web@blue-andi.de>
+ * @file   HttpRsp.h
+ * @brief  HTTP response
+ * @author Andreas Merkle (web@blue-andi.de)
  *
- * @addtogroup MQTT_SERVICE
+ * @addtogroup HTTP_SERVICE
  *
  * @{
  */
 
-#ifndef MQTT_TYPES_H
-#define MQTT_TYPES_H
+#ifndef HTTP_RSP_H
+#define HTTP_RSP_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
 #include <stdint.h>
-#include <functional>
-#include <WString.h>
+#include <HTTPClient.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -56,25 +55,38 @@
  * Types and Classes
  *****************************************************************************/
 
-/** MQTT types */
-namespace MqttTypes
+/**
+ * This type defins a HTTP response structure.
+ */
+struct HttpRsp
 {
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
+    t_http_codes statusCode; /**< HTTP status code of the response. */
+    uint8_t*     payload;    /**< Payload of the HTTP response. */
+    size_t       size;       /**< Size of the payload in byte. */
 
     /**
-     * MQTT connection states.
+     * Construct a new HTTP response object.
      */
-    typedef enum
+    HttpRsp() :
+        statusCode(HTTP_CODE_SERVICE_UNAVAILABLE),
+        payload(nullptr),
+        size(0U)
     {
-        STATE_IDLE = 0,     /**< Connection is idle */
-        STATE_DISCONNECTED, /**< No connection to a MQTT broker */
-        STATE_CONNECTED     /**< Connected with a MQTT broker */
-    } State;
+    }
 
-} /* MQTT types */
+    /**
+     * Destroys the HTTP response object.
+     */
+    ~HttpRsp()
+    {
+        if (nullptr != payload)
+        {
+            delete[] payload;
+            payload = nullptr;
+            size    = 0U;
+        }
+    }
+};
 
 /******************************************************************************
  * Variables
@@ -84,6 +96,6 @@ namespace MqttTypes
  * Functions
  *****************************************************************************/
 
-#endif /* MQTT_TYPES_H */
+#endif /* HTTP_RSP_H */
 
 /** @} */

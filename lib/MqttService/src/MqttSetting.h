@@ -25,17 +25,17 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   TimerSetting.h
- * @brief  Timer setting
+ * @file   MqttSetting.h
+ * @brief  MQTT setting
  * @author Andreas Merkle <web@blue-andi.de>
  *
- * @addtogroup TIMER_SERVICE
+ * @addtogroup MQTT_SERVICE
  *
  * @{
  */
 
-#ifndef TIMER_SETTING_H
-#define TIMER_SETTING_H
+#ifndef MQTT_SETTING_H
+#define MQTT_SETTING_H
 
 /******************************************************************************
  * Includes
@@ -56,62 +56,56 @@
  *****************************************************************************/
 
 /**
- * Single timer setting.
+ * Single MQTT setting.
  */
-class TimerSetting
+class MqttSetting
 {
 public:
 
-    /** Generic display state which is request to be set. */
-    enum DisplayState : uint8_t
-    {
-        DISPLAY_STATE_NONE = 0, /**< No action */
-        DISPLAY_STATE_ON,       /**< Switch on */
-        DISPLAY_STATE_OFF       /**< Switch off */
-    };
-
     /**
-     * Constructs a timer setting.
+     * Constructs a MQTT setting.
      */
-    TimerSetting() :
+    MqttSetting() :
         m_isEnabled(false),
-        m_hour(0U),
-        m_minute(0U),
-        m_daysOfWeek(0U),
-        m_displayState(DISPLAY_STATE_NONE),
-        m_brightness(-1),
-        m_isSignalling(false)
+        m_useTls(false),
+        m_broker(),
+        m_port(MQTT_PORT),
+        m_user(),
+        m_password(),
+        m_rootCaCert(nullptr),
+        m_clientCert(nullptr),
+        m_clientKey(nullptr)
     {
     }
 
     /**
-     * Destroys a timer setting.
+     * Destroys a MQTT setting.
      */
-    ~TimerSetting()
+    ~MqttSetting()
     {
+        clear();
     }
 
     /**
-     * Clear timer setting to default values.
+     * Clear MQTT setting to default values.
      */
     void clear();
 
     /**
      * Convert setting to JSON.
      *
-     * @param[out] jsonTimerSetting JSON object destination.
+     * @param[out] jsonSetting JSON object destination.
      */
-    void toJson(JsonObject& jsonTimerSetting) const;
+    void toJson(JsonObject& jsonSetting) const;
 
     /**
      * Convert from JSON to setting.
      *
-     * @param[in] jsonTimerSetting  JSON object source.
+     * @param[in] jsonSetting  JSON object source.
      *
      * @return If successful, it will return true otherwise false.
      */
-    bool fromJson(const JsonObjectConst& jsonTimerSetting);
-
+    bool fromJson(const JsonObjectConst& jsonSetting);
     /**
      * Is timer enabled?
      *
@@ -123,55 +117,102 @@ public:
     }
 
     /**
-     * Is timer signalling?
+     * Use TLS for connection?
      *
-     * @param[in] currentTime   Current time.
-     *
-     * @return If signalling, it will return true otherwise false.
+     * @return If TLS is used, it will return true otherwise false.
      */
-    bool isSignalling(const struct tm& currentTime);
-
-    /**
-     * Get display state.
-     *
-     * @return Display state.
-     */
-    DisplayState getDisplayState() const
+    bool useTls() const
     {
-        return m_displayState;
+        return m_useTls;
     }
 
     /**
-     * Get brightness level.
+     * Get broker host.
      *
-     * @return Brightness level ([0; 255], otherwise disabled).
+     * @return Broker host.
      */
-    int16_t getBrightness() const
+    String getBroker() const
     {
-        return m_brightness;
+        return m_broker;
+    }
+
+    /**
+     * Get broker port.
+     *
+     * @return Broker port.
+     */
+    uint16_t getPort() const
+    {
+        return m_port;
+    }
+
+    /**
+     * Get user name for authentication.
+     *
+     * @return User name.
+     */
+    String getUser() const
+    {
+        return m_user;
+    }
+
+    /**
+     * Get password for authentication.
+     *
+     * @return Password.
+     */
+    String getPassword() const
+    {
+        return m_password;
+    }
+
+    /**
+     * Get root CA certificate for TLS connection.
+     * If no certificate is set, it returns nullptr.
+     *
+     * @return Root CA certificate.
+     */
+    const char* getRootCaCert() const
+    {
+        return m_rootCaCert;
+    }
+
+    /**
+     * Get client certificate for TLS connection.
+     * If no certificate is set, it returns nullptr.
+     *
+     * @return Client certificate.
+     */
+    const char* getClientCert() const
+    {
+        return m_clientCert;
+    }
+
+    /**
+     * Get client key for TLS connection.
+     * If no key is set, it returns nullptr.
+     *
+     * @return Client key.
+     */
+    const char* getClientKey() const
+    {
+        return m_clientKey;
     }
 
 private:
 
-    bool         m_isEnabled;    /**< Is timer enabled? */
-    uint8_t      m_hour;         /**< Hour */
-    uint8_t      m_minute;       /**< Minute */
-    uint32_t     m_daysOfWeek;   /**< Days of week (bit 0: Su, bit 1: Mo and etc.) */
-    DisplayState m_displayState; /**< Display state to set. */
-    int16_t      m_brightness;   /**< Brightness level ([0; 255], otherwise disabled) to set. */
-    bool         m_isSignalling; /**< Is timer signalling? Used to signal just once. */
+    /** MQTT port */
+    static const uint16_t MQTT_PORT = 1883U;
 
-    /**
-     * Get the day of week.
-     *
-     * @param[in] dayOfWeek Day of week.
-     *
-     * @return If day is set, it will return true otherwise false.
-     */
-    bool isDayOfWeek(uint32_t dayOfWeek) const
-    {
-        return (0 != (m_daysOfWeek & (1U << dayOfWeek)));
-    }
+    bool                  m_isEnabled;  /**< Is MQTT enabled? */
+    bool                  m_useTls;     /**< Use TLS for connection? */
+    String                m_broker;     /**< MQTT broker host. */
+    uint16_t              m_port;       /**< MQTT broker port. */
+    String                m_user;       /**< User name for authentication. */
+    String                m_password;   /**< Password for authentication. */
+    char*                 m_rootCaCert; /**< Root CA certificate for TLS connection. */
+    char*                 m_clientCert; /**< Client certificate for TLS connection. */
+    char*                 m_clientKey;  /**< Client key for TLS connection. */
 };
 
 /******************************************************************************
@@ -182,6 +223,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif /* TIMER_SETTING_H */
+#endif /* MQTT_SETTING_H */
 
 /** @} */

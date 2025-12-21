@@ -25,24 +25,16 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttTypes.h
- * @brief  MQTT types
- * @author Andreas Merkle <web@blue-andi.de>
- *
- * @addtogroup MQTT_SERVICE
- *
- * @{
+ * @file   HttpFileResponseHandler.cpp
+ * @brief  HTTP file response handler
+ * @author Andreas Merkle (web@blue-andi.de)
  */
-
-#ifndef MQTT_TYPES_H
-#define MQTT_TYPES_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <functional>
-#include <WString.h>
+#include "HttpFileResponseHandler.h"
+#include <Logging.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -53,37 +45,56 @@
  *****************************************************************************/
 
 /******************************************************************************
- * Types and Classes
+ * Types and classes
  *****************************************************************************/
 
-/** MQTT types */
-namespace MqttTypes
+/******************************************************************************
+ * Prototypes
+ *****************************************************************************/
+
+/******************************************************************************
+ * Local Variables
+ *****************************************************************************/
+
+/******************************************************************************
+ * Public Methods
+ *****************************************************************************/
+
+void HttpFileResponseHandler::onResponse(uint32_t index, bool isFinal, const uint8_t* payload, size_t size)
 {
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
-
-    /**
-     * MQTT connection states.
-     */
-    typedef enum
+    if (0U == index)
     {
-        STATE_IDLE = 0,     /**< Connection is idle */
-        STATE_DISCONNECTED, /**< No connection to a MQTT broker */
-        STATE_CONNECTED     /**< Connected with a MQTT broker */
-    } State;
+        m_file = FILESYSTEM.open(m_filePath, FILE_WRITE);
 
-} /* MQTT types */
+        if (false == m_file)
+        {
+            LOG_ERROR("Unable to open file %s for writing HTTP response.", m_filePath);
+        }
+    }
+
+    if (true == m_file)
+    {
+        (void)m_file.write(payload, size);
+
+        if (isFinal == true)
+        {
+            m_file.close();
+        }
+    }
+}
 
 /******************************************************************************
- * Variables
+ * Protected Methods
  *****************************************************************************/
 
 /******************************************************************************
- * Functions
+ * Private Methods
  *****************************************************************************/
 
-#endif /* MQTT_TYPES_H */
+/******************************************************************************
+ * External Functions
+ *****************************************************************************/
 
-/** @} */
+/******************************************************************************
+ * Local Functions
+ *****************************************************************************/

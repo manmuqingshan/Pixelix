@@ -219,7 +219,7 @@ void HomeAssistantMqtt::unregisterMqttDiscovery(const String& deviceId, const St
                     LOG_DEBUG("Component: %s", component.c_str());
 
                     /* Purge retained discovery info. */
-                    if (false == mqttService.publish(mqttDiscoveryInfoTopic, "", true))
+                    if (false == mqttService.publish(MqttService::PRIMARY_MQTT_INST, mqttDiscoveryInfoTopic, "", true))
                     {
                         LOG_WARNING("Failed to purge HA discovery of %s.", objectId.c_str());
                     }
@@ -500,7 +500,7 @@ void HomeAssistantMqtt::publishAutoDiscoveryInfo(MqttDiscoveryInfo& mqttDiscover
             if (0U < serializeJson(jsonDoc, mqttDiscoveryContent))
             {
                 /* Publish retained to ensure that HomeAssistant will recognize the device entity. */
-                if (false == mqttService.publish(mqttDiscoveryTopic, mqttDiscoveryContent.c_str(), true))
+                if (false == mqttService.publish(MqttService::PRIMARY_MQTT_INST, mqttDiscoveryTopic, mqttDiscoveryContent.c_str(), true))
                 {
                     LOG_WARNING("Failed to provide HA discovery info of %s.", objectId.c_str());
                 }

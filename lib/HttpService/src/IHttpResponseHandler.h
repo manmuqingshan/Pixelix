@@ -25,24 +25,29 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @file   MqttTypes.h
- * @brief  MQTT types
- * @author Andreas Merkle <web@blue-andi.de>
+ * @file   IHttpResponseHandler.h
+ * @brief  HTTP response handler interface
+ * @author Andreas Merkle (web@blue-andi.de)
  *
- * @addtogroup MQTT_SERVICE
+ * @addtogroup HTTP_SERVICE
  *
  * @{
  */
 
-#ifndef MQTT_TYPES_H
-#define MQTT_TYPES_H
+#ifndef IHTTP_RESPONSE_HANDLER_H
+#define IHTTP_RESPONSE_HANDLER_H
 
 /******************************************************************************
  * Includes
  *****************************************************************************/
-#include <stdint.h>
-#include <functional>
+#include <IService.hpp>
+#include <Mutex.hpp>
+#include <Task.hpp>
+#include <Queue.hpp>
 #include <WString.h>
+#include <HTTPClient.h>
+
+#include "HttpRsp.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -56,25 +61,39 @@
  * Types and Classes
  *****************************************************************************/
 
-/** MQTT types */
-namespace MqttTypes
+/**
+ * Interface for HTTP response handlers.
+ */
+class IHttpResponseHandler
 {
-    /**
-     * Topic callback prototype.
-     */
-    typedef std::function<void(const String& topic, const uint8_t* payload, size_t size)> TopicCallback;
+public:
 
     /**
-     * MQTT connection states.
+     * Destroys the interface.
      */
-    typedef enum
+    virtual ~IHttpResponseHandler()
     {
-        STATE_IDLE = 0,     /**< Connection is idle */
-        STATE_DISCONNECTED, /**< No connection to a MQTT broker */
-        STATE_CONNECTED     /**< Connected with a MQTT broker */
-    } State;
+    }
 
-} /* MQTT types */
+    /**
+     * This method will be called when a HTTP response is available.
+     *
+     * @param[in] index     Index of the response chunk, starting from 0.
+     * @param[in] isFinal   Indicates that this is the final chunk.
+     * @param[in] payload   Payload of the HTTP response.
+     * @param[in] size      Size of the payload in byte.
+     */
+    virtual void onResponse(uint32_t index, bool isFinal, const uint8_t* payload, size_t size) = 0;
+
+protected:
+
+    /**
+     * Constructs the interface.
+     */
+    IHttpResponseHandler()
+    {
+    }
+};
 
 /******************************************************************************
  * Variables
@@ -84,6 +103,6 @@ namespace MqttTypes
  * Functions
  *****************************************************************************/
 
-#endif /* MQTT_TYPES_H */
+#endif /* IHTTP_RESPONSE_HANDLER_H */
 
 /** @} */
