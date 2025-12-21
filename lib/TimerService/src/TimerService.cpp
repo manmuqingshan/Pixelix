@@ -35,7 +35,6 @@
  *****************************************************************************/
 #include "TimerService.h"
 
-#include <Logging.h>
 #include <JsonFile.h>
 #include <ClockDrv.h>
 #include <DisplayMgr.h>
@@ -43,6 +42,7 @@
 #include <TopicHandlerService.h>
 #include <SettingsService.h>
 #include <Util.h>
+#include <Logging.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -75,6 +75,7 @@ const char* TimerService::ENTITY_ID = "timerService";
 
 bool TimerService::start()
 {
+    bool                        isSuccessful        = true;
     SettingsService&            settings            = SettingsService::getInstance();
     TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
     JsonObjectConst             jsonExtra; /* Empty */
@@ -91,35 +92,43 @@ bool TimerService::start()
         return this->setTopic(topic, jsonValue);
     };
 
-    if (false == settings.open(true))
+    if (false == m_mutex.create())
     {
-        m_deviceId = settings.getHostname().getDefault();
+        isSuccessful = false;
     }
     else
     {
-        m_deviceId = settings.getHostname().getValue();
+        if (false == settings.open(true))
+        {
+            m_deviceId = settings.getHostname().getDefault();
+        }
+        else
+        {
+            m_deviceId = settings.getHostname().getValue();
 
-        settings.close();
+            settings.close();
+        }
+
+        if (false == loadSettings())
+        {
+            saveSettings();
+        }
+
+        topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
+
+        m_processTimer.start(PROCESS_PERIOD);
+
+        LOG_INFO("Timer service started.");
     }
 
-    if (false == loadSettings())
-    {
-        saveSettings();
-    }
-
-    topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
-
-    m_processTimer.start(PROCESS_PERIOD);
-
-    LOG_INFO("Timer service started.");
-
-    return true;
+    return isSuccessful;
 }
 
 void TimerService::stop()
 {
     TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
 
+    m_mutex.destroy();
     m_processTimer.stop();
     topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
 
