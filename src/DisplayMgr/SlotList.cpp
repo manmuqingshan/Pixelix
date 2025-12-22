@@ -289,8 +289,6 @@ bool SlotList::disable(uint8_t slotId)
 
     if (true == isSlotIdValid(slotId))
     {
-        Slot& slot = m_slots[slotId];
-
         /* A sticky slot can't be disabled. */
         if (m_stickySlot != slotId)
         {

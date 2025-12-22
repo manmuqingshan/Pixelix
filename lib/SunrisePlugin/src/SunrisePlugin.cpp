@@ -194,7 +194,6 @@ void SunrisePlugin::stop()
 void SunrisePlugin::process(bool isConnected)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
-    bool                       isRestRequestRequired = false;
     DynamicJsonDocument        jsonDoc(0U);
     bool                       isValidResponse;
 
