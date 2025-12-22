@@ -45,7 +45,7 @@ rest_command:
     method: POST
 ```
 
-The REST API is desribed in detail on the [SwaggerHub](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.7.0).
+The REST API is desribed in detail on the [SwaggerHub](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.8.0).
 
 #### Automation (REST Command)
 
