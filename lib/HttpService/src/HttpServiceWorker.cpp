@@ -140,7 +140,7 @@ void HttpServiceWorker::performHttpRequest(const WorkerRequest& workerReq, Worke
         wifiClient = new WiFiClient();
     }
 
-    if (nullptr != wifiClient)
+    if (nullptr == wifiClient)
     {
         LOG_WARNING("HTTP request to URL %s failed, no heap memory available.", workerReq.url);
         workerRsp.statusCode = HTTP_CODE_INTERNAL_SERVER_ERROR;
