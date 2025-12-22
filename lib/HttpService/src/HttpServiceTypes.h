@@ -73,7 +73,7 @@ typedef enum
 } HttpMethod;
 
 /**
- * This type defins a HTTP request structure.
+ * This type defines a HTTP request structure.
  * This structure is used to send HTTP requests to the worker task.
  *
  * Attention, constructor and destructor of the members are not called!
