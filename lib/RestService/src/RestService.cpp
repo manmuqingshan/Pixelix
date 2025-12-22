@@ -61,9 +61,8 @@
 
 bool RestService::start()
 {
-    MutexGuard<Mutex>           guard(m_mutex);
-
-    AsyncHttpClient::OnResponse rspCallback = [this](const HttpResponse& rsp) {
+    bool                        isSuccessful = true;
+    AsyncHttpClient::OnResponse rspCallback  = [this](const HttpResponse& rsp) {
         handleAsyncWebResponse(rsp);
     };
     AsyncHttpClient::OnError errCallback = [this]() {
@@ -73,18 +72,23 @@ bool RestService::start()
         m_isWaitingForResponse = false;
     };
 
-    m_client.regOnResponse(rspCallback);
-    m_client.regOnError(errCallback);
-    m_client.regOnClosed(closedCallback);
-    m_isRunning = true;
+    if (false == m_mutex.create())
+    {
+        isSuccessful = false;
+    }
+    else
+    {
+        m_client.regOnResponse(rspCallback);
+        m_client.regOnError(errCallback);
+        m_client.regOnClosed(closedCallback);
+        m_isRunning = true;
+    }
 
-    return true;
+    return isSuccessful;
 }
 
 void RestService::stop()
 {
-    MutexGuard<Mutex> guard(m_mutex);
-
     m_isRunning = false;
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
@@ -94,6 +98,8 @@ void RestService::stop()
     m_responseQueue.clear();
     m_activeRestId             = INVALID_REST_ID;
     m_activePreProcessCallback = nullptr;
+
+    m_mutex.destroy();
 }
 
 void RestService::process()

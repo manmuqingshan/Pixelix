@@ -163,7 +163,6 @@ void MqttService::stop()
 {
     TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
 
-    m_mutex.destroy();
     topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
 
     /* Stop MQTT broker connections. */
@@ -171,6 +170,8 @@ void MqttService::stop()
     {
         m_brokerConnections[idx].disconnect();
     }
+
+    m_mutex.destroy();
 
     LOG_INFO("MQTT service stopped.");
 }

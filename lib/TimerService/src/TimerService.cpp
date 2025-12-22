@@ -128,9 +128,10 @@ void TimerService::stop()
 {
     TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
 
-    m_mutex.destroy();
     m_processTimer.stop();
     topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
+
+    m_mutex.destroy();
 
     LOG_INFO("Timer service stopped.");
 }

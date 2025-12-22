@@ -321,7 +321,6 @@ private:
         m_activePreProcessCallback(),
         m_mutex()
     {
-        (void)m_mutex.create();
     }
 
     /**
@@ -330,7 +329,6 @@ private:
     ~RestService()
     {
         /* Never called. */
-        m_mutex.destroy();
     }
 
     /* An instance shall not be copied. */
