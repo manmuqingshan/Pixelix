@@ -190,6 +190,8 @@ private:
     MqttSetting          m_settings[MAX_MQTT_COUNT];          /**< MQTT settings. */
     bool                 m_hasSettingsChanged;                /**< Has any MQTT setting changed since last request? */
     MqttBrokerConnection m_brokerConnections[MAX_MQTT_COUNT]; /**< MQTT broker connections. */
+    bool                 m_isSettingsTopicRegistered;         /**< Is settings topic registered? */
+    bool                 m_isRunning;                         /**< Is service running? */
 
     /**
      * Constructs the service instance.
@@ -200,7 +202,9 @@ private:
         m_deviceId(),
         m_settings(),
         m_hasSettingsChanged(true),
-        m_brokerConnections()
+        m_brokerConnections(),
+        m_isSettingsTopicRegistered(false),
+        m_isRunning(false)
     {
     }
 

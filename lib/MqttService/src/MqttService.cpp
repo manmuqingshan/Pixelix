@@ -73,29 +73,22 @@ const char* MqttService::ENTITY_ID = "mqttService";
 
 bool MqttService::start()
 {
-    bool                        isSuccessful        = true;
-    SettingsService&            settings            = SettingsService::getInstance();
-    TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
-    JsonObjectConst             jsonExtra; /* Empty */
-    ITopicHandler::GetTopicFunc getTopicFunc =
-        [this](const String& topic, JsonObject& jsonValue) -> bool {
-        return this->getTopic(topic, jsonValue);
-    };
-    TopicHandlerService::HasChangedFunc hasChangedFunc =
-        [this](const String& topic) -> bool {
-        return this->hasTopicChanged(topic);
-    };
-    ITopicHandler::SetTopicFunc setTopicFunc =
-        [this](const String& topic, const JsonObjectConst& jsonValue) -> bool {
-        return this->setTopic(topic, jsonValue);
-    };
+    bool isSuccessful = true;
 
-    if (false == m_mutex.create())
+    /* Service already started? */
+    if (true == m_isRunning)
+    {
+        /* Nothing to do. */
+        ;
+    }
+    else if (false == m_mutex.create())
     {
         isSuccessful = false;
     }
     else
     {
+        SettingsService& settings = SettingsService::getInstance();
+
         if (false == settings.open(true))
         {
             m_deviceId = settings.getHostname().getDefault();
@@ -112,37 +105,35 @@ bool MqttService::start()
             saveSettings();
         }
 
-        topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
-    }
-
-    /* Start MQTT broker connections. */
-    for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
-    {
-        MqttSetting& setting = m_settings[idx];
-
-        if ((true == setting.isEnabled()) &&
-            (false == setting.getBroker().isEmpty()))
+        /* Start MQTT broker connections. */
+        for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
         {
-            m_brokerConnections[idx].setLastWillTopic(m_deviceId + "/status", "online", "offline");
+            MqttSetting& setting = m_settings[idx];
 
-            if (false == m_brokerConnections[idx].setupClient(setting.useTls(),
-                                                                 setting.getRootCaCert(),
-                                                                 setting.getClientCert(),
-                                                                 setting.getClientKey()))
+            if ((true == setting.isEnabled()) &&
+                (false == setting.getBroker().isEmpty()))
             {
-                LOG_WARNING("MQTT client setup for broker %s failed.", setting.getBroker().c_str());
-            }
-            else if (false == m_brokerConnections[idx].connect(m_deviceId,
-                                                                setting.getBroker(),
-                                                                setting.getPort(),
-                                                                setting.getUser(),
-                                                                setting.getPassword()))
-            {
-                LOG_WARNING("MQTT broker connection to %s failed.", setting.getBroker().c_str());
-            }
-            else
-            {
-                ;
+                m_brokerConnections[idx].setLastWillTopic(m_deviceId + "/status", "online", "offline");
+
+                if (false == m_brokerConnections[idx].setupClient(setting.useTls(),
+                                 setting.getRootCaCert(),
+                                 setting.getClientCert(),
+                                 setting.getClientKey()))
+                {
+                    LOG_WARNING("MQTT client setup for broker %s failed.", setting.getBroker().c_str());
+                }
+                else if (false == m_brokerConnections[idx].connect(m_deviceId,
+                                      setting.getBroker(),
+                                      setting.getPort(),
+                                      setting.getUser(),
+                                      setting.getPassword()))
+                {
+                    LOG_WARNING("MQTT broker connection to %s failed.", setting.getBroker().c_str());
+                }
+                else
+                {
+                    ;
+                }
             }
         }
     }
@@ -151,8 +142,13 @@ bool MqttService::start()
     {
         stop();
     }
+    else if (true == m_isRunning)
+    {
+        LOG_WARNING("MQTT service is already started.");
+    }
     else
     {
+        m_isRunning = true;
         LOG_INFO("MQTT service started.");
     }
 
@@ -173,14 +169,47 @@ void MqttService::stop()
 
     m_mutex.destroy();
 
-    LOG_INFO("MQTT service stopped.");
+    if (true == m_isRunning)
+    {
+        m_isRunning = false;
+        LOG_INFO("MQTT service stopped.");
+    }
 }
 
 void MqttService::process()
 {
-    for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
+    if (true == m_isRunning)
     {
-        m_brokerConnections[idx].process();
+        /* Register settings topic if not done yet.
+         * This is done here to have the service started before the topic handler
+         * service tries to get or set any topic value.
+         */
+        if (false == m_isSettingsTopicRegistered)
+        {
+            TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
+            JsonObjectConst             jsonExtra; /* Empty */
+            ITopicHandler::GetTopicFunc getTopicFunc =
+                [this](const String& topic, JsonObject& jsonValue) -> bool {
+                return this->getTopic(topic, jsonValue);
+            };
+            TopicHandlerService::HasChangedFunc hasChangedFunc =
+                [this](const String& topic) -> bool {
+                return this->hasTopicChanged(topic);
+            };
+            ITopicHandler::SetTopicFunc setTopicFunc =
+                [this](const String& topic, const JsonObjectConst& jsonValue) -> bool {
+                return this->setTopic(topic, jsonValue);
+            };
+
+            topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
+
+            m_isSettingsTopicRegistered = true;
+        }
+
+        for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
+        {
+            m_brokerConnections[idx].process();
+        }
     }
 }
 
@@ -188,7 +217,8 @@ MqttTypes::State MqttService::getState(uint8_t instance) const
 {
     MqttTypes::State state = MqttTypes::STATE_IDLE;
 
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         state = m_brokerConnections[instance].getState();
     }
@@ -200,7 +230,8 @@ bool MqttService::publish(uint8_t instance, const String& topic, const String& m
 {
     bool isSuccessful = false;
 
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         isSuccessful = m_brokerConnections[instance].publish(topic, msg, retained);
     }
@@ -212,7 +243,8 @@ bool MqttService::publish(uint8_t instance, const char* topic, const char* msg, 
 {
     bool isSuccessful = false;
 
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         isSuccessful = m_brokerConnections[instance].publish(topic, msg, retained);
     }
@@ -224,7 +256,8 @@ bool MqttService::subscribe(uint8_t instance, const String& topic, MqttTypes::To
 {
     bool isSuccessful = false;
 
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         isSuccessful = m_brokerConnections[instance].subscribe(topic, callback);
     }
@@ -236,7 +269,8 @@ bool MqttService::subscribe(uint8_t instance, const char* topic, MqttTypes::Topi
 {
     bool isSuccessful = false;
 
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         isSuccessful = m_brokerConnections[instance].subscribe(topic, callback);
     }
@@ -246,7 +280,8 @@ bool MqttService::subscribe(uint8_t instance, const char* topic, MqttTypes::Topi
 
 void MqttService::unsubscribe(uint8_t instance, const String& topic)
 {
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         m_brokerConnections[instance].unsubscribe(topic);
     }
@@ -254,7 +289,8 @@ void MqttService::unsubscribe(uint8_t instance, const String& topic)
 
 void MqttService::unsubscribe(uint8_t instance, const char* topic)
 {
-    if (MAX_MQTT_COUNT > instance)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
         m_brokerConnections[instance].unsubscribe(topic);
     }
@@ -404,7 +440,7 @@ bool MqttService::setTopic(const String& topic, const JsonObjectConst& jsonValue
     if (true == jsonMqttSettings.is<JsonArrayConst>())
     {
         JsonArrayConst jsonMqttSettingsArray = jsonMqttSettings.as<JsonArrayConst>();
-        size_t         count                  = (MAX_MQTT_COUNT >= jsonMqttSettingsArray.size()) ? jsonMqttSettingsArray.size() : MAX_MQTT_COUNT;
+        size_t         count                 = (MAX_MQTT_COUNT >= jsonMqttSettingsArray.size()) ? jsonMqttSettingsArray.size() : MAX_MQTT_COUNT;
 
         for (idx = 0U; idx < count; ++idx)
         {

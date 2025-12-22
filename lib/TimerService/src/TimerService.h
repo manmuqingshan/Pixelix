@@ -81,7 +81,7 @@ public:
 
     /**
      * Start the timer service.
-     * 
+     *
      * @return If successful started, it will return true otherwise false.
      */
     bool start() final;
@@ -109,6 +109,7 @@ private:
     bool                  m_hasSettingsChanged;        /**< Has any timer setting changed since last request? */
     Mutex                 m_mutex;                     /**< Mutex to protect the settings. */
     SimpleTimer           m_processTimer;              /**< Process timer */
+    bool                  m_isRunning;                 /**< Is service running? */
 
     TimerService(const TimerService& drv);
     TimerService& operator=(const TimerService& drv);
@@ -122,7 +123,8 @@ private:
         m_settings(),
         m_hasSettingsChanged(true),
         m_mutex(),
-        m_processTimer()
+        m_processTimer(),
+        m_isRunning(false)
     {
     }
 

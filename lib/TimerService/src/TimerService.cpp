@@ -75,49 +75,71 @@ const char* TimerService::ENTITY_ID = "timerService";
 
 bool TimerService::start()
 {
-    bool                        isSuccessful        = true;
-    SettingsService&            settings            = SettingsService::getInstance();
-    TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
-    JsonObjectConst             jsonExtra; /* Empty */
-    ITopicHandler::GetTopicFunc getTopicFunc =
-        [this](const String& topic, JsonObject& jsonValue) -> bool {
-        return this->getTopic(topic, jsonValue);
-    };
-    TopicHandlerService::HasChangedFunc hasChangedFunc =
-        [this](const String& topic) -> bool {
-        return this->hasTopicChanged(topic);
-    };
-    ITopicHandler::SetTopicFunc setTopicFunc =
-        [this](const String& topic, const JsonObjectConst& jsonValue) -> bool {
-        return this->setTopic(topic, jsonValue);
-    };
+    bool isSuccessful = true;
 
-    if (false == m_mutex.create())
+    /* Is service already running? */
+    if (true == m_isRunning)
     {
-        isSuccessful = false;
+        /* Nothing to do. */
+        ;
     }
     else
     {
-        if (false == settings.open(true))
+        SettingsService&            settings            = SettingsService::getInstance();
+        TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
+        JsonObjectConst             jsonExtra; /* Empty */
+        ITopicHandler::GetTopicFunc getTopicFunc =
+            [this](const String& topic, JsonObject& jsonValue) -> bool {
+            return this->getTopic(topic, jsonValue);
+        };
+        TopicHandlerService::HasChangedFunc hasChangedFunc =
+            [this](const String& topic) -> bool {
+            return this->hasTopicChanged(topic);
+        };
+        ITopicHandler::SetTopicFunc setTopicFunc =
+            [this](const String& topic, const JsonObjectConst& jsonValue) -> bool {
+            return this->setTopic(topic, jsonValue);
+        };
+
+        if (false == m_mutex.create())
         {
-            m_deviceId = settings.getHostname().getDefault();
+            isSuccessful = false;
         }
         else
         {
-            m_deviceId = settings.getHostname().getValue();
+            if (false == settings.open(true))
+            {
+                m_deviceId = settings.getHostname().getDefault();
+            }
+            else
+            {
+                m_deviceId = settings.getHostname().getValue();
 
-            settings.close();
+                settings.close();
+            }
+
+            if (false == loadSettings())
+            {
+                saveSettings();
+            }
+
+            topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
+
+            m_processTimer.start(PROCESS_PERIOD);
         }
+    }
 
-        if (false == loadSettings())
-        {
-            saveSettings();
-        }
-
-        topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
-
-        m_processTimer.start(PROCESS_PERIOD);
-
+    if (false == isSuccessful)
+    {
+        stop();
+    }
+    else if (true == m_isRunning)
+    {
+        LOG_WARNING("Timer service is already started.");
+    }
+    else
+    {
+        m_isRunning = true;
         LOG_INFO("Timer service started.");
     }
 
@@ -128,17 +150,22 @@ void TimerService::stop()
 {
     TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
 
-    m_processTimer.stop();
     topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
+    m_processTimer.stop();
 
     m_mutex.destroy();
 
-    LOG_INFO("Timer service stopped.");
+    if (true == m_isRunning)
+    {
+        m_isRunning = false;
+        LOG_INFO("Timer service stopped.");
+    }
 }
 
 void TimerService::process()
 {
-    if ((true == m_processTimer.isTimerRunning()) &&
+    if (true == m_isRunning &&
+        (true == m_processTimer.isTimerRunning()) &&
         (true == m_processTimer.isTimeout()))
     {
         ClockDrv& clockDrv = ClockDrv::getInstance();

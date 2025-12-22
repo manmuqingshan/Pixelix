@@ -61,27 +61,49 @@
 
 bool RestService::start()
 {
-    bool                        isSuccessful = true;
-    AsyncHttpClient::OnResponse rspCallback  = [this](const HttpResponse& rsp) {
-        handleAsyncWebResponse(rsp);
-    };
-    AsyncHttpClient::OnError errCallback = [this]() {
-        handleFailedWebRequest();
-    };
-    AsyncHttpClient::OnClosed closedCallback = [this]() {
-        m_isWaitingForResponse = false;
-    };
+    bool isSuccessful = true;
 
-    if (false == m_mutex.create())
+    /* Is service already running? */
+    if (true == m_isRunning)
     {
-        isSuccessful = false;
+        /* Nothing to do. */
     }
     else
     {
-        m_client.regOnResponse(rspCallback);
-        m_client.regOnError(errCallback);
-        m_client.regOnClosed(closedCallback);
+        AsyncHttpClient::OnResponse rspCallback = [this](const HttpResponse& rsp) {
+            handleAsyncWebResponse(rsp);
+        };
+        AsyncHttpClient::OnError errCallback = [this]() {
+            handleFailedWebRequest();
+        };
+        AsyncHttpClient::OnClosed closedCallback = [this]() {
+            m_isWaitingForResponse = false;
+        };
+
+        if (false == m_mutex.create())
+        {
+            isSuccessful = false;
+        }
+        else
+        {
+            m_client.regOnResponse(rspCallback);
+            m_client.regOnError(errCallback);
+            m_client.regOnClosed(closedCallback);
+        }
+    }
+
+    if (false == isSuccessful)
+    {
+        stop();
+    }
+    else if (true == m_isRunning)
+    {
+        LOG_WARNING("REST service is already started.");
+    }
+    else
+    {
         m_isRunning = true;
+        LOG_INFO("REST service started.");
     }
 
     return isSuccessful;
@@ -89,7 +111,6 @@ bool RestService::start()
 
 void RestService::stop()
 {
-    m_isRunning = false;
     m_client.regOnResponse(nullptr);
     m_client.regOnError(nullptr);
     m_client.regOnClosed(nullptr);
@@ -100,78 +121,87 @@ void RestService::stop()
     m_activePreProcessCallback = nullptr;
 
     m_mutex.destroy();
+
+    if (true == m_isRunning)
+    {
+        m_isRunning = false;
+        LOG_INFO("REST service stopped.");
+    }
 }
 
 void RestService::process()
 {
-    MutexGuard<Mutex> guard(m_mutex);
-
-    if (false == m_isWaitingForResponse)
+    if (true == m_isRunning)
     {
-        bool    isError = false;
-        Request req;
+        MutexGuard<Mutex> guard(m_mutex);
 
-        if (false == m_requestQueue.empty())
+        if (false == m_isWaitingForResponse)
         {
-            m_isWaitingForResponse = true;
+            bool    isError = false;
+            Request req;
 
-            /* Take first request from queue. */
-            req                    = std::move(m_requestQueue.front());
-            m_requestQueue.erase(m_requestQueue.begin());
-            m_activeRestId             = req.restId;
-            m_activePreProcessCallback = req.preProcessCallback;
-
-            if (true == m_client.begin(String(req.url)))
+            if (false == m_requestQueue.empty())
             {
-                switch (req.id)
+                m_isWaitingForResponse = true;
+
+                /* Take first request from queue. */
+                req                    = std::move(m_requestQueue.front());
+                m_requestQueue.erase(m_requestQueue.begin());
+                m_activeRestId             = req.restId;
+                m_activePreProcessCallback = req.preProcessCallback;
+
+                if (true == m_client.begin(String(req.url)))
                 {
-                case REQUEST_ID_GET:
-                    if (false == m_client.GET())
+                    switch (req.id)
                     {
-                        isError = true;
-                    }
-                    break;
+                    case REQUEST_ID_GET:
+                        if (false == m_client.GET())
+                        {
+                            isError = true;
+                        }
+                        break;
 
-                case REQUEST_ID_POST:
-                    if (false == m_client.POST(req.data.data, req.data.size))
-                    {
-                        isError = true;
-                    }
-                    break;
+                    case REQUEST_ID_POST:
+                        if (false == m_client.POST(req.data.data, req.data.size))
+                        {
+                            isError = true;
+                        }
+                        break;
 
-                default:
-                    break;
-                };
+                    default:
+                        break;
+                    };
+                }
+                else
+                {
+                    LOG_ERROR("URL could not be parsed");
+                    isError = true;
+                }
             }
-            else
+
+            if (true == isError)
             {
-                LOG_ERROR("URL could not be parsed");
-                isError = true;
+                Response rsp(0U);
+
+                rsp.restId = req.restId;
+                rsp.isRsp  = false;
+                m_responseQueue.push_back(std::move(rsp));
+                m_activeRestId             = INVALID_REST_ID;
+                m_activePreProcessCallback = nullptr;
+                m_isWaitingForResponse     = false;
             }
-        }
-
-        if (true == isError)
-        {
-            Response rsp(0U);
-
-            rsp.restId = req.restId;
-            rsp.isRsp  = false;
-            m_responseQueue.push_back(std::move(rsp));
-            m_activeRestId             = INVALID_REST_ID;
-            m_activePreProcessCallback = nullptr;
-            m_isWaitingForResponse     = false;
         }
     }
 }
 
 uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallback)
 {
-    MutexGuard<Mutex> guard(m_mutex);
-    uint32_t          restId = INVALID_REST_ID;
+    uint32_t restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
-        Request req;
+        MutexGuard<Mutex> guard(m_mutex);
+        Request           req;
 
         restId                 = getRestId();
         req.id                 = REQUEST_ID_GET;
@@ -187,12 +217,12 @@ uint32_t RestService::get(const String& url, PreProcessCallback preProcessCallba
 
 uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallback, const uint8_t* payload, size_t size)
 {
-    MutexGuard<Mutex> guard(m_mutex);
-    uint32_t          restId = INVALID_REST_ID;
+    uint32_t restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
-        Request req;
+        MutexGuard<Mutex> guard(m_mutex);
+        Request           req;
 
         restId                 = getRestId();
         req.id                 = REQUEST_ID_POST;
@@ -210,12 +240,12 @@ uint32_t RestService::post(const String& url, PreProcessCallback preProcessCallb
 
 uint32_t RestService::post(const String& url, const String& payload, PreProcessCallback preProcessCallback)
 {
-    MutexGuard<Mutex> guard(m_mutex);
-    uint32_t          restId = INVALID_REST_ID;
+    uint32_t restId = INVALID_REST_ID;
 
     if (true == m_isRunning)
     {
-        Request req;
+        MutexGuard<Mutex> guard(m_mutex);
+        Request           req;
 
         restId                 = getRestId();
         req.id                 = REQUEST_ID_POST;
@@ -237,10 +267,9 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
 
     if (INVALID_REST_ID != restId)
     {
-        MutexGuard<Mutex> guard(m_mutex);
-
         if (true == m_isRunning)
         {
+            MutexGuard<Mutex>       guard(m_mutex);
             ResponseQueue::iterator rspIterator = m_responseQueue.begin();
 
             while (rspIterator != m_responseQueue.end())
@@ -272,43 +301,46 @@ bool RestService::getResponse(uint32_t restId, bool& isValidRsp, DynamicJsonDocu
 
 void RestService::abortRequest(uint32_t restId)
 {
-    MutexGuard<Mutex>       guard(m_mutex);
-    bool                    isRequestFound = false;
-    RequestQueue::iterator  reqIterator    = m_requestQueue.begin();
-    ResponseQueue::iterator rspIterator    = m_responseQueue.begin();
-
-    while ((false == isRequestFound) && (reqIterator != m_requestQueue.end()))
+    if (true == m_isRunning)
     {
-        if (restId == reqIterator->restId)
-        {
-            reqIterator    = m_requestQueue.erase(reqIterator);
-            isRequestFound = true;
-        }
-        else
-        {
-            ++reqIterator;
-        }
-    }
+        MutexGuard<Mutex>       guard(m_mutex);
+        bool                    isRequestFound = false;
+        RequestQueue::iterator  reqIterator    = m_requestQueue.begin();
+        ResponseQueue::iterator rspIterator    = m_responseQueue.begin();
 
-    if (m_activeRestId == restId)
-    {
-        m_client.end();
-        m_activeRestId             = INVALID_REST_ID;
-        m_activePreProcessCallback = nullptr;
-        isRequestFound             = true;
-        m_isWaitingForResponse     = false;
-    }
-
-    while ((false == isRequestFound) && (rspIterator != m_responseQueue.end()))
-    {
-        if (restId == rspIterator->restId)
+        while ((false == isRequestFound) && (reqIterator != m_requestQueue.end()))
         {
-            rspIterator    = m_responseQueue.erase(rspIterator);
-            isRequestFound = true;
+            if (restId == reqIterator->restId)
+            {
+                reqIterator    = m_requestQueue.erase(reqIterator);
+                isRequestFound = true;
+            }
+            else
+            {
+                ++reqIterator;
+            }
         }
-        else
+
+        if (m_activeRestId == restId)
         {
-            ++rspIterator;
+            m_client.end();
+            m_activeRestId             = INVALID_REST_ID;
+            m_activePreProcessCallback = nullptr;
+            isRequestFound             = true;
+            m_isWaitingForResponse     = false;
+        }
+
+        while ((false == isRequestFound) && (rspIterator != m_responseQueue.end()))
+        {
+            if (restId == rspIterator->restId)
+            {
+                rspIterator    = m_responseQueue.erase(rspIterator);
+                isRequestFound = true;
+            }
+            else
+            {
+                ++rspIterator;
+            }
         }
     }
 }

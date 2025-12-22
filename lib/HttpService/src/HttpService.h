@@ -218,7 +218,6 @@ private:
         m_workerQueues(),
         m_worker()
     {
-        (void)m_mutex.create();
     }
 
     /**
@@ -227,7 +226,6 @@ private:
     ~HttpService()
     {
         /* Never called. */
-        m_mutex.destroy();
     }
 
     /* An instance shall not be copied. */

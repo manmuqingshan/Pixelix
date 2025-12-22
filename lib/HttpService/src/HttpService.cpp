@@ -64,56 +64,60 @@
 
 bool HttpService::start()
 {
-    MutexGuard<Mutex> guard(m_mutex);
+    bool isSuccessful = true;
 
-    if (false == m_workerQueues.requestQueue.create(WORKER_REQUEST_QUEUE_LENGTH))
+    /* Is service already running? */
+    if (true == m_isRunning)
     {
-        ;
-    }
-    else if (false == m_workerQueues.responseQueue.create(WORKER_RESPONSE_QUEUE_LENGTH))
-    {
-        ;
-    }
-    else if (false == m_workerQueues.abortJobQueue.create(WORKER_ABORT_JOB_QUEUE_LENGTH))
-    {
-        ;
-    }
-    else if (false == m_workerQueues.abortedJobQueue.create(WORKER_ABORTED_JOB_QUEUE_LENGTH))
-    {
-        ;
-    }
-    else if (false == m_worker.start(&m_workerQueues))
-    {
+        /* Nothing to do. */
         ;
     }
     else
     {
-        m_isRunning = true;
+        if (false == m_workerQueues.requestQueue.create(WORKER_REQUEST_QUEUE_LENGTH))
+        {
+            isSuccessful = false;
+        }
+        else if (false == m_workerQueues.responseQueue.create(WORKER_RESPONSE_QUEUE_LENGTH))
+        {
+            isSuccessful = false;
+        }
+        else if (false == m_workerQueues.abortJobQueue.create(WORKER_ABORT_JOB_QUEUE_LENGTH))
+        {
+            isSuccessful = false;
+        }
+        else if (false == m_workerQueues.abortedJobQueue.create(WORKER_ABORTED_JOB_QUEUE_LENGTH))
+        {
+            isSuccessful = false;
+        }
+        else if (false == m_worker.start(&m_workerQueues))
+        {
+            isSuccessful = false;
+        }
+        else
+        {
+            ;
+        }
     }
 
-    /* Any error? */
-    if (false == m_isRunning)
+    if (false == isSuccessful)
     {
-        (void)m_worker.stop();
-
-        m_requestList.clear();
-        m_responseList.clear();
-
-        m_workerQueues.responseQueue.destroy();
-        m_workerQueues.requestQueue.destroy();
-        m_workerQueues.abortJobQueue.destroy();
-        m_workerQueues.abortedJobQueue.destroy();
+        stop();
     }
-
+    else if (true == m_isRunning)
+    {
+        LOG_WARNING("HTTP service is already started.");
+    }
+    else
+    {
+        m_isRunning = true;
+        LOG_INFO("HTTP service started.");
+    }
     return m_isRunning;
 }
 
 void HttpService::stop()
 {
-    MutexGuard<Mutex> guard(m_mutex);
-
-    m_isRunning = false;
-
     (void)m_worker.stop();
 
     m_requestList.clear();
@@ -123,6 +127,14 @@ void HttpService::stop()
     m_workerQueues.requestQueue.destroy();
     m_workerQueues.abortJobQueue.destroy();
     m_workerQueues.abortedJobQueue.destroy();
+
+    m_mutex.destroy();
+
+    if (true == m_isRunning)
+    {
+        m_isRunning = false;
+        LOG_INFO("HTTP service stopped.");
+    }
 }
 
 void HttpService::process()
@@ -270,7 +282,7 @@ void HttpService::abortJob(HttpJobId jobId)
 
                 if (jobId == abortedJobId)
                 {
-                    isAborted = true;
+                    isAborted     = true;
                     m_activeJobId = INVALID_HTTP_JOB_ID;
                 }
             }
