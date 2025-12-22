@@ -128,7 +128,7 @@ public:
     }
 
     /**
-     * Set thel latidue.
+     * Set the latitude.
      * 
      * @param[in] latitude  The latitude which to set.
      */
@@ -138,7 +138,7 @@ public:
     }
 
     /**
-     * Set thel latidue.
+     * Set the latitude.
      * 
      * @param[in] latitude  The latitude which to set.
      */
