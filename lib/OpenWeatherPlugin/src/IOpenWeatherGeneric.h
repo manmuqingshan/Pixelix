@@ -99,14 +99,14 @@ public:
     virtual const String& getLatitude() const = 0;
 
     /**
-     * Set thel latidue.
+     * Set the latitude.
      * 
      * @param[in] latitude  The latitude which to set.
      */
     virtual void setLatitude(const String& latitude) = 0;
 
     /**
-     * Set thel latidue.
+     * Set the latitude.
      * 
      * @param[in] latitude  The latitude which to set.
      */
