@@ -34,6 +34,11 @@
             <div class="container">
                 <h1 class="mt-5">MqttService</h1>
                 <p>The MQTT service allows to configure and manage MQTT broker connections.</p>
+                <p>
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Important:</strong> The primary MQTT broker connection publishes configuration data for plugins, sensors and services. Make sure that its not a security risk to publish this data to the configured broker.
+                    </div>
+                </p>
                 <p>Notes:</p>
                 <ul>
                     <li>The first configured broker is used as primary connection.</li>
