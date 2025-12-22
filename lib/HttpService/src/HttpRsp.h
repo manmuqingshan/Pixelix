@@ -56,7 +56,7 @@
  *****************************************************************************/
 
 /**
- * This type defins a HTTP response structure.
+ * This type defines a HTTP response structure.
  */
 struct HttpRsp
 {
