@@ -211,6 +211,8 @@ void ButtonActions::decreaseBrightness()
     uint8_t     brightnessSoftLimitMin = 0U;
     uint8_t     brightnessSoftLimitMax = 0U;
 
+    displayMgr.getBrightnessSoftLimits(brightnessSoftLimitMin, brightnessSoftLimitMax);
+
     if (BRIGHTNESS_DELTA > brightness)
     {
         brightness      = 0U;
