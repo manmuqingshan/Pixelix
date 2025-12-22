@@ -241,7 +241,7 @@ private:
         Request(const Request& other)            = default;
 
         /**
-         * Assgin a request.
+         * Assign a request.
          *
          * @param[in] other Request, which to assign.
          *
