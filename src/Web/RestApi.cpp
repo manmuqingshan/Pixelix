@@ -708,7 +708,7 @@ static void handlePlugins(AsyncWebServerRequest* request)
  */
 static void handleSensors(AsyncWebServerRequest* request)
 {
-    const size_t        JSON_DOC_SIZE = 1024U;
+    const size_t        JSON_DOC_SIZE = 2048U;
     DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
     uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
 
