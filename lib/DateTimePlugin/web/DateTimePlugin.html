@@ -140,7 +140,6 @@
                                         <input type="radio" class="btn-check" id="viewMode0" name="viewMode" value="0" checked />
                                         <label class="btn btn-outline-secondary" for="viewMode0">Digital</label>
 
-
                                         <input type="radio" class="btn-check" id="viewMode1" name="viewMode" value="1" />
                                         <label class="btn btn-outline-secondary" for="viewMode1">Analog</label>
 
@@ -295,10 +294,11 @@
                     $("#startOfWeek").val(rsp.data.startOfWeek);
                     $("#dayOnColor").val(rsp.data.dayOnColor);
                     $("#dayOffColor").val(rsp.data.dayOffColor);
-                    $("#viewMode").val(rsp.data.viewMode);
+                    $('input[name=viewMode][value="' + rsp.data.viewMode + '"]').prop('checked', true);
 
                     if (rsp.data.hasOwnProperty("analogClock")) {
                         jsonAnalogClock = rsp.data.analogClock;
+                        $('input[name=secondsMode][value="' + jsonAnalogClock.secondsMode + '"]').prop('checked', true);
                         $("#handHourCol").val(jsonAnalogClock.handHourCol);
                         $("#handMinCol").val(jsonAnalogClock.handMinCol);
                         $("#handSecCol").val(jsonAnalogClock.handSecCol);
