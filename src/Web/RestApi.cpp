@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestApi.cpp
  * @brief  REST pages
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -42,7 +43,6 @@
 #include "FileSystem.h"
 #include "RestUtil.h"
 #include "SlotList.h"
-#include "ButtonActions.h"
 
 #include <Util.h>
 #include <WiFi.h>
@@ -51,6 +51,7 @@
 #include <Logging.h>
 #include <SensorDataProvider.h>
 #include <SettingsService.h>
+#include "RestartMgr.h"
 
 /******************************************************************************
  * Compiler Switches
@@ -73,66 +74,46 @@ typedef struct
 } ContentTypeElem;
 
 /**
- * Virtual button which can be triggered via REST API.
+ * Status of the Home Assistant MQTT automatic discovery feature.
  */
-class RestApiButton : public ButtonActions
+typedef enum
 {
-public:
+    HA_ENABLED = 0,   /**< Discovery is enabled. */
+    HA_DISABLED,      /**< Discovery is disabled. This is also the case if the MqttService is not configured. */
+    HA_STATUS_UNKNOWN /**< Status is unknown. */
 
-    /**
-     * Construct virtual button instance.
-     */
-    RestApiButton() :
-        ButtonActions()
-    {
-    }
-
-    /**
-     * Destroy virtual button instance.
-     */
-    virtual ~RestApiButton()
-    {
-    }
-
-    /**
-     * Execute action by button action id.
-     *
-     * @param[in] id    Button action id
-     */
-    void executeAction(ButtonActionId id)
-    {
-        ButtonActions::executeAction(id, true);
-    }
-
-private:
-};
+} HomeAssistantDiscoveryStatus;
 
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
 
-static void        handleButton(AsyncWebServerRequest* request);
-static void        handleFadeEffect(AsyncWebServerRequest* request);
-static void        getSlotInfo(JsonObject& slot, uint16_t slotId);
-static void        handleSlots(AsyncWebServerRequest* request);
-static void        handleSlot(AsyncWebServerRequest* request);
-static void        handlePluginInstall(AsyncWebServerRequest* request);
-static void        handlePluginUninstall(AsyncWebServerRequest* request);
-static void        handlePlugins(AsyncWebServerRequest* request);
-static void        handleSensors(AsyncWebServerRequest* request);
-static void        handleSettings(AsyncWebServerRequest* request);
-static void        handleSetting(AsyncWebServerRequest* request);
-static bool        storeSetting(KeyValue* parameter, const String& value, String& error);
-static void        handleStatus(AsyncWebServerRequest* request);
-static void        getFiles(File& dir, JsonArray& files, uint32_t& preCount, uint32_t& count, bool isRecursive);
-static void        handleFilesystem(AsyncWebServerRequest* request);
-static void        handleFileGet(AsyncWebServerRequest* request);
-static const char* getContentType(const String& filename);
-static void        handleFilePost(AsyncWebServerRequest* request);
-static bool        createDirectories(const String& path);
-static void        uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final);
-static void        handleFileDelete(AsyncWebServerRequest* request);
-static bool        isValidHostname(const String& hostname);
+static void                         handleFadeEffect(AsyncWebServerRequest* request);
+static void                         getSlotInfo(JsonObject& slot, uint16_t slotId);
+static void                         handleSlots(AsyncWebServerRequest* request);
+static void                         handleSlot(AsyncWebServerRequest* request);
+static void                         handlePluginInstall(AsyncWebServerRequest* request);
+static void                         handlePluginUninstall(AsyncWebServerRequest* request);
+static void                         handlePlugins(AsyncWebServerRequest* request);
+static void                         handleSensors(AsyncWebServerRequest* request);
+static void                         handleSettings(AsyncWebServerRequest* request);
+static void                         handleSetting(AsyncWebServerRequest* request);
+static bool                         storeSetting(KeyValue* parameter, const String& value, String& error);
+static void                         handleStatus(AsyncWebServerRequest* request);
+static void                         getFiles(File& dir, JsonArray& files, uint32_t& preCount, uint32_t& count, bool isRecursive);
+static void                         handleFilesystem(AsyncWebServerRequest* request);
+static void                         handleFileGet(AsyncWebServerRequest* request);
+static const char*                  getContentType(const String& filename);
+static void                         handleFilePost(AsyncWebServerRequest* request);
+static bool                         createDirectories(const String& path);
+static void                         uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final);
+static void                         handleFileDelete(AsyncWebServerRequest* request);
+static bool                         isValidHostname(const String& hostname);
+static void                         handlePartitionChange(AsyncWebServerRequest* request);
+static HomeAssistantDiscoveryStatus disableHomeAssistantAutomaticDiscovery();
+static void                         handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request);
+static HomeAssistantDiscoveryStatus getHomeAssistantAutomaticDiscoveryStatus();
+static void                         handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request);
 
 /******************************************************************************
  * Local Variables
@@ -169,7 +150,6 @@ static const ContentTypeElem contentTypeTable[] = {
 
 void RestApi::init(AsyncWebServer& srv)
 {
-    (void)srv.on("/rest/api/v1/button", handleButton);
     (void)srv.on("/rest/api/v1/display/fadeEffect", handleFadeEffect);
     (void)srv.on("/rest/api/v1/display/slots", handleSlots);
     (void)srv.on("/rest/api/v1/display/slot/*", handleSlot);
@@ -184,6 +164,9 @@ void RestApi::init(AsyncWebServer& srv)
     (void)srv.on("/rest/api/v1/fs/file", HTTP_POST, handleFilePost, uploadHandler);
     (void)srv.on("/rest/api/v1/fs/file", HTTP_DELETE, handleFileDelete);
     (void)srv.on("/rest/api/v1/fs", handleFilesystem);
+    (void)srv.on("/rest/api/v1/partitionChange", HTTP_POST, handlePartitionChange);
+    (void)srv.on("/rest/api/v1/homeAssistant/automaticDiscovery/disable", HTTP_POST, handleHomeAssistantAutomaticDiscoveryDisable);
+    (void)srv.on("/rest/api/v1/homeAssistant/automaticDiscovery/status", HTTP_GET, handleHomeAssistantAutomaticDiscoveryStatus);
 }
 
 /**
@@ -212,66 +195,6 @@ void RestApi::error(AsyncWebServerRequest* request)
  *****************************************************************************/
 
 /**
- * Trigger virtual user button.
- * POST \c "/api/v1/button"
- *
- * @param[in] request   HTTP request
- */
-static void handleButton(AsyncWebServerRequest* request)
-{
-    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
-    const size_t        JSON_DOC_SIZE  = 512U;
-    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
-
-    if (nullptr == request)
-    {
-        return;
-    }
-
-    if (HTTP_POST != request->method())
-    {
-        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
-        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
-    }
-    else
-    {
-        ButtonActionId actionId     = BUTTON_ACTION_ID_ACTIVATE_NEXT_SLOT; /* Default */
-        bool           isSuccessful = true;
-
-        if (true == request->hasArg("actionId"))
-        {
-            int32_t i32ActionId = request->arg("actionId").toInt();
-
-            if ((0 > i32ActionId) ||
-                (BUTTON_ACTION_ID_MAX <= i32ActionId))
-            {
-                isSuccessful = false;
-            }
-            else
-            {
-                actionId = static_cast<ButtonActionId>(i32ActionId);
-            }
-        }
-
-        if (false == isSuccessful)
-        {
-            RestUtil::prepareRspError(jsonDoc, "Invalid action id.");
-            httpStatusCode = HttpStatus::STATUS_CODE_METHOD_NOT_ALLOWED;
-        }
-        else
-        {
-            RestApiButton buttonActions;
-
-            buttonActions.executeAction(actionId);
-
-            (void)RestUtil::prepareRspSuccess(jsonDoc);
-        }
-    }
-
-    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
-}
-
-/**
  * Activate next fade effect.
  * POST \c "/api/v1/display/fadeEffect"
  *
@@ -296,12 +219,9 @@ static void handleFadeEffect(AsyncWebServerRequest* request)
     }
     else if (HTTP_POST == request->method())
     {
-        JsonVariant            dataObj           = RestUtil::prepareRspSuccess(jsonDoc);
-        DisplayMgr::FadeEffect currentFadeEffect = DisplayMgr::getInstance().getFadeEffect();
-        uint8_t                fadeEffectId      = static_cast<uint8_t>(currentFadeEffect);
-        DisplayMgr::FadeEffect nextFadeEffect    = static_cast<DisplayMgr::FadeEffect>(fadeEffectId + 1U);
+        JsonVariant dataObj = RestUtil::prepareRspSuccess(jsonDoc);
 
-        DisplayMgr::getInstance().activateNextFadeEffect(nextFadeEffect);
+        DisplayMgr::getInstance().activateNextFadeEffect(FadeEffectController::FADE_EFFECT_COUNT);
 
         dataObj["fadeEffect"] = DisplayMgr::getInstance().getFadeEffect();
     }
@@ -788,7 +708,7 @@ static void handlePlugins(AsyncWebServerRequest* request)
  */
 static void handleSensors(AsyncWebServerRequest* request)
 {
-    const size_t        JSON_DOC_SIZE = 1024U;
+    const size_t        JSON_DOC_SIZE = 2048U;
     DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
     uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
 
@@ -1430,7 +1350,7 @@ static void getFiles(File& dir, JsonArray& files, uint32_t& preCount, uint32_t& 
 }
 
 /**
- * List files of given directory (?dir=<path>).
+ * List files of given directory "?dir=<path>".
  *
  * GET \c "/api/v1/fs"
  *
@@ -1499,7 +1419,7 @@ static void handleFilesystem(AsyncWebServerRequest* request)
 }
 
 /**
- * Read file from filesystem (?path=<path>).
+ * Read file from filesystem "?path=<path>".
  *
  * GET \c "/api/v1/fs/file"
  *
@@ -1570,7 +1490,7 @@ static const char* getContentType(const String& filename)
 }
 
 /**
- * Write file to filesystem (?path=<path>).
+ * Write file to filesystem "?path=<path>".
  *
  * POST \c "/api/v1/fs/file"
  *
@@ -1698,7 +1618,9 @@ static void uploadHandler(AsyncWebServerRequest* request, const String& filename
 }
 
 /**
- * Delete file from filesystem (?path=<path>).
+ * Delete file from filesystem "?path=<path>".
+ * Delete directories is not supported.
+ * A single wildcard '*' is supported at the start, middle or end of the filename, but not in the directory part.
  *
  * DELETE \c "/api/v1/fs/file"
  *
@@ -1722,18 +1644,127 @@ static void handleFileDelete(AsyncWebServerRequest* request)
     }
     else
     {
-        const String& path = request->arg("path");
+        const char*   WILDCARD    = "*";
+        const String& path        = request->arg("path");
+        int32_t       lastSlash   = path.lastIndexOf('/');
+        String        dir         = (0 <= lastSlash) ? path.substring(0U, static_cast<size_t>(lastSlash)) : "/";
+        String        filename    = (0 <= lastSlash) ? path.substring(static_cast<size_t>(lastSlash + 1)) : path;
+        int32_t       wildcardPos = filename.indexOf('*');
+        bool          anyRemoved  = false;
 
         LOG_INFO("File \"%s\" removal requested.", path.c_str());
 
-        if (false == FILESYSTEM.remove(path))
+        /* Wildcard used, but not allowed in directory part. */
+        if (0 <= dir.indexOf(WILDCARD))
         {
-            RestUtil::prepareRspError(jsonDoc, "Failed to remove file.");
-            httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            RestUtil::prepareRspError(jsonDoc, "Wildcard not allowed in directory part.");
+            httpStatusCode = HttpStatus::STATUS_CODE_BAD_REQUEST;
+        }
+        else if (0 <= wildcardPos)
+        {
+            File dirFile = FILESYSTEM.open(dir, "r");
+
+            if ((false == dirFile) || (false == dirFile.isDirectory()))
+            {
+                RestUtil::prepareRspError(jsonDoc, "Invalid directory.");
+                httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            }
+            else
+            {
+                File file = dirFile.openNextFile();
+
+                while (true == file)
+                {
+                    String fname = String(file.name());
+
+                    if (false == file.isDirectory())
+                    {
+                        bool   match    = false;
+                        String fullPath = String(file.path());
+
+                        /* Check if filename matches wildcard pattern. */
+                        if (filename == WILDCARD)
+                        {
+                            match = true;
+                        }
+                        else
+                        {
+                            int32_t startPos   = filename.indexOf(WILDCARD);
+                            String  prefix     = filename.substring(0U, static_cast<size_t>(startPos));
+                            String  suffix     = filename.substring(static_cast<size_t>(startPos + 1));
+                            int32_t fnameSlash = fname.lastIndexOf('/');
+                            String  fnameOnly;
+
+                            if (0 <= fnameSlash)
+                            {
+                                fnameOnly = fname.substring(static_cast<size_t>(fnameSlash + 1));
+                            }
+                            else
+                            {
+                                fnameOnly = fname;
+                            }
+
+                            if ((0U == prefix.length()) && (0U == suffix.length()))
+                            {
+                                match = true;
+                            }
+                            else if (0U == prefix.length())
+                            {
+                                match = fnameOnly.endsWith(suffix);
+                            }
+                            else if (0U == suffix.length())
+                            {
+                                match = fnameOnly.startsWith(prefix);
+                            }
+                            else
+                            {
+                                match = (fnameOnly.startsWith(prefix) && fnameOnly.endsWith(suffix));
+                            }
+                        }
+
+                        file.close();
+
+                        if (true == match)
+                        {
+                            LOG_DEBUG("Remove file \"%s\".", fullPath.c_str());
+
+                            if (true == FILESYSTEM.remove(fullPath))
+                            {
+                                anyRemoved = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        file.close();
+                    }
+
+                    file = dirFile.openNextFile();
+                }
+                dirFile.close();
+
+                if (true == anyRemoved)
+                {
+                    (void)RestUtil::prepareRspSuccess(jsonDoc);
+                }
+                else
+                {
+                    RestUtil::prepareRspError(jsonDoc, "No matching files found to remove.");
+                    httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+                }
+            }
         }
         else
         {
-            (void)RestUtil::prepareRspSuccess(jsonDoc);
+            if (false == FILESYSTEM.remove(path))
+            {
+                RestUtil::prepareRspError(jsonDoc, "Failed to remove file.");
+                httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+            }
+            else
+            {
+                (void)RestUtil::prepareRspSuccess(jsonDoc);
+            }
         }
     }
 
@@ -1805,4 +1836,243 @@ static bool isValidHostname(const String& hostname)
     }
 
     return isValid;
+}
+
+/**
+ * Set the factory partition active to be the next boot partition and notify the client whether it was successful or not.
+ * If it was successful the board will be restarted.
+ *
+ * @param[in] request   HTTP request
+ */
+static void handlePartitionChange(AsyncWebServerRequest* request)
+{
+    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
+    const size_t        JSON_DOC_SIZE  = 512U;
+    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+    const uint32_t      RESTART_DELAY = 100U; /* ms */
+
+    if (nullptr == request)
+    {
+        return;
+    }
+
+    if (HTTP_POST != request->method())
+    {
+        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
+        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+    }
+    else
+    {
+        RestartMgr&                  restartMgr = RestartMgr::getInstance();
+        RestartMgr::RestartReqStatus status     = restartMgr.reqRestart(RESTART_DELAY, true);
+
+        switch (status)
+        {
+        case RestartMgr::RESTART_REQ_STATUS_OK:
+            (void)RestUtil::prepareRspSuccess(jsonDoc);
+            break;
+
+        case RestartMgr::RESTART_REQ_STATUS_ERR:
+            RestUtil::prepareRspError(jsonDoc, "Cannot switch to factory partition. Error unknown!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+
+        case RestartMgr::RESTART_REQ_STATUS_FACTORY_PARTITION_NOT_FOUND:
+            RestUtil::prepareRspError(jsonDoc, "Factory partition not found!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+        case RestartMgr::RESTART_REQ_STATUS_FACTORY_SET_FAILED:
+            RestUtil::prepareRspError(jsonDoc, "Failed to set factory partition as boot partition!");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+
+        default:
+            break;
+        }
+    }
+
+    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
+}
+
+/**
+ * Disable HomeAssistant MQTT automatic discovery to avoid that the welcome plugin will be discovered in case of a filesystem update.
+ *
+ * @return The status of the HomeAssistant MQTT automatic discovery after this operation.
+ */
+static HomeAssistantDiscoveryStatus disableHomeAssistantAutomaticDiscovery()
+{
+
+    HomeAssistantDiscoveryStatus status      = HA_STATUS_UNKNOWN;
+    SettingsService&             settings    = SettingsService::getInstance();
+
+    /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
+     * Include the header is not possible, because MQTT might not be compiled in.
+     */
+    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
+
+    if ((nullptr != kvHomeAssistantEnableDiscovery))
+    {
+        if (KeyValue::TYPE_BOOL == kvHomeAssistantEnableDiscovery->getValueType())
+        {
+            if (true == settings.open(false))
+            {
+                KeyValueBool* homeAssistantEnableDiscovery = static_cast<KeyValueBool*>(kvHomeAssistantEnableDiscovery);
+
+                homeAssistantEnableDiscovery->setValue(false);
+                settings.close();
+
+                status = HA_DISABLED;
+                LOG_INFO("Home Assistant MQTT automatic discovery disabled for filesystem update.");
+            }
+        }
+    }
+    else
+    {
+        status = HA_DISABLED;
+    }
+
+    return status;
+}
+
+/**
+ * Disable the Home Assistant MQTT automatic discovery and notifiy the client whether it was successful or not.
+ *
+ * @param[in] request   HTTP request
+ */
+static void handleHomeAssistantAutomaticDiscoveryDisable(AsyncWebServerRequest* request)
+{
+    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
+    const size_t        JSON_DOC_SIZE  = 512U;
+    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+
+    if (nullptr == request)
+    {
+        return;
+    }
+
+    if (HTTP_POST != request->method())
+    {
+        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
+        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+    }
+    else
+    {
+        switch (disableHomeAssistantAutomaticDiscovery())
+        {
+        case HA_DISABLED:
+            (void)RestUtil::prepareRspSuccess(jsonDoc);
+            break;
+
+        case HA_ENABLED:
+            RestUtil::prepareRspError(jsonDoc, "Home Assistant MQTT automatic discovery could not be disabled.");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+        case HA_STATUS_UNKNOWN:
+            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistant MQTT automatic discovery is unnkown.");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+
+        default:
+            break;
+        }
+    }
+
+    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
+}
+
+/**
+ * Get the status of the Home Assistant MQTT automatic discovery.
+ *
+ * @return The status of the Home Assistant MQTT automatic discovery.
+ */
+static HomeAssistantDiscoveryStatus getHomeAssistantAutomaticDiscoveryStatus()
+{
+    HomeAssistantDiscoveryStatus status      = HA_STATUS_UNKNOWN;
+    SettingsService&             settings    = SettingsService::getInstance();
+
+    /* Key see HomeAssistantMqtt::KEY_HA_DISCOVERY_ENABLE
+     * Include the header is not possible, because MQTT might not be compiled in.
+     */
+    KeyValue* kvHomeAssistantEnableDiscovery = settings.getSettingByKey("ha_ena");
+
+    if ((nullptr != kvHomeAssistantEnableDiscovery))
+    {
+        if (KeyValue::TYPE_BOOL == kvHomeAssistantEnableDiscovery->getValueType())
+        {
+            if (true == settings.open(true))
+            {
+                KeyValueBool* homeAssistantEnableDiscovery = static_cast<KeyValueBool*>(kvHomeAssistantEnableDiscovery);
+
+                if (true == homeAssistantEnableDiscovery->getValue())
+                {
+                    status = HA_ENABLED;
+                }
+                else
+                {
+                    status = HA_DISABLED;
+                }
+
+                settings.close();
+            }
+        }
+    }
+    else
+    {
+        status = HA_DISABLED;
+    }
+
+    return status;
+}
+
+/**
+ * Check whether the Home Assistant MQTT automatic discovery is enabled or not and notify the client of the result.
+ *
+ * @param[in] request   HTTP request
+ */
+static void handleHomeAssistantAutomaticDiscoveryStatus(AsyncWebServerRequest* request)
+{
+    uint32_t            httpStatusCode = HttpStatus::STATUS_CODE_OK;
+    const size_t        JSON_DOC_SIZE  = 512U;
+    DynamicJsonDocument jsonDoc(JSON_DOC_SIZE);
+
+    if (nullptr == request)
+    {
+        return;
+    }
+
+    if (HTTP_GET != request->method())
+    {
+        RestUtil::prepareRspErrorHttpMethodNotSupported(jsonDoc);
+        httpStatusCode = HttpStatus::STATUS_CODE_NOT_FOUND;
+    }
+    else
+    {
+        switch (getHomeAssistantAutomaticDiscoveryStatus())
+        {
+        case HA_ENABLED: {
+            JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
+            data["status"]  = "enabled";
+            break;
+        }
+
+        case HA_DISABLED: {
+            JsonObject data = RestUtil::prepareRspSuccess(jsonDoc);
+            data["status"]  = "disabled";
+            break;
+        }
+
+        case HA_STATUS_UNKNOWN:
+            RestUtil::prepareRspError(jsonDoc, "Could not access setting. Status of Home Assistant MQTT automatic discovery is unknown.");
+            httpStatusCode = HttpStatus::STATUS_CODE_INTERNAL_SERVER_ERROR;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    RestUtil::sendJsonRsp(request, jsonDoc, httpStatusCode);
 }

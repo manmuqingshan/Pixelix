@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SpectrumAnalyzer.cpp
  * @brief  Spectrum analyzer
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -41,6 +42,10 @@
  * Compiler Switches
  *****************************************************************************/
 
+/**
+ * Simulation of a sinusoidal signal can be enabled by setting this to 1.
+ * This is for test purposes only, when no microphone is available.
+ */
 #define SPECTRUM_ANALYZER_SIM_SIN_EN    0
 
 /******************************************************************************

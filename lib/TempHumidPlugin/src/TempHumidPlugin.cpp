@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TempHumidPlugin.cpp
  * @brief  Reads temperature and humidity from a sensor and displays it
  * @author Flavio Curti <fcu-github@no-way.org>
  */
@@ -155,18 +156,6 @@ void TempHumidPlugin::process(bool isConnected)
             m_pageTime = DEFAULT_PAGE_TIME;
         }
     }
-}
-
-void TempHumidPlugin::active(YAGfx& gfx)
-{
-    MutexGuard<MutexRecursive> guard(m_mutex);
-
-    m_view.update(gfx);
-}
-
-void TempHumidPlugin::inactive()
-{
-    /* Nothing to do. */
 }
 
 void TempHumidPlugin::update(YAGfx& gfx)

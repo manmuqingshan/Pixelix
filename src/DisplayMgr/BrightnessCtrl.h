@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BrightnessCtrl.h
  * @brief  Brightness controller
  * @author Andreas Merkle <web@blue-andi.de>
  *

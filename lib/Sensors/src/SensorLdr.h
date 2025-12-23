@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorLdr.h
  * @brief  Light depended resistor driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

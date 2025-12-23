@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MqttService.cpp
  * @brief  MQTT service
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -34,8 +35,12 @@
  *****************************************************************************/
 #include "MqttService.h"
 
-#include <Logging.h>
+#include <FileSystem.h>
+#include <JsonFile.h>
+#include <TopicHandlerService.h>
 #include <SettingsService.h>
+#include <Util.h>
+#include <Logging.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -57,10 +62,10 @@
  * Local Variables
  *****************************************************************************/
 
-/* Initialize MQTT service variables */
-const char* MqttService::KEY_MQTT_BROKER_URL     = "mqtt_broker_url";
-const char* MqttService::NAME_MQTT_BROKER_URL    = "MQTT broker URL";
-const char* MqttService::DEFAULT_MQTT_BROKER_URL = "";
+/* Initialize constant values. */
+const char* MqttService::FILE_NAME = "/configuration/mqttService.json";
+const char* MqttService::TOPIC     = "mqtt";
+const char* MqttService::ENTITY_ID = "mqttService";
 
 /******************************************************************************
  * Public Methods
@@ -68,44 +73,68 @@ const char* MqttService::DEFAULT_MQTT_BROKER_URL = "";
 
 bool MqttService::start()
 {
-    bool             isSuccessful = true;
-    SettingsService& settings     = SettingsService::getInstance();
+    bool isSuccessful = true;
 
-    if (false == settings.registerSetting(&m_mqttBrokerUrlSetting))
+    /* Service already started? */
+    if (true == m_isRunning)
     {
-        LOG_ERROR("Couldn't register MQTT broker URL setting.");
-        isSuccessful = false;
+        /* Nothing to do. */
+        ;
     }
-    else if (false == settings.open(true))
+    else if (false == m_mutex.create())
     {
-        LOG_ERROR("Couldn't open settings.");
         isSuccessful = false;
     }
     else
     {
-        String mqttBrokerUrl = m_mqttBrokerUrlSetting.getValue();
+        SettingsService& settings = SettingsService::getInstance();
 
-        /* Determine URL, user and password. */
-        parseMqttBrokerUrl(mqttBrokerUrl);
-
-        m_hostname = settings.getHostname().getValue();
-
-        settings.close();
-
-        if (false == m_url.isEmpty())
+        if (false == settings.open(true))
         {
-            (void)m_mqttClient.setServer(m_url.c_str(), m_port);
-            (void)m_mqttClient.setCallback([this](char* topic, uint8_t* payload, uint32_t length) {
-                this->rxCallback(topic, payload, length);
-            });
-            (void)m_mqttClient.setBufferSize(MAX_BUFFER_SIZE);
-            (void)m_mqttClient.setSocketTimeout(MQTT_SOCK_TIMEOUT);
-
-            m_state = STATE_DISCONNECTED;
+            m_deviceId = settings.getHostname().getDefault();
         }
         else
         {
-            m_state = STATE_IDLE;
+            m_deviceId = settings.getHostname().getValue();
+
+            settings.close();
+        }
+
+        if (false == loadSettings())
+        {
+            saveSettings();
+        }
+
+        /* Start MQTT broker connections. */
+        for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
+        {
+            MqttSetting& setting = m_settings[idx];
+
+            if ((true == setting.isEnabled()) &&
+                (false == setting.getBroker().isEmpty()))
+            {
+                m_brokerConnections[idx].setLastWillTopic(m_deviceId + "/status", "online", "offline");
+
+                if (false == m_brokerConnections[idx].setupClient(setting.useTls(),
+                                 setting.getRootCaCert(),
+                                 setting.getClientCert(),
+                                 setting.getClientKey()))
+                {
+                    LOG_WARNING("MQTT client setup for broker %s failed.", setting.getBroker().c_str());
+                }
+                else if (false == m_brokerConnections[idx].connect(m_deviceId,
+                                      setting.getBroker(),
+                                      setting.getPort(),
+                                      setting.getUser(),
+                                      setting.getPassword()))
+                {
+                    LOG_WARNING("MQTT broker connection to %s failed.", setting.getBroker().c_str());
+                }
+                else
+                {
+                    ;
+                }
+            }
         }
     }
 
@@ -113,8 +142,13 @@ bool MqttService::start()
     {
         stop();
     }
+    else if (true == m_isRunning)
+    {
+        LOG_WARNING("MQTT service is already started.");
+    }
     else
     {
+        m_isRunning = true;
         LOG_INFO("MQTT service started.");
     }
 
@@ -123,150 +157,142 @@ bool MqttService::start()
 
 void MqttService::stop()
 {
-    SettingsService& settings  = SettingsService::getInstance();
-    String           willTopic = m_hostname + "/status";
+    TopicHandlerService& topicHandlerService = TopicHandlerService::getInstance();
 
-    /* Provide offline status */
-    (void)m_mqttClient.publish(willTopic.c_str(), "offline", true);
+    topicHandlerService.unregisterTopic(m_deviceId, ENTITY_ID, TOPIC);
 
-    settings.unregisterSetting(&m_mqttBrokerUrlSetting);
-    m_mqttClient.disconnect();
-    m_state = STATE_IDLE;
-    m_reconnectTimer.stop();
+    /* Stop MQTT broker connections. */
+    for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
+    {
+        m_brokerConnections[idx].disconnect();
+    }
 
-    LOG_INFO("MQTT service stopped.");
+    m_mutex.destroy();
+
+    if (true == m_isRunning)
+    {
+        m_isRunning = false;
+        LOG_INFO("MQTT service stopped.");
+    }
 }
 
 void MqttService::process()
 {
-    switch (m_state)
+    if (true == m_isRunning)
     {
-    case STATE_DISCONNECTED:
-        disconnectedState();
-        break;
+        /* Register settings topic if not done yet.
+         * This is done here to have the service started before the topic handler
+         * service tries to get or set any topic value.
+         */
+        if (false == m_isSettingsTopicRegistered)
+        {
+            TopicHandlerService&        topicHandlerService = TopicHandlerService::getInstance();
+            JsonObjectConst             jsonExtra; /* Empty */
+            ITopicHandler::GetTopicFunc getTopicFunc =
+                [this](const String& topic, JsonObject& jsonValue) -> bool {
+                return this->getTopic(topic, jsonValue);
+            };
+            TopicHandlerService::HasChangedFunc hasChangedFunc =
+                [this](const String& topic) -> bool {
+                return this->hasTopicChanged(topic);
+            };
+            ITopicHandler::SetTopicFunc setTopicFunc =
+                [this](const String& topic, const JsonObjectConst& jsonValue) -> bool {
+                return this->setTopic(topic, jsonValue);
+            };
 
-    case STATE_CONNECTED:
-        connectedState();
-        break;
+            topicHandlerService.registerTopic(m_deviceId, ENTITY_ID, TOPIC, jsonExtra, getTopicFunc, hasChangedFunc, setTopicFunc, nullptr);
 
-    case STATE_IDLE:
-        idleState();
-        break;
+            m_isSettingsTopicRegistered = true;
+        }
 
-    default:
-        break;
+        for (size_t idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
+        {
+            m_brokerConnections[idx].process();
+        }
     }
 }
 
-MqttService::State MqttService::getState() const
+MqttTypes::State MqttService::getState(uint8_t instance) const
 {
-    return m_state;
+    MqttTypes::State state = MqttTypes::STATE_IDLE;
+
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
+    {
+        state = m_brokerConnections[instance].getState();
+    }
+
+    return state;
 }
 
-bool MqttService::publish(const String& topic, const String& msg, bool retained)
-{
-    return publish(topic.c_str(), msg.c_str(), retained);
-}
-
-bool MqttService::publish(const char* topic, const char* msg, bool retained)
-{
-    return m_mqttClient.publish(topic, msg, retained);
-}
-
-bool MqttService::subscribe(const String& topic, TopicCallback callback)
-{
-    return subscribe(topic.c_str(), callback);
-}
-
-bool MqttService::subscribe(const char* topic, TopicCallback callback)
+bool MqttService::publish(uint8_t instance, const String& topic, const String& msg, bool retained)
 {
     bool isSuccessful = false;
 
-    if (nullptr != topic)
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
-        SubscriberList::const_iterator it;
-
-        /* Register a topic only once! */
-        for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
-        {
-            if (nullptr != (*it))
-            {
-                if (0 == strcmp((*it)->topic.c_str(), topic))
-                {
-                    break;
-                }
-            }
-        }
-
-        if (it == m_subscriberList.end())
-        {
-            Subscriber* subscriber = new (std::nothrow) Subscriber;
-
-            if (nullptr != subscriber)
-            {
-                subscriber->topic    = topic;
-                subscriber->callback = callback;
-
-                if (false == m_mqttClient.connected())
-                {
-                    m_subscriberList.push_back(subscriber);
-                    isSuccessful = true;
-                }
-                else
-                {
-                    if (false == m_mqttClient.subscribe(topic))
-                    {
-                        LOG_WARNING("MQTT topic subscription not possible: %s", topic);
-                    }
-                    else
-                    {
-                        m_subscriberList.push_back(subscriber);
-                        isSuccessful = true;
-                    }
-                }
-
-                if (false == isSuccessful)
-                {
-                    delete subscriber;
-                    subscriber = nullptr;
-                }
-            }
-        }
+        isSuccessful = m_brokerConnections[instance].publish(topic, msg, retained);
     }
 
     return isSuccessful;
 }
 
-void MqttService::unsubscribe(const String& topic)
+bool MqttService::publish(uint8_t instance, const char* topic, const char* msg, bool retained)
 {
-    unsubscribe(topic.c_str());
+    bool isSuccessful = false;
+
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
+    {
+        isSuccessful = m_brokerConnections[instance].publish(topic, msg, retained);
+    }
+
+    return isSuccessful;
 }
 
-void MqttService::unsubscribe(const char* topic)
+bool MqttService::subscribe(uint8_t instance, const String& topic, MqttTypes::TopicCallback callback)
 {
-    if (nullptr != topic)
+    bool isSuccessful = false;
+
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
     {
-        SubscriberList::iterator it = m_subscriberList.begin();
+        isSuccessful = m_brokerConnections[instance].subscribe(topic, callback);
+    }
 
-        while (m_subscriberList.end() != it)
-        {
-            if (nullptr != (*it))
-            {
-                if (0 == strcmp((*it)->topic.c_str(), topic))
-                {
-                    Subscriber* subscriber = *it;
+    return isSuccessful;
+}
 
-                    (void)m_mqttClient.unsubscribe(subscriber->topic.c_str());
+bool MqttService::subscribe(uint8_t instance, const char* topic, MqttTypes::TopicCallback callback)
+{
+    bool isSuccessful = false;
 
-                    (void)m_subscriberList.erase(it);
-                    delete subscriber;
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
+    {
+        isSuccessful = m_brokerConnections[instance].subscribe(topic, callback);
+    }
 
-                    break;
-                }
-            }
+    return isSuccessful;
+}
 
-            ++it;
-        }
+void MqttService::unsubscribe(uint8_t instance, const String& topic)
+{
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
+    {
+        m_brokerConnections[instance].unsubscribe(topic);
+    }
+}
+
+void MqttService::unsubscribe(uint8_t instance, const char* topic)
+{
+    if ((true == m_isRunning) &&
+        (MAX_MQTT_COUNT > instance))
+    {
+        m_brokerConnections[instance].unsubscribe(topic);
     }
 }
 
@@ -278,188 +304,162 @@ void MqttService::unsubscribe(const char* topic)
  * Private Methods
  *****************************************************************************/
 
-void MqttService::disconnectedState()
+void MqttService::clear()
 {
-    if (true == WiFi.isConnected())
+    size_t idx;
+
+    for (idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
     {
-        bool connectNow = false;
+        m_settings[idx].clear();
+    }
+}
 
-        /* Connect immediately after service is started initially? */
-        if (false == m_reconnectTimer.isTimerRunning())
-        {
-            connectNow = true;
+bool MqttService::loadSettings()
+{
+    bool                isSuccessful = false;
+    const size_t        JSON_SIZE    = 4096U;
+    DynamicJsonDocument jsonDoc(JSON_SIZE);
+    JsonFile            jsonFile(FILESYSTEM);
 
-            m_reconnectTimer.start(RECONNECT_PERIOD);
-        }
-        else if (true == m_reconnectTimer.isTimeout())
+    if (false == jsonFile.load(FILE_NAME, jsonDoc))
+    {
+        LOG_WARNING("Failed to load MQTT settings.");
+    }
+    else
+    {
+        JsonVariantConst jsonMqttSettings = jsonDoc["mqttSettings"];
+
+        if (false == jsonMqttSettings.is<JsonArrayConst>())
         {
-            connectNow = true;
+            LOG_ERROR("No MQTT settings found.");
         }
         else
         {
-            ;
-        }
+            JsonArrayConst jsonMqttSettingsArray = jsonMqttSettings.as<JsonArrayConst>();
+            size_t         idx                   = 0U;
 
-        if (true == connectNow)
-        {
-            bool   isConnected = false;
-            String willTopic   = m_hostname + "/status";
+            clear();
 
-            /* Authentication necessary? */
-            if (false == m_user.isEmpty())
+            for (JsonObjectConst jsonMqttSetting : jsonMqttSettingsArray)
             {
-                LOG_INFO("Connect to %s as %s with %s.", m_url.c_str(), m_user.c_str(), m_hostname.c_str());
+                if (false == m_settings[idx].fromJson(jsonMqttSetting))
+                {
+                    LOG_WARNING("Failed to load MQTT setting %u.", idx);
+                }
+                else
+                {
+                    ++idx;
+                }
 
-                isConnected = m_mqttClient.connect(m_hostname.c_str(), m_user.c_str(), m_password.c_str(), willTopic.c_str(), 0, true, "offline");
+                if (MAX_MQTT_COUNT <= idx)
+                {
+                    break;
+                }
             }
-            /* Connect anonymous */
-            else
-            {
-                LOG_INFO("Connect anonymous to %s with %s.", m_url.c_str(), m_hostname.c_str());
 
-                isConnected = m_mqttClient.connect(m_hostname.c_str(), nullptr, nullptr, willTopic.c_str(), 0, true, "offline");
-            }
+            m_hasSettingsChanged = true;
 
-            /* Connection to broker failed? */
-            if (false == isConnected)
-            {
-                /* Try to reconnect later. */
-                m_reconnectTimer.restart();
-            }
-            /* Connection to broker successful. */
-            else
-            {
-                LOG_INFO("Connection to MQTT broker established.");
-
-                m_state = STATE_CONNECTED;
-                m_reconnectTimer.stop();
-
-                /* Provide online status */
-                (void)m_mqttClient.publish(willTopic.c_str(), "online", true);
-
-                resubscribe();
-            }
+            isSuccessful         = true;
         }
     }
+
+    return isSuccessful;
 }
 
-void MqttService::connectedState()
+bool MqttService::saveSettings()
 {
-    /* Connection with broker lost? */
-    if (false == m_mqttClient.loop())
+    bool                isSuccessful = false;
+    const size_t        JSON_SIZE    = 4096U;
+    DynamicJsonDocument jsonDoc(JSON_SIZE);
+    JsonArray           jsonMqttSettings = jsonDoc.createNestedArray("mqttSettings");
+    JsonFile            jsonFile(FILESYSTEM);
+    size_t              idx;
+
+    for (idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
     {
-        LOG_INFO("Connection to MQTT broker disconnected.");
-        m_state = STATE_DISCONNECTED;
+        JsonObject jsonMqttSetting = jsonMqttSettings.createNestedObject();
 
-        /* Try to reconnect later. */
-        m_reconnectTimer.restart();
+        m_settings[idx].toJson(jsonMqttSetting);
     }
-}
 
-void MqttService::idleState()
-{
-    /* Nothing to do. */
-}
-
-void MqttService::rxCallback(char* topic, uint8_t* payload, uint32_t length)
-{
-    SubscriberList::const_iterator it;
-
-    for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
+    if (false == jsonFile.save(FILE_NAME, jsonDoc))
     {
-        if (nullptr != (*it))
-        {
-            if (0 == strcmp((*it)->topic.c_str(), topic))
-            {
-                Subscriber* subscriber = *it;
-
-                subscriber->callback(topic, payload, length);
-                break;
-            }
-        }
+        LOG_ERROR("Failed to save MQTT settings.");
     }
-}
-
-void MqttService::resubscribe()
-{
-    SubscriberList::const_iterator it;
-
-    for (it = m_subscriberList.begin(); it != m_subscriberList.end(); ++it)
+    else
     {
-        if (nullptr != (*it))
-        {
-            Subscriber* subscriber = *it;
-
-            if (false == m_mqttClient.subscribe(subscriber->topic.c_str()))
-            {
-                LOG_WARNING("MQTT topic subscription not possible: %s", subscriber->topic.c_str());
-            }
-        }
+        isSuccessful = true;
     }
+
+    return isSuccessful;
 }
 
-void MqttService::parseMqttBrokerUrl(const String& mqttBrokerUrl)
+bool MqttService::getTopic(const String& topic, JsonObject& jsonValue)
 {
-    int32_t idx = mqttBrokerUrl.indexOf("://");
+    size_t            idx;
+    JsonArray         jsonMqttSettings = jsonValue.createNestedArray("mqttSettings");
+    MutexGuard<Mutex> guard(m_mutex);
 
-    /* The MQTT broker URL format:
-     * [mqtt://][<USER>:<PASSWORD>@]<BROKER-URL>[:<PORT>]
+    /* The callback is dedicated to a topic, therefore the
+     * topic parameter is not used.
      */
-    m_url       = mqttBrokerUrl;
+    UTIL_NOT_USED(topic);
 
-    /* Remove protocol, we don't care about. */
-    if (0 <= idx)
+    for (idx = 0U; idx < MAX_MQTT_COUNT; ++idx)
     {
-        m_url.remove(0U, idx + 3);
+        JsonObject jsonMqttSetting = jsonMqttSettings.createNestedObject();
+
+        m_settings[idx].toJson(jsonMqttSetting);
     }
 
-    /* User and passwort */
-    idx = m_url.indexOf("@");
+    return true;
+}
 
-    m_user.clear();
-    m_password.clear();
+bool MqttService::hasTopicChanged(const String& topic)
+{
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              hasChanged = m_hasSettingsChanged;
 
-    if (0 <= idx)
+    m_hasSettingsChanged         = false;
+
+    return hasChanged;
+}
+
+bool MqttService::setTopic(const String& topic, const JsonObjectConst& jsonValue)
+{
+    bool              isSuccessful = false;
+    size_t            idx;
+    JsonVariantConst  jsonMqttSettings = jsonValue["mqttSettings"];
+    MutexGuard<Mutex> guard(m_mutex);
+
+    /* The callback is dedicated to a topic, therefore the
+     * topic parameter is not used.
+     */
+    UTIL_NOT_USED(topic);
+
+    if (true == jsonMqttSettings.is<JsonArrayConst>())
     {
-        int32_t dividerIdx = m_url.indexOf(":");
+        JsonArrayConst jsonMqttSettingsArray = jsonMqttSettings.as<JsonArrayConst>();
+        size_t         count                 = (MAX_MQTT_COUNT >= jsonMqttSettingsArray.size()) ? jsonMqttSettingsArray.size() : MAX_MQTT_COUNT;
 
-        /* Only user name with empty password? */
-        if (0 > dividerIdx)
+        for (idx = 0U; idx < count; ++idx)
         {
-            m_user = m_url.substring(0U, idx);
-        }
-        /* At least one character for a user name must exist. */
-        else if (0 < dividerIdx)
-        {
-            m_user = m_url.substring(0U, dividerIdx);
-
-            /* Password not empty? */
-            if (idx > (dividerIdx + 1))
+            if (false == m_settings[idx].fromJson(jsonMqttSettingsArray[idx]))
             {
-                m_password = m_url.substring(dividerIdx + 1, idx);
+                LOG_WARNING("Failed to set MQTT setting %u.", idx);
             }
         }
 
-        m_url.remove(0U, idx + 1);
+        m_hasSettingsChanged = true;
+        isSuccessful         = true;
     }
 
-    /* Port */
-    idx    = m_url.indexOf(":");
-
-    m_port = MQTT_PORT;
-
-    if (0 <= idx)
+    if (true == isSuccessful)
     {
-        String  portStr = m_url.substring(idx + 1);
-        int32_t port    = portStr.toInt();
-
-        if (0 <= port)
-        {
-            m_port = static_cast<uint16_t>(port);
-        }
-
-        m_url.remove(idx);
+        isSuccessful = saveSettings();
     }
+
+    return isSuccessful;
 }
 
 /******************************************************************************

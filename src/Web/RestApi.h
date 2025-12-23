@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestApi.h
  * @brief  REST pages
  * @author Andreas Merkle <web@blue-andi.de>
  * 

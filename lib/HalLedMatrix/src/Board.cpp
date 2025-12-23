@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Board.cpp
  * @brief  Board Abstraction
  * @author Andreas Merkle <web@blue-andi.de>
  */

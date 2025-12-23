@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   View.cpp
  * @brief  BatteryPlugin view
  * @author Andreas Merkle <web@blue-andi.de>
  */

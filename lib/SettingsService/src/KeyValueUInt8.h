@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueUInt8.h
  * @brief  Key value pair of uint8_t type
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -92,7 +93,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueUInt8()
+    ~KeyValueUInt8() override
     {
     }
 

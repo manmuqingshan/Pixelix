@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherCurrent.cpp
  * @brief  OpenWeather source for current weather data
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -156,7 +157,7 @@ void OpenWeatherCurrent::parse(const JsonDocument& jsonDoc)
 
     if (false == jsonIcon.isNull())
     {
-        m_weatherIconId = jsonIcon.as<String>();
+        m_weatherIconId = jsonIcon.as<const char*>();
     }
 }
 

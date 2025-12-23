@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CaptivePortalHandler.cpp
  * @brief  Captive portal request handler
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -36,6 +37,7 @@
 #include "HttpStatus.h"
 #include "FileSystem.h"
 
+#include <WiFi.h>
 #include <SettingsService.h>
 #include <Logging.h>
 

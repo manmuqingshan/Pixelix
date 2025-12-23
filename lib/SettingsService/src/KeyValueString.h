@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueString.h
  * @brief  Key value pair with string type
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -106,7 +107,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueString()
+    ~KeyValueString() override
     {
     }
 

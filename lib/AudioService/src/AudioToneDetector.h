@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AudioToneDetector.h
  * @brief  Audio tone detector by using Goertzel algorithm
  * @author Andreas Merkle <web@blue-andi.de>
  * 
@@ -87,7 +88,7 @@ public:
     /**
      * Destroys the audio tone detector instance.
      */
-    ~AudioToneDetector()
+    ~AudioToneDetector() override
     {
         /* Never called. */
     }

@@ -16,9 +16,13 @@
     }, {
         "name": "SettingsService"
     }, {
-        "owner": "knolleary",
-        "name": "PubSubClient",
-        "version": "~2.8"
+        "name": "TopicHandlerService"
+    }, {
+        "owner": "hmueller01",
+        "name": "PubSubClient3",
+        "version": "~3.3.0"
+    }, {
+        "name": "Os"
     }, {
         "name": "Utilities"
     }],

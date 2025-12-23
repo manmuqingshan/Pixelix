@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DDPServer.h
  * @brief  Distributed Display Protocol server
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -255,9 +256,19 @@ private:
     String      m_deviceVersion;        /**< Device version */
     String      m_deviceMac;            /**< Device MAC address */
 
-    /* Copy DDP server is not allowed. */
-    DDPServer(const DDPServer& server);
-    DDPServer& operator=(const DDPServer& server);
+    /**
+     * Copy DDP server is not allowed.
+     * 
+     * @param[in] server The server to copy.
+     */
+    DDPServer(const DDPServer& server) = delete;
+
+    /**
+     * Assignment operator is not allowed.
+     * 
+     * @param[in] server The server to assign.
+     */
+    DDPServer& operator=(const DDPServer& server) = delete;
 
     /**
      * Get the 16-bit big endian value in little endian.
@@ -309,8 +320,6 @@ private:
      * 
      * @param[in,out]   header  DDP header
      * @param[in]       version DDP version
-     * 
-     * @return Protocol version
      */
     void setVersion(DDPHeader& header, uint8_t version);
 

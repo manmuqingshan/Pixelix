@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TextViewBase.hpp
  * @brief  Base class for view with text.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,7 +44,7 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/TextViewGeneric.h"
+#include "./layout/TextViewGeneric.h"
 
 /******************************************************************************
  * Macros

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TempHumidPlugin.h
  * @brief  Reads temperature and humidity from a sensor and displays it
  * @author Flavio Curti <fcu-github@no-way.org>
  * @addtogroup PLUGIN
@@ -184,21 +185,7 @@ public:
      * @param[in] isConnected   The network connection status. If network
      *                          connection is established, it will be true otherwise false.
      */
-    void process(bool isConnected) final; 
-
-    /**
-     * This method will be called in case the plugin is set active, which means
-     * it will be shown on the display in the next step.
-     *
-     * @param[in] gfx   Display graphics interface
-     */
-    void active(YAGfx& gfx) final;
-
-    /**
-     * This method will be called in case the plugin is set inactive, which means
-     * it won't be shown on the display anymore.
-     */
-    void inactive() final;
+    void process(bool isConnected) final;
     
     /**
      * Update the display.

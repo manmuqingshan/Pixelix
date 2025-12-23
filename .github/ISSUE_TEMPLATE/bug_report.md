@@ -1,34 +1,45 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: "[Bug]"
-labels: ''
+name: Bug Report
+about: Help us improve by reporting bugs
+title: "[Bug] "
+labels: 'bug'
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Description of the Bug
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Provide a clear and concise description of the bug encountered.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Steps to Reproduce
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+List the steps to reproduce the issue:
 
-**Please complete the following information:**
- - Development board: [e.g. ESP32-DevKit-v1]
- - Version: [e.g. 6.0.0]
+1. Navigate to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. Observe the error
 
-**Additional context**
-Add any other context about the problem here.
+## Expected Behavior
 
-**Log**
-If applicable, add serial log output to support the analysis.
+Describe what you expected to happen instead.
+
+## Screenshots
+
+If applicable, include screenshots to illustrate the issue.
+
+## Environment Information
+
+Please provide the following details:
+
+- Development board: [e.g., ESP32-DevKit-v1]
+- Version: [e.g., 6.0.0]
+- Operating System: [e.g., Windows, macOS, Linux]
+
+## Additional Context
+
+Add any other relevant context or information regarding the issue.
+
+## Log Output
+
+If applicable, include any serial log output to assist in troubleshooting.

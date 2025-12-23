@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   LogSinkPrinter.h
  * @brief  Printer log sink
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -85,7 +86,7 @@ public:
     /**
      * Destroys the printer log sink.
      */
-    ~LogSinkPrinter()
+    ~LogSinkPrinter() override
     {
     }
 

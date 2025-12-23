@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TimerSetting.cpp
  * @brief  Timer setting
  * @author Andreas Merkle <web@blue-andi.de>
  */

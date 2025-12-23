@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MultiIconPlugin.cpp
  * @brief  Multiple icon plugin
  * @author Yann Le Glaz <yann_le@web.de>
  *
@@ -99,7 +100,6 @@ bool MultiIconPlugin::getTopic(const String& topic, JsonObject& value) const
         if ((true == status) &&
             (_MultiIconPlugin::View::MAX_ICON_SLOTS > slotId))
         {
-            value["slotId"] = slotId;
             value["fileId"] = getIconFileId(slotId);
 
             isSuccessful    = true;

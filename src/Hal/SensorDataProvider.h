@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorDataProvider.h
  * @brief  Sensor data provider
  * @author Andreas Merkle <web@blue-andi.de>
  * 

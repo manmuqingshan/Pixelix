@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   HttpHeader.cpp
  * @brief  HTTP header
  * @author Andreas Merkle <web@blue-andi.de>
  */

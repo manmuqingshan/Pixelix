@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdRestart.cpp
  * @brief  Websocket command to restart the system
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -33,7 +34,7 @@
  * Includes
  *****************************************************************************/
 #include "WsCmdRestart.h"
-#include "UpdateMgr.h"
+#include "RestartMgr.h"
 
 #include <Util.h>
 
@@ -78,7 +79,7 @@ void WsCmdRestart::execute(AsyncWebSocket* server, uint32_t clientId)
         /* To ensure the positive response will be sent. */
         const uint32_t RESTART_DELAY = 100U; /* ms */
 
-        UpdateMgr::getInstance().reqRestart(RESTART_DELAY);
+        (void)RestartMgr::getInstance().reqRestart(RESTART_DELAY, false);
 
         sendPositiveResponse(server, clientId);
     }

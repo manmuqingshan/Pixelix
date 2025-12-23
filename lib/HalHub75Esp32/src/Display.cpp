@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Display.cpp
  * @brief  HUB75 matrix display
  * @author Mariano Dupont <marianomd@gmail.com>
  */
@@ -79,6 +80,7 @@ const HUB75_I2S_CFG             Display::MATRIX_CFG  =
     CONFIG_HUB75_CHAIN_LENGTH,          /* Chain length */
     I2S_PINS,                           /* Pin mapping */
     CONFIG_HUB75_DRIVER,                /* Driver */
+    CONFIG_HUB75_LINE_DRIVER,           /* Line driver */
     false,                              /* Use DMA double buffer */
     HUB75_I2S_CFG::HZ_8M,               /* I2S clock speed */
     DEFAULT_LAT_BLANKING,               /* How many clock cycles to blank OE before/after LAT signal change. */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   LogSinkWebsocket.cpp
  * @brief  Websocket log sink
  * @author Andreas Merkle <web@blue-andi.de>
  */

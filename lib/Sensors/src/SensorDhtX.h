@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorDhtX.h
  * @brief  DHTx sensor
  * @author Andreas Merkle <web@blue-andi.de>
  * 

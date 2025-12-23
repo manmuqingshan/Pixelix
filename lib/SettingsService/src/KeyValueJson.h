@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueJson.h
  * @brief  Key value pair with JSON type
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -103,7 +104,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueJson()
+    ~KeyValueJson() override
     {
     }
 

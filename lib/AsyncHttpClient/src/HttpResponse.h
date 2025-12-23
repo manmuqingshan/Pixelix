@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   HttpResponse.h
  * @brief  HTTP response
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -45,6 +46,8 @@
  *****************************************************************************/
 #include <WString.h>
 #include <vector>
+#include <TypedAllocator.hpp>
+#include <PsAllocator.hpp>
 
 #include "HttpHeader.h"
 
@@ -134,16 +137,20 @@ public:
      * Extend payload size in bytes.
      *
      * @param[in] size  Size in bytes
+     * 
+     * @return true on success, false otherwise.
      */
-    void extendPayload(size_t size);
+    bool extendPayload(size_t size);
 
     /**
      * Add a complete payload or add it several times partly.
      *
      * @param[in] payload   Complete or partly payload
      * @param[in] size      Payload size in byte
+     * 
+     * @return true on success, false otherwise.
      */
-    void addPayload(const uint8_t* payload, size_t size);
+    bool addPayload(const uint8_t* payload, size_t size);
 
     /**
      * Get HTTP version.
@@ -186,8 +193,13 @@ public:
 
 private:
 
+    /**
+     * Data allocator type.
+     */
+    typedef TypedAllocator<uint8_t, PsAllocator> DataAllocator;
+
     /** This type defines a list of HTTP headers. */
-    typedef std::vector<HttpHeader*> ListOfHeaders;
+    typedef std::vector<HttpHeader> ListOfHeaders;
 
     String          m_httpVersion;  /**< HTTP version */
     uint16_t        m_statusCode;   /**< Status code */

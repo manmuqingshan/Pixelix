@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OneButtonCtrl.hpp
  * @brief  One button controller
  * @author Andreas Merkle <web@blue-andi.de>
  * 

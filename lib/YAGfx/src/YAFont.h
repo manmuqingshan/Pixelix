@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAFont.h
  * @brief  Yet another font class
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BmpImgLoader.cpp
  * @brief  Bitmap image loader
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -104,6 +105,9 @@ typedef struct _BmpV5Header
 
 } __attribute__ ((packed)) BmpV5Header;
 
+/**
+ * Compression methods.
+ */
 typedef enum
 {
     COMPRESSION_METHOD_RGB          = 0,    /**< None */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SimpleTimer.hpp
  * @brief  Simple timer
  * @author Andreas Merkle <web@blue-andi.de>
  * 

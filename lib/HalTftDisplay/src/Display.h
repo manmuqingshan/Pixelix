@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Display.h
  * @brief  Graphic TFT display
  * @author Andreas Merkle <web@blue-andi.de>
  *

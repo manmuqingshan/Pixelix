@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Sensors.cpp
  * @brief  Sensors
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -39,6 +40,9 @@
 #include <SensorSht3X.h>
 #include <SensorDhtX.h>
 #include <SensorBattery.h>
+#include <SensorHeap.h>
+#include <SensorWiFi.h>
+#include <SensorSystem.h>
 
 /******************************************************************************
  * Compiler Switches
@@ -113,6 +117,42 @@
 #define SENSOR_ID_BATTERY   SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_DHT_X)
 #endif  /* IS_ENABLED(CONFIG_SENSOR_BATTERY_ENABLE) */
 
+#if IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE)
+/**
+ * Heap sensor id.
+ */
+#define SENSOR_ID_HEAP      SENSOR_ID_NEXT(SENSOR_ID_BATTERY)
+#else   /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+/**
+ * Heap sensor id (not applicable).
+ */
+#define SENSOR_ID_HEAP      SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_BATTERY)
+#endif  /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE)
+/**
+ * WiFi sensor id.
+ */
+#define SENSOR_ID_WIFI      SENSOR_ID_NEXT(SENSOR_ID_HEAP)
+#else   /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+/**
+ * WiFi sensor id. (not applicable).
+ */
+#define SENSOR_ID_WIFI      SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_HEAP)
+#endif  /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+/**
+ * System sensor id.
+ */
+#define SENSOR_ID_SYSTEM    SENSOR_ID_NEXT(SENSOR_ID_WIFI)
+#else   /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+/**
+ * System sensor id. (not applicable).
+ */
+#define SENSOR_ID_SYSTEM    SENSOR_ID_NOT_APPLICABLE(SENSOR_ID_WIFI)
+#endif  /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+
 /******************************************************************************
  * Types and classes
  *****************************************************************************/
@@ -153,6 +193,27 @@ static SensorBattery    gBattery;
 
 #endif /* IS_ENABLED(CONFIG_SENSOR_BATTERY_ENABLE) */
 
+#if IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE)
+
+/** Heap sensor. */
+static SensorHeap       gHeap;
+
+#endif /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE)
+
+/** WiFi sensor. */
+static SensorWiFi       gWiFi;
+
+#endif /* IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+
+/** System sensor. */
+static SensorSystem       gSystem;
+
+#endif /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
+
 /** A list with all registered sensors. */
 static ISensor*         gSensors[] =
 {
@@ -171,6 +232,18 @@ static ISensor*         gSensors[] =
 #if IS_ENABLED(CONFIG_SENSOR_BATTERY_ENABLE)
     &gBattery,
 #endif /* IS_ENABLED(CONFIG_SENSOR_BATTERY_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE)
+    &gHeap,
+#endif /* IS_ENABLED(CONFIG_SENSOR_HEAP_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE)
+    &gWiFi,
+#endif /* IS_ENABLED(CONFIG_SENSOR_WIFI_ENABLE) */
+
+#if IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE)
+    &gSystem,
+#endif /* IS_ENABLED(CONFIG_SENSOR_SYSTEM_ENABLE) */
 
     nullptr
 };

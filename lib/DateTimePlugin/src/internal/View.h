@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   View.h
  * @brief  DateTimePlugin view
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

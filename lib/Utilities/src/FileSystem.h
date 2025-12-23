@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FileSystem.h
  * @brief  Defines the filesystem.
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IOpenWeatherForecast.h
  * @brief  Interface for the forecast weather
  * @author Andreas Merkle <web@blue-andi.de>
  *

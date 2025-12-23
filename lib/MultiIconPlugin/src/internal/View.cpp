@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   View.cpp
  * @brief  MultiIconPlugin view
  * @author Andreas Merkle <web@blue-andi.de>
  */

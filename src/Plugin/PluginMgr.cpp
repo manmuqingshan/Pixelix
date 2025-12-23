@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PluginMgr.cpp
  * @brief  Plugin manager
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -360,9 +361,9 @@ void PluginMgr::prepareSlotByConfiguration(uint8_t slotId, const JsonObject& jso
                 }
                 else
                 {
-                    String          alias         = jsonAlias.as<String>();
+                    String          alias         = jsonAlias.as<const char*>();
                     String          filteredAlias = filterPluginAlias(alias);
-                    String          fontTypeStr   = jsonFontType.as<String>();
+                    String          fontTypeStr   = jsonFontType.as<const char*>();
                     Fonts::FontType fontType      = Fonts::strToFontType(fontTypeStr.c_str());
 
                     plugin->setAlias(filteredAlias);

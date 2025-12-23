@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxTest.hpp
  * @brief  Graphics interface for testing purposes.
  * @author Andreas Merkle <web@blue-andi.de>
  *

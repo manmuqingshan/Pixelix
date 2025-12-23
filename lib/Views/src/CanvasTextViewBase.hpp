@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasTextViewBase.hpp
  * @brief  Base class for view with canvas and text.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,10 +44,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/CanvasTextViewGeneric.h"
-#include "./layouts/CanvasTextView32x8.h"
-#include "./layouts/CanvasTextView32x16.h"
-#include "./layouts/CanvasTextView64x64.h"
+#include "./layout/CanvasTextViewGeneric.h"
+#include "./layout/CanvasTextView32x8.h"
+#include "./layout/CanvasTextView32x16.h"
+#include "./layout/CanvasTextView64x64.h"
 
 /******************************************************************************
  * Macros

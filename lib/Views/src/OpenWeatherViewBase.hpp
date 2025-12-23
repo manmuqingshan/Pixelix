@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherViewBase.hpp
  * @brief  Base class for view for OpenWeather.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,10 +44,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-//#include "./layouts/OpenWeatherViewGeneric.h"
-#include "./layouts/OpenWeatherView32x8.h"
-#include "./layouts/OpenWeatherView32x16.h"
-#include "./layouts/OpenWeatherView64x64.h"
+//#include "./layout/OpenWeatherViewGeneric.h"
+#include "./layout/OpenWeatherView32x8.h"
+#include "./layout/OpenWeatherView32x16.h"
+#include "./layout/OpenWeatherView64x64.h"
 
 /******************************************************************************
  * Macros

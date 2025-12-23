@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestUtil.cpp
  * @brief  Test utility functions.
  * @author Andreas Merkle <web@blue-andi.de>
  */

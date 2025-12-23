@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BitmapWidget.h
  * @brief  Bitmap Widget
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -47,6 +48,7 @@
 #include <FS.h>
 
 #include "Widget.hpp"
+#include "GifFileToMemLoader.h"
 #include "GifImgPlayer.h"
 #include "Alignment.h"
 
@@ -70,7 +72,7 @@ public:
 
     /**
      * Constructs a bitmap widget, which is empty.
-     * 
+     *
      * @param[in] width     Widget width in pixel.
      * @param[in] height    Widget height in pixel.
      * @param[in] x         Upper left corner (x-coordinate) of the widget in a canvas.
@@ -80,6 +82,7 @@ public:
         Widget(WIDGET_TYPE, width, height, x, y),
         m_imgType(IMG_TYPE_NO_IMAGE),
         m_bitmap(),
+        m_gifFileLoader(),
         m_gifPlayer(),
         m_hAlign(Alignment::Horizontal::HORIZONTAL_LEFT),
         m_vAlign(Alignment::Vertical::VERTICAL_TOP),
@@ -97,6 +100,7 @@ public:
         Widget(widget),
         m_imgType(widget.m_imgType),
         m_bitmap(widget.m_bitmap),
+        m_gifFileLoader(widget.m_gifFileLoader),
         m_gifPlayer(widget.m_gifPlayer),
         m_hAlign(widget.m_hAlign),
         m_vAlign(widget.m_vAlign),
@@ -108,7 +112,7 @@ public:
     /**
      * Destroys the bitmap widget.
      */
-    virtual ~BitmapWidget()
+    ~BitmapWidget() override
     {
     }
 
@@ -116,14 +120,14 @@ public:
      * Assigns a existing bitmap widget.
      *
      * @param[in] widget Bitmap widge, which to assign
-     * 
+     *
      * @return Bitmap widget
      */
     BitmapWidget& operator=(const BitmapWidget& widget);
 
     /**
      * Set widget width.
-     * 
+     *
      * @param[in] width Width in pixel
      */
     void setWidth(uint16_t width) override
@@ -134,7 +138,7 @@ public:
 
     /**
      * Set widget height.
-     * 
+     *
      * @param[in] height Height in pixel
      */
     void setHeight(uint16_t height) override
@@ -155,24 +159,24 @@ public:
 
     /**
      * Set a bitmap.
-     * 
+     *
      * The canvas width and height won't be updated. If required, update them
      * explicit.
-     * 
+     *
      * @param[in] bitmap    Bitmap
      */
     void set(const YAGfxBitmap& bitmap);
 
     /**
      * Clear the image.
-     * 
+     *
      * @param[in] color Color used for clearing.
      */
     void clear(const Color& color);
 
     /**
      * Load image from filesystem.
-     * 
+     *
      * The canvas width and height won't be updated. If required, update them
      * explicit.
      *
@@ -185,7 +189,7 @@ public:
 
     /**
      * Set the horizontal alignment.
-     * 
+     *
      * @param[in] align The horizontal aligment.
      */
     void setHorizontalAlignment(Alignment::Horizontal align)
@@ -196,7 +200,7 @@ public:
 
     /**
      * Set the vertical alignment.
-     * 
+     *
      * @param[in] align The vertical aligment.
      */
     void setVerticalAlignment(Alignment::Vertical align)
@@ -207,7 +211,7 @@ public:
 
     /**
      * Is bitmap widget empty, means no image is shown?
-     * 
+     *
      * @return If empty, it will return true otherwise false.
      */
     bool isEmpty() const
@@ -216,17 +220,17 @@ public:
     }
 
     /** Widget type string */
-    static const char*  WIDGET_TYPE;
+    static const char* WIDGET_TYPE;
 
     /**
      * Filename extension of bitmap image file.
      */
-    static const char*  FILE_EXT_BITMAP;
+    static const char* FILE_EXT_BITMAP;
 
     /**
      * Filename extension of GIF image file.
      */
-    static const char*  FILE_EXT_GIF;
+    static const char* FILE_EXT_GIF;
 
 private:
 
@@ -235,22 +239,23 @@ private:
      */
     enum ImgType
     {
-        IMG_TYPE_NO_IMAGE = 0,  /**< No image */
-        IMG_TYPE_BMP,           /**< BMP image */
-        IMG_TYPE_GIF            /**< GIF image */
+        IMG_TYPE_NO_IMAGE = 0, /**< No image */
+        IMG_TYPE_BMP,          /**< BMP image */
+        IMG_TYPE_GIF           /**< GIF image */
     };
 
-    ImgType                 m_imgType;      /**< Current image type. */
-    YAGfxDynamicBitmap      m_bitmap;       /**< Bitmap image. */
-    GifImgPlayer            m_gifPlayer;    /**< GIF image player. */
-    Alignment::Horizontal   m_hAlign;       /**< Horizontal alignment. */
-    Alignment::Vertical     m_vAlign;       /**< Vertical alignment. */
-    int16_t                 m_hAlignPosX;   /**< x-coordinate derived from horizontal alignment. */
-    int16_t                 m_vAlignPosY;   /**< y-coordinate derived from vertical alignment. */
+    ImgType               m_imgType;       /**< Current image type. */
+    YAGfxDynamicBitmap    m_bitmap;        /**< Bitmap image. */
+    GifFileToMemLoader    m_gifFileLoader; /**< GIF file loader used to read the file from memory. */
+    GifImgPlayer          m_gifPlayer;     /**< GIF image player. */
+    Alignment::Horizontal m_hAlign;        /**< Horizontal alignment. */
+    Alignment::Vertical   m_vAlign;        /**< Vertical alignment. */
+    int16_t               m_hAlignPosX;    /**< x-coordinate derived from horizontal alignment. */
+    int16_t               m_vAlignPosY;    /**< y-coordinate derived from vertical alignment. */
 
     /**
      * Paint the widget with the given graphics interface.
-     * 
+     *
      * @param[in] gfx   Graphics interface
      */
     void paint(YAGfx& gfx) override
@@ -294,13 +299,12 @@ private:
      * @return If successful loaded it will return true otherwise false.
      */
     bool loadGIF(FS& fs, const String& filename);
-
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* BITMAPWIDGET_H */
+#endif /* BITMAPWIDGET_H */
 
 /** @} */

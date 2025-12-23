@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TopicHandlers.cpp
  * @brief  Topic handlers
  * @author Andreas Merkle <web@blue-andi.de>
  * 
@@ -61,6 +62,9 @@ $INCLUDES
 
 $INSTANCES
 
+/**
+ * List of topic handlers.
+ */
 static ITopicHandler* gList[] =
 {
 $LIST_OF_INSTANCES

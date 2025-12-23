@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TimerSetting.h
  * @brief  Timer setting
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -40,7 +41,6 @@
  * Includes
  *****************************************************************************/
 #include <stdint.h>
-#include <IService.hpp>
 #include <ArduinoJson.h>
 
 /******************************************************************************

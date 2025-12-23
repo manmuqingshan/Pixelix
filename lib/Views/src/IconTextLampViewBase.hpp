@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextLampViewBase.hpp
  * @brief  Base class for view with icon, text and lamps.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,10 +44,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/IconTextLampViewGeneric.h"
-#include "./layouts/IconTextLampView32x8.h"
-#include "./layouts/IconTextLampView32x16.h"
-#include "./layouts/IconTextLampView64x64.h"
+#include "./layout/IconTextLampViewGeneric.h"
+#include "./layout/IconTextLampView32x8.h"
+#include "./layout/IconTextLampView32x16.h"
+#include "./layout/IconTextLampView64x64.h"
 
 /******************************************************************************
  * Macros

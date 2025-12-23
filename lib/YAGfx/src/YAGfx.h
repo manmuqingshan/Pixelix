@@ -25,7 +25,8 @@
     DESCRIPTION
 *******************************************************************************/
 /**
- * @brief  Yet anoterh GFX class
+ * @file   YAGfx.h
+ * @brief  Yet another GFX class
  * @author Andreas Merkle <web@blue-andi.de>
  *
  * @addtogroup GFX

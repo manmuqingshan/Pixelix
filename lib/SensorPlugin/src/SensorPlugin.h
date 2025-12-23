@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorPlugin.h
  * @brief  Sensor plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -282,14 +283,14 @@ private:
     /**
      * Get configuration in JSON.
      * 
-     * @param[out] cfg  Configuration
+     * @param[out] jsonCfg   Configuration
      */
     void getConfiguration(JsonObject& jsonCfg) const final;
 
     /**
      * Set configuration in JSON.
      * 
-     * @param[in] cfg   Configuration
+     * @param[in] jsonCfg   Configuration
      * 
      * @return If successful set, it will return true otherwise false.
      */

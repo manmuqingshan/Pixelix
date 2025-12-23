@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   OpenWeatherForecast.cpp
  * @brief  OpenWeather source for forecast weather data
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -242,7 +243,7 @@ void OpenWeatherForecast::parse(const JsonDocument& jsonDoc)
 
         if (false == jsonIcon.isNull())
         {
-            m_weatherInfo[day].weatherIconId = jsonIcon.as<String>();
+            m_weatherInfo[day].weatherIconId = jsonIcon.as<const char*>();
         }
     }
 }

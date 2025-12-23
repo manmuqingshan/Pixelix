@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   InitState.h
  * @brief  System state: Init
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -47,7 +48,6 @@
 #include <StateMachine.hpp>
 #include <IPluginMaintenance.hpp>
 #include <SimpleTimer.hpp>
-#include <RtcDrv.hpp>
 
 /******************************************************************************
  * Macros
@@ -115,7 +115,6 @@ private:
     bool                 m_isQuiet;           /**< Is quite mode active? */
     bool                 m_isApModeRequested; /**< Is wifi AP mode requested? */
     SimpleTimer          m_timer;             /**< Timer used to stay for a min. time in this state. */
-    RtcDrv               m_rtcDrv;            /**< RTC driver */
 
     /**
      * Constructs the state.
@@ -123,8 +122,7 @@ private:
     InitState() :
         m_isQuiet(false),
         m_isApModeRequested(false),
-        m_timer(),
-        m_rtcDrv()
+        m_timer()
     {
     }
 
@@ -174,6 +172,11 @@ private:
      * @param[out] deviceUniqueId   The device unique id.
      */
     void getDeviceUniqueId(String& deviceUniqueId);
+
+    /**
+     * Configure the views with general settings.
+     */
+    void configureViews();
 };
 
 /******************************************************************************

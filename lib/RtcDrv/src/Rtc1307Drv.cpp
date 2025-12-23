@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Rtc1307Drv.cpp
  * @brief  RTC 1307 driver
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -98,6 +99,8 @@ bool Rtc1307Drv::getTime(struct tm& timeInfo)
         timeInfo.tm_mday    = dateTime.day();
         timeInfo.tm_mon     = dateTime.month() - 1;
         timeInfo.tm_year    = dateTime.year() - 1900;
+
+        isSuccess = true;
     }
 
     return isSuccess;

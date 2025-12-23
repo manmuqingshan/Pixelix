@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IPluginMaintenance.hpp
  * @brief  Plugin maintenance interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

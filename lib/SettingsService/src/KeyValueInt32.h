@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueInt32.h
  * @brief  Key value pair of int32_t type
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -92,7 +93,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueInt32()
+    ~KeyValueInt32() override
     {
     }
 

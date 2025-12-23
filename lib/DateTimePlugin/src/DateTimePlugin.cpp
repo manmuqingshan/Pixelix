@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimePlugin.cpp
  * @brief  DateTime plugin
  * @author Yann Le Glaz <yann_le@web.de>
  */
@@ -170,6 +171,8 @@ void DateTimePlugin::active(YAGfx& gfx)
 {
     MutexGuard<MutexRecursive> guard(m_mutex);
 
+    UTIL_NOT_USED(gfx);
+
     /* The date/time information shall be retrieved every second while plugin is activated. */
     m_durationCounter = 0U;
     m_checkUpdateTimer.start(CHECK_UPDATE_PERIOD);
@@ -248,7 +251,7 @@ bool DateTimePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
     }
     else if (false == jsonTimeZone.is<String>())
     {
-        LOG_WARNING("JSON timezone not found or invalid type.");
+        LOG_WARNING("JSON time zone not found or invalid type.");
     }
     else if (false == jsonStartOfWeek.is<uint8_t>())
     {
@@ -271,13 +274,13 @@ bool DateTimePlugin::setConfiguration(const JsonObjectConst& jsonCfg)
         MutexGuard<MutexRecursive> guard(m_mutex);
 
         m_mode       = static_cast<Mode>(jsonMode.as<uint8_t>());
-        m_timeFormat = jsonTimeFormat.as<String>();
-        m_dateFormat = jsonDateFormat.as<String>();
-        m_timeZone   = jsonTimeZone.as<String>();
+        m_timeFormat = jsonTimeFormat.as<const char*>();
+        m_dateFormat = jsonDateFormat.as<const char*>();
+        m_timeZone   = jsonTimeZone.as<const char*>();
 
         status       = m_view.setStartOfWeek(jsonStartOfWeek.as<uint8_t>());
-        m_view.setDayOnColor(Util::colorFromHtml(jsonDayOnColor.as<String>()));
-        m_view.setDayOffColor(Util::colorFromHtml(jsonDayOffColor.as<String>()));
+        m_view.setDayOnColor(Util::colorFromHtml(jsonDayOnColor.as<const char*>()));
+        m_view.setDayOffColor(Util::colorFromHtml(jsonDayOffColor.as<const char*>()));
         m_view.setViewMode(static_cast<IDateTimeView::ViewMode>(jsonViewMode.as<uint8_t>()));
 
         m_hasTopicChanged = true;
@@ -323,19 +326,19 @@ bool DateTimePlugin::mergeConfiguration(JsonObject& jsonMerged, const JsonObject
 
     if (false == jsonTimeFormat.isNull())
     {
-        jsonMerged["timeFormat"] = jsonTimeFormat.as<String>();
+        jsonMerged["timeFormat"] = jsonTimeFormat.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonDateFormat.isNull())
     {
-        jsonMerged["dateFormat"] = jsonDateFormat.as<String>();
+        jsonMerged["dateFormat"] = jsonDateFormat.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonTimeZone.isNull())
     {
-        jsonMerged["timeZone"] = jsonTimeZone.as<String>();
+        jsonMerged["timeZone"] = jsonTimeZone.as<const char*>();
         isSuccessful           = true;
     }
 
@@ -347,13 +350,13 @@ bool DateTimePlugin::mergeConfiguration(JsonObject& jsonMerged, const JsonObject
 
     if (false == jsonDayOnColor.isNull())
     {
-        jsonMerged["dayOnColor"] = jsonDayOnColor.as<String>();
+        jsonMerged["dayOnColor"] = jsonDayOnColor.as<const char*>();
         isSuccessful             = true;
     }
 
     if (false == jsonDayOffColor.isNull())
     {
-        jsonMerged["dayOffColor"] = jsonDayOffColor.as<String>();
+        jsonMerged["dayOffColor"] = jsonDayOffColor.as<const char*>();
         isSuccessful              = true;
     }
 
@@ -372,7 +375,7 @@ void DateTimePlugin::updateDateTime(bool force)
     struct tm timeInfo         = { 0 };
     bool      isClockAvailable = false;
 
-    /* If no other timezone is given, the local time shall be used. */
+    /* If no other time zone is given, the local time shall be used. */
     if (true == m_timeZone.isEmpty())
     {
         isClockAvailable = clockDrv.getTime(timeInfo);
@@ -447,7 +450,7 @@ void DateTimePlugin::updateDateTime(bool force)
             break;
         }
 
-        /* cache time every second in view  (i.e. for analog clock) */
+        /* cache time every second in view (i.e. for analog clock) */
         if ((true == force) ||
             (m_shownSecond != timeInfo.tm_sec))
         {
@@ -504,7 +507,7 @@ void DateTimePlugin::updateDateTime(bool force)
     {
         if (true == force)
         {
-            m_view.setFormatText("{hc}?");
+            m_view.setFormatText("{hc}Time Sync");
         }
     }
 }

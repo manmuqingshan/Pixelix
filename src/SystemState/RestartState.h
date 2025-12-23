@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestartState.h
  * @brief  System state: Restart
  * @author Andreas Merkle <web@blue-andi.de>
  *

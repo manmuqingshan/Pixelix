@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FadeLinear.h
  * @brief  Linear fade in/out effect
  * @author Andreas Merkle <web@blue-andi.de>
  *

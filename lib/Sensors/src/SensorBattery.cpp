@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SensorBattery.cpp
  * @brief  Battery state of charge driver
  * @author Andreas Merkle <web@blue-andi.de>
  */

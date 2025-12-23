@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   GameOfLifePlugin.h
  * @brief  Conways Game of Life plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

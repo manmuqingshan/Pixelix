@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdSlot.h
  * @brief  Websocket command set slot properties
  * @author Andreas Merkle <web@blue-andi.de>
  * 

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ISlotPlugin.hpp
  * @brief  Slot interface for plugins
  * @author Andreas Merkle <web@blue-andi.de>
  *

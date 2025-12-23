@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueBool.cpp
  * @brief  Key value pair with bool type
  * @author Andreas Merkle <web@blue-andi.de>
  */

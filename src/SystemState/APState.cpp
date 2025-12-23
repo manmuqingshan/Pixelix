@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   APState.cpp
  * @brief  System state: AP
  * @author Andreas Merkle <web@blue-andi.de>
  */

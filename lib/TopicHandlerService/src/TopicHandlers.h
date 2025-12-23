@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TopicHandlers.h
  * @brief  Topic handler
  * @author Andreas Merkle <web@blue-andi.de>
  * 

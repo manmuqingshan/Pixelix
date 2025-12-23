@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Arduino.h
  * @brief  Arduino stuff for test
  * @author Andreas Merkle <web@blue-andi.de>
  *

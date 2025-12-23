@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Rtc1307Drv.h
  * @brief  RTC 1307 driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

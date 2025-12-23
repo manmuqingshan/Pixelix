@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   LampWidget.cpp
  * @brief  Lamp Widget
  * @author Andreas Merkle <web@blue-andi.de>
  */

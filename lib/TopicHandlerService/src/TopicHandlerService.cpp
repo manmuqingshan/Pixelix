@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TopicHandlerService.cpp
  * @brief  Topic handler service
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -155,12 +156,12 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
 
                     if (true == jsonTopicName.is<String>())
                     {
-                        topicName = jsonTopicName.as<String>();
+                        topicName = jsonTopicName.as<const char*>();
                     }
 
                     if (true == jsonTopicAccess.is<String>())
                     {
-                        topicAccess = jsonTopicAccess.as<String>();
+                        topicAccess = jsonTopicAccess.as<const char*>();
                     }
 
                     if (true == jsonExtraVar.is<JsonObjectConst>())
@@ -169,7 +170,7 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
                     }
                     else if (true == jsonExtraVar.is<String>())
                     {
-                        extraFileName = jsonExtraVar.as<String>();
+                        extraFileName = jsonExtraVar.as<const char*>();
                     }
                     else
                     {
@@ -180,7 +181,7 @@ void TopicHandlerService::registerTopics(const String& deviceId, const String& e
                 /* Only topic name is available */
                 else if (true == jsonTopic.is<String>())
                 {
-                    topicName = jsonTopic.as<String>();
+                    topicName = jsonTopic.as<const char*>();
                 }
                 else
                 {
@@ -243,13 +244,13 @@ void TopicHandlerService::unregisterTopics(const String& deviceId, const String&
 
                     if (true == jsonTopicName.is<String>())
                     {
-                        topicName = jsonTopicName.as<String>();
+                        topicName = jsonTopicName.as<const char*>();
                     }
                 }
                 /* Only topic name is available */
                 else if (true == jsonTopic.is<String>())
                 {
-                    topicName = jsonTopic.as<String>();
+                    topicName = jsonTopic.as<const char*>();
                 }
                 else
                 {
@@ -408,7 +409,7 @@ void TopicHandlerService::strToAccess(IPluginMaintenance* plugin, const String& 
         if (true == isReadAccess)
         {
             getTopicFunc = [plugin](const String& topic, JsonObject& value) -> bool {
-                LOG_INFO("Get %s of plugin %u.", topic.c_str(), plugin->getUID());
+                LOG_DEBUG("Get %s of plugin %u.", topic.c_str(), plugin->getUID());
                 return plugin->getTopic(topic, value);
             };
         }
@@ -416,7 +417,7 @@ void TopicHandlerService::strToAccess(IPluginMaintenance* plugin, const String& 
         if (true == isWriteAccess)
         {
             setTopicFunc = [plugin](const String& topic, const JsonObjectConst& value) -> bool {
-                LOG_INFO("Set %s of plugin %u.", topic.c_str(), plugin->getUID());
+                LOG_DEBUG("Set %s of plugin %u.", topic.c_str(), plugin->getUID());
                 return plugin->setTopic(topic, value);
             };
 

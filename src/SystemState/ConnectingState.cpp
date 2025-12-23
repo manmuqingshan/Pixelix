@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ConnectingState.cpp
  * @brief  System state: Connecting
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -37,6 +38,7 @@
 #include "Services.h"
 #include "SensorDataProvider.h"
 #include "MyWebServer.h"
+#include "DisplayMgr.h"
 
 #include "IdleState.h"
 #include "ConnectedState.h"
@@ -117,6 +119,9 @@ void ConnectingState::entry(StateMachine& sm)
 
         sm.setState(ErrorState::getInstance());
     }
+
+    /* Show the user via indicator light that there is no connection. */
+    DisplayMgr::getInstance().setIndicator(DisplayMgr::INDICATOR_ID_NETWORK, true);
 }
 
 void ConnectingState::process(StateMachine& sm)
@@ -130,7 +135,7 @@ void ConnectingState::process(StateMachine& sm)
         String          infoStr                 = "Connecting to ";
 
         infoStr += m_wifiSSID;
-        infoStr += ".";
+        infoStr += " ...";
 
         LOG_INFO(infoStr);
 
@@ -188,9 +193,11 @@ void ConnectingState::process(StateMachine& sm)
 
 void ConnectingState::exit(StateMachine& sm)
 {
-    UTIL_NOT_USED(sm);
-
-    /* Nothing to do. */
+    /* If connection established, the no connection indicator shall be removed. */
+    if (true == WiFi.isConnected())
+    {
+        DisplayMgr::getInstance().setIndicator(DisplayMgr::INDICATOR_ID_NETWORK, false);
+    }
 }
 
 /******************************************************************************

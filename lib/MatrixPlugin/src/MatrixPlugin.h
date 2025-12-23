@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MatrixPlugin.h
  * @brief  Matrix demo plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

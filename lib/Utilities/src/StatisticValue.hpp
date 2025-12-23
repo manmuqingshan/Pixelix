@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   StatisticValue.hpp
  * @brief  Statistic value
  * @author Andreas Merkle <web@blue-andi.de>
  * 

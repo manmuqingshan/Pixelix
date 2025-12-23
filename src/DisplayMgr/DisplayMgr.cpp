@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DisplayMgr.cpp
  * @brief  Display manager
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -42,10 +43,6 @@
 #include <Util.h>
 #include <SettingsService.h>
 
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-#include <StatisticValue.hpp>
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -57,21 +54,6 @@
 /******************************************************************************
  * Types and classes
  *****************************************************************************/
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-
-/**
- * A collection of statistics, which are interesting for debugging purposes.
- */
-struct Statistics
-{
-    StatisticValue<uint32_t, 0U, 10U> pluginProcessing;
-    StatisticValue<uint32_t, 0U, 10U> displayUpdate;
-    StatisticValue<uint32_t, 0U, 10U> total;
-    StatisticValue<uint32_t, 0U, 10U> refreshPeriod;
-};
-
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
 /******************************************************************************
  * Prototypes
@@ -87,134 +69,123 @@ struct Statistics
 
 bool DisplayMgr::begin()
 {
-    bool             status                 = false;
-    bool             isError                = false;
-    uint8_t          maxSlots               = 0U;
-    uint8_t          brightnessPercent      = 0U;
-    uint8_t          minBrightnessPercent   = 0U;
-    uint8_t          maxBrightnessPercent   = 0U;
-    uint16_t         brightness             = 0U;
-    uint16_t         minBrightnessHardLimit = 0U;
-    uint16_t         maxBrightnessHardLimit = 0U;
-    uint8_t          fadeEffect             = 0U;
-    SettingsService& settings               = SettingsService::getInstance();
-    BrightnessCtrl&  brightnessCtrl         = BrightnessCtrl::getInstance();
+    const uint16_t   PERCENT_100                   = 100U; /* [%] */
+    bool             status                        = false;
+    bool             isError                       = false;
+    uint8_t          maxSlots                      = 0U;
+    uint8_t          brightnessPercent             = 0U;
+    uint8_t          minBrightnessHardLimitPercent = 0U;
+    uint8_t          maxBrightnessHardLimitPercent = 0U;
+    uint8_t          minBrightnessSoftLimitPercent = 0U;
+    uint8_t          maxBrightnessSoftLimitPercent = 0U;
+    uint16_t         brightness                    = 0U;
+    uint16_t         minBrightnessHardLimit        = 0U;
+    uint16_t         maxBrightnessHardLimit        = 0U;
+    uint16_t         minBrightnessSoftLimit        = 0U;
+    uint16_t         maxBrightnessSoftLimit        = 0U;
+    uint8_t          fadeEffect                    = 0U;
+    SettingsService& settings                      = SettingsService::getInstance();
+    BrightnessCtrl&  brightnessCtrl                = BrightnessCtrl::getInstance();
 
     if (false == settings.open(true))
     {
-        maxSlots          = settings.getMaxSlots().getDefault();
-        brightnessPercent = settings.getBrightness().getDefault();
-        fadeEffect        = settings.getFadeEffect().getDefault();
+        maxSlots                      = settings.getMaxSlots().getDefault();
+        brightnessPercent             = settings.getBrightness().getDefault();
+        minBrightnessSoftLimitPercent = settings.getMinBrightnessSoftLimit().getDefault();
+        maxBrightnessSoftLimitPercent = settings.getMaxBrightnessSoftLimit().getDefault();
+        fadeEffect                    = settings.getFadeEffect().getDefault();
     }
     else
     {
-        maxSlots          = settings.getMaxSlots().getValue();
-        brightnessPercent = settings.getBrightness().getValue();
-        fadeEffect        = settings.getFadeEffect().getValue();
+        maxSlots                      = settings.getMaxSlots().getValue();
+        brightnessPercent             = settings.getBrightness().getValue();
+        minBrightnessSoftLimitPercent = settings.getMinBrightnessSoftLimit().getValue();
+        maxBrightnessSoftLimitPercent = settings.getMaxBrightnessSoftLimit().getValue();
+        fadeEffect                    = settings.getFadeEffect().getValue();
 
         settings.close();
     }
 
-    minBrightnessPercent   = settings.getBrightness().getMin();
-    maxBrightnessPercent   = settings.getBrightness().getMax();
-
-    minBrightnessHardLimit = (static_cast<uint16_t>(minBrightnessPercent) * UINT8_MAX) / 100U;
-    maxBrightnessHardLimit = (static_cast<uint16_t>(maxBrightnessPercent) * UINT8_MAX) / 100U;
+    /* Derive the hard limits from the min. and max. brightness values. */
+    minBrightnessHardLimitPercent = settings.getBrightness().getMin();
+    maxBrightnessHardLimitPercent = settings.getBrightness().getMax();
+    minBrightnessHardLimit        = (static_cast<uint16_t>(minBrightnessHardLimitPercent) * UINT8_MAX) / PERCENT_100;
+    maxBrightnessHardLimit        = (static_cast<uint16_t>(maxBrightnessHardLimitPercent) * UINT8_MAX) / PERCENT_100;
+    minBrightnessSoftLimit        = (static_cast<uint16_t>(minBrightnessSoftLimitPercent) * UINT8_MAX) / PERCENT_100;
+    maxBrightnessSoftLimit        = (static_cast<uint16_t>(maxBrightnessSoftLimitPercent) * UINT8_MAX) / PERCENT_100;
 
     /* Set the display brightness here just once.
      * There is no need to do this in the process() method periodically.
      */
-    brightnessCtrl.init(Display::getInstance(), minBrightnessHardLimit, maxBrightnessHardLimit);
-    brightness = (static_cast<uint16_t>(brightnessPercent) * UINT8_MAX) / 100U;
+    brightnessCtrl.init(Display::getInstance(), static_cast<uint8_t>(minBrightnessHardLimit), static_cast<uint8_t>(maxBrightnessHardLimit));
+    brightnessCtrl.setSoftLimits(static_cast<uint8_t>(minBrightnessSoftLimit), static_cast<uint8_t>(maxBrightnessSoftLimit));
+
+    brightness = (static_cast<uint16_t>(brightnessPercent) * UINT8_MAX) / PERCENT_100;
     brightnessCtrl.setBrightness(static_cast<uint8_t>(brightness));
 
     /* Set fade effect */
-    m_fadeEffectIndex = static_cast<FadeEffect>(fadeEffect);
-    m_fadeEffectUpdate = true;
+    m_fadeEffectController.selectFadeEffect(static_cast<FadeEffectController::FadeEffect>(fadeEffect));
 
-    /* No slots available? */
-    if (false == m_slotList.isAvailable())
+    /* Allocate some stuff. */
+    if (false == m_slotList.create(maxSlots))
     {
-        if (false == m_slotList.create(maxSlots))
-        {
-            LOG_FATAL("Not enough heap space available.");
-
-            isError = true;
-        }
+        LOG_FATAL("Not enough heap space available.");
+        isError = true;
+    }
+    else if (false == m_doubleFrameBuffer.create(Display::getInstance().getWidth(), Display::getInstance().getHeight()))
+    {
+        LOG_FATAL("Couldn't create double framebuffer.");
+        isError = true;
+    }
+    else if (false == m_mutexInterf.create())
+    {
+        isError = true;
+    }
+    else if (false == m_mutexUpdate.create())
+    {
+        isError = true;
+    }
+    else
+    {
+        ;
     }
 
-    if (false == isError)
+    /* Process task not started yet? */
+    if ((false == isError) &&
+        (false == m_processTask.isRunning()))
     {
-        uint8_t idx = 0U;
-
-        /* Allocate framebuffer memory. */
-        for (idx = 0U; idx < UTIL_ARRAY_NUM(m_framebuffers); ++idx)
+        if (false == m_processTask.start(this))
         {
-            if (false == m_framebuffers[idx].isAllocated())
-            {
-                if (false == m_framebuffers[idx].create(Display::getInstance().getWidth(), Display::getInstance().getHeight()))
-                {
-                    isError = true;
-
-                    LOG_WARNING("Couldn't create framebuffer canvas for fade effect.");
-                }
-            }
-        }
-
-        if (false == isError)
-        {
-            m_selectedFrameBuffer = &m_framebuffers[0U];
+            isError = true;
         }
         else
         {
-            /* If fade effects are not available, it just looks not so nice but
-             * thats it.
-             */
-            isError = false;
+            LOG_DEBUG("Process task is up.");
         }
+    }
 
-        if (false == m_mutexInterf.isAllocated())
+    /* Update task not started yet? */
+    if ((false == isError) &&
+        (false == m_updateTask.isRunning()))
+    {
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+        m_statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
+        if (false == m_updateTask.start(this))
         {
-            if (false == m_mutexInterf.create())
-            {
-                isError = true;
-            }
+            isError = true;
         }
-
-        if (false == m_mutexUpdate.isAllocated())
+        else
         {
-            if (false == m_mutexUpdate.create())
-            {
-                isError = true;
-            }
-        }
-
-        /* Process task not started yet? */
-        if ((false == isError) &&
-            (nullptr == m_processTaskHandle))
-        {
-            if (false == createProcessTask())
-            {
-                isError = true;
-            }
-        }
-
-        /* Update task not started yet? */
-        if ((false == isError) &&
-            (nullptr == m_updateTaskHandle))
-        {
-            if (false == createUpdateTask())
-            {
-                isError = true;
-            }
+            LOG_DEBUG("Update task is up.");
         }
     }
 
     /* Any error happened? */
     if (true == isError)
     {
-        destroyProcessTask();
-        destroyUpdateTask();
+        end();
     }
     else
     {
@@ -228,30 +199,34 @@ bool DisplayMgr::begin()
 
 void DisplayMgr::end()
 {
-    uint8_t idx = 0U;
-
-    /* Already running? */
-    if (nullptr != m_processTaskHandle)
+    /* Stop the process task. */
+    if (false == m_processTask.stop())
     {
-        destroyProcessTask();
+        LOG_ERROR("Failed to stop process task.");
+    }
+    else
+    {
+        LOG_DEBUG("Process task is down.");
     }
 
-    if (nullptr != m_updateTaskHandle)
+    /* Stop the update task. */
+    if (false == m_updateTask.stop())
     {
-        destroyUpdateTask();
+        LOG_ERROR("Failed to stop update task.");
     }
+    else
+    {
+        LOG_DEBUG("Update task is down.");
+    }
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    m_statisticsLogTimer.stop();
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
     m_mutexUpdate.destroy();
     m_mutexInterf.destroy();
 
-    m_selectedFrameBuffer = nullptr;
-
-    /* Release framebuffer memory. */
-    for (idx = 0U; idx < UTIL_ARRAY_NUM(m_framebuffers); ++idx)
-    {
-        m_framebuffers[idx].release();
-    }
-
+    m_doubleFrameBuffer.release();
     m_slotList.destroy();
 
     LOG_INFO("DisplayMgr is down.");
@@ -580,28 +555,20 @@ void DisplayMgr::activatePreviousSlot()
     }
 }
 
-void DisplayMgr::activateNextFadeEffect(FadeEffect fadeEffect)
+void DisplayMgr::activateNextFadeEffect(FadeEffectController::FadeEffect fadeEffect)
 {
-    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard1(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard2(m_mutexUpdate);
 
-    if (FADE_EFFECT_COUNT <= fadeEffect)
-    {
-        m_fadeEffectIndex = FADE_EFFECT_NONE;
-    }
-    else
-    {
-        m_fadeEffectIndex = fadeEffect;
-    }
-
-    m_fadeEffectUpdate = true;
+    m_fadeEffectController.selectFadeEffect(fadeEffect);
 }
 
-DisplayMgr::FadeEffect DisplayMgr::getFadeEffect()
+FadeEffectController::FadeEffect DisplayMgr::getFadeEffect()
 {
-    FadeEffect                 currentFadeEffect;
-    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    FadeEffectController ::FadeEffect currentFadeEffect;
+    MutexGuard<MutexRecursive>        guard(m_mutexInterf);
 
-    currentFadeEffect = m_fadeEffectIndex;
+    currentFadeEffect = m_fadeEffectController.getFadeEffect();
 
     return currentFadeEffect;
 }
@@ -794,6 +761,22 @@ bool DisplayMgr::isDisplayOn() const
     return isDisplayOn;
 }
 
+bool DisplayMgr::getIndicator(uint8_t indicatorId) const
+{
+    MutexGuard<MutexRecursive> guard(m_mutexInterf);
+    bool                       isOn = m_indicatorView.isIndicatorOn(indicatorId);
+
+    return isOn;
+}
+
+void DisplayMgr::setIndicator(uint8_t indicatorId, bool isOn)
+{
+    MutexGuard<MutexRecursive> guard1(m_mutexInterf);
+    MutexGuard<MutexRecursive> guard2(m_mutexUpdate);
+
+    m_indicatorView.setIndicator(indicatorId, isOn);
+}
+
 /******************************************************************************
  * Protected Methods
  *****************************************************************************/
@@ -805,27 +788,26 @@ bool DisplayMgr::isDisplayOn() const
 DisplayMgr::DisplayMgr() :
     m_mutexInterf(),
     m_mutexUpdate(),
-    m_processTaskHandle(nullptr),
-    m_processTaskExit(false),
-    m_processTaskSemaphore(nullptr),
-    m_updateTaskHandle(nullptr),
-    m_updateTaskExit(false),
-    m_updateTaskSemaphore(nullptr),
+    m_processTask("processTask", processTask, PROCESS_TASK_STACK_SIZE, PROCESS_TASK_PRIORITY, PROCESS_TASK_RUN_CORE),
+    m_updateTask("updateTask", updateTask, UPDATE_TASK_STACK_SIZE, UPDATE_TASK_PRIORITY, UPDATE_TASK_RUN_CORE),
     m_slotList(),
     m_selectedSlotId(SlotList::SLOT_ID_INVALID),
     m_selectedPlugin(nullptr),
     m_requestedPlugin(nullptr),
     m_slotTimer(),
-    m_displayFadeState(FADE_IN),
-    m_selectedFrameBuffer(nullptr),
-    m_framebuffers(),
-    m_fadeLinearEffect(),
-    m_fadeMoveXEffect(),
-    m_fadeMoveYEffect(),
-    m_fadeEffect(&m_fadeLinearEffect),
-    m_fadeEffectIndex(FADE_EFFECT_LINEAR),
-    m_fadeEffectUpdate(false),
-    m_isNetworkConnected(false)
+    m_doubleFrameBuffer(),
+    m_fadeEffectController(m_doubleFrameBuffer),
+    m_isNetworkConnected(false),
+    m_indicatorView()
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    ,
+    m_statistics(),
+    m_statisticsLogTimer(),
+    m_timestampLastUpdate(0U)
+
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
 {
 }
 
@@ -930,90 +912,6 @@ uint8_t DisplayMgr::previousSlot(uint8_t slotId)
     return slotId;
 }
 
-void DisplayMgr::startFadeOut()
-{
-    /* Select next framebuffer and keep old content, until
-     * the fade effect is finished.
-     */
-    if (m_selectedFrameBuffer == &m_framebuffers[FB_ID_0])
-    {
-        m_selectedFrameBuffer = &m_framebuffers[FB_ID_1];
-    }
-    else
-    {
-        m_selectedFrameBuffer = &m_framebuffers[FB_ID_0];
-    }
-
-    m_displayFadeState = FADE_OUT;
-
-    if (nullptr != m_fadeEffect)
-    {
-        m_fadeEffect->init();
-    }
-}
-
-void DisplayMgr::fadeInOut(YAGfx& dst)
-{
-    if (nullptr != m_selectedFrameBuffer)
-    {
-        /* Continuously update the current canvas with its framebuffer. */
-        if (nullptr != m_selectedPlugin)
-        {
-            m_selectedPlugin->update(*m_selectedFrameBuffer);
-        }
-
-        /* No fade effect? */
-        if (nullptr == m_fadeEffect)
-        {
-            dst.drawBitmap(0, 0, *m_selectedFrameBuffer);
-            m_displayFadeState = FADE_IDLE;
-        }
-        /* Process fade effect. */
-        else
-        {
-            YAGfxBitmap* prevFb = nullptr;
-
-            /* Determine previous frame buffer. */
-            if (m_selectedFrameBuffer == &m_framebuffers[FB_ID_0])
-            {
-                prevFb = &m_framebuffers[FB_ID_1];
-            }
-            else
-            {
-                prevFb = &m_framebuffers[FB_ID_0];
-            }
-
-            /* Handle fading */
-            switch (m_displayFadeState)
-            {
-            /* No fading at all */
-            case FADE_IDLE:
-                dst.drawBitmap(0, 0, *m_selectedFrameBuffer);
-                break;
-
-            /* Fade new display content in */
-            case FADE_IN:
-                if (true == m_fadeEffect->fadeIn(dst, *prevFb, *m_selectedFrameBuffer))
-                {
-                    m_displayFadeState = FADE_IDLE;
-                }
-                break;
-
-            /* Fade old display content out! */
-            case FADE_OUT:
-                if (true == m_fadeEffect->fadeOut(dst, *prevFb, *m_selectedFrameBuffer))
-                {
-                    m_displayFadeState = FADE_IN;
-                }
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-}
-
 void DisplayMgr::process()
 {
     IDisplay&                  display    = Display::getInstance();
@@ -1094,7 +992,7 @@ void DisplayMgr::process()
                 m_selectedPlugin = nullptr;
 
                 /* Fade old display content out */
-                startFadeOut();
+                m_fadeEffectController.start();
             }
         }
         else
@@ -1106,7 +1004,7 @@ void DisplayMgr::process()
 
     /* Any plugin selected? */
     if ((nullptr != m_selectedPlugin) &&
-        (FADE_IDLE == m_displayFadeState))
+        (false == m_fadeEffectController.isRunning()))
     {
         MutexGuard<MutexRecursive> guard(m_mutexUpdate);
 
@@ -1120,7 +1018,7 @@ void DisplayMgr::process()
             m_slotTimer.stop();
 
             /* Fade old display content out */
-            startFadeOut();
+            m_fadeEffectController.start();
         }
         /* Plugin run duration timeout? */
         else if ((true == m_slotTimer.isTimerRunning()) &&
@@ -1145,7 +1043,7 @@ void DisplayMgr::process()
                 m_slotTimer.stop();
 
                 /* Fade old display content out */
-                startFadeOut();
+                m_fadeEffectController.start();
             }
         }
         else
@@ -1158,6 +1056,7 @@ void DisplayMgr::process()
     /* If no plugin is selected, choose the next one. */
     if (nullptr == m_selectedPlugin)
     {
+        YAGfxDynamicBitmap&        selectedFrameBuffer = m_doubleFrameBuffer.getSelectedFramebuffer();
         MutexGuard<MutexRecursive> guard(m_mutexUpdate);
 
         /* Plugin requested to choose? */
@@ -1190,56 +1089,16 @@ void DisplayMgr::process()
                 m_slotTimer.start(duration);
             }
 
-            if (nullptr != m_selectedFrameBuffer)
-            {
-                m_selectedPlugin->active(*m_selectedFrameBuffer);
-            }
-            else
-            {
-                m_selectedPlugin->active(display);
-            }
+            m_selectedPlugin->active(selectedFrameBuffer);
 
             LOG_INFO("Slot %u (%s) now active.", m_selectedSlotId, m_selectedPlugin->getName());
         }
         /* No plugin is active, clear the display. */
         else
         {
-            if (nullptr != m_selectedFrameBuffer)
-            {
-                m_selectedFrameBuffer->fillScreen(ColorDef::BLACK);
-            }
+            selectedFrameBuffer.fillScreen(ColorDef::BLACK);
             display.clear();
         }
-    }
-
-    /* Avoid changing to next effect, if the there is a pending slot change. */
-    if ((false != m_fadeEffectUpdate) && (FADE_IDLE == m_displayFadeState))
-    {
-        switch (m_fadeEffectIndex)
-        {
-        case FADE_EFFECT_NONE:
-            m_fadeEffect = nullptr;
-            break;
-
-        case FADE_EFFECT_LINEAR:
-            m_fadeEffect = &m_fadeLinearEffect;
-            break;
-
-        case FADE_EFFECT_MOVE_X:
-            m_fadeEffect = &m_fadeMoveXEffect;
-            break;
-
-        case FADE_EFFECT_MOVE_Y:
-            m_fadeEffect = &m_fadeMoveYEffect;
-            break;
-
-        default:
-            m_fadeEffect      = nullptr;
-            m_fadeEffectIndex = FADE_EFFECT_NONE;
-            break;
-        }
-
-        m_fadeEffectUpdate = false;
     }
 
     /* Process all installed plugins. */
@@ -1259,295 +1118,122 @@ void DisplayMgr::update()
 {
     IDisplay&                  display = Display::getInstance();
     MutexGuard<MutexRecursive> guard(m_mutexUpdate);
+    YAGfxDynamicBitmap&        selectedFrameBuffer = m_doubleFrameBuffer.getSelectedFramebuffer();
 
-    /* Update display (main canvas available) */
-    if (nullptr != m_selectedFrameBuffer)
+    /* Update frame buffer with plugin content. */
+    if (nullptr != m_selectedPlugin)
     {
-        fadeInOut(display);
-    }
-    /* Update display (main canvas not available) */
-    else if (nullptr != m_selectedPlugin)
-    {
-        m_selectedPlugin->update(display);
-    }
-    /* No plugin selected. */
-    else
-    {
-        /* Nothing to do. */
-        ;
+        m_selectedPlugin->update(selectedFrameBuffer);
     }
 
+    /* Update frame buffer with indicators (foreground). */
+    m_indicatorView.update(selectedFrameBuffer);
+
+    /* Update the display buffer. */
+    m_fadeEffectController.update(display);
+
+    /* Latch display buffer. */
     display.show();
 }
 
-bool DisplayMgr::createProcessTask()
+void DisplayMgr::processTask(DisplayMgr* self)
 {
-    bool isSuccessful = false;
+    uint32_t timestamp = millis();
+    uint32_t duration  = 0U;
 
-    if (nullptr == m_processTaskSemaphore)
+    /* Process all slot and plugin related stuff. */
+    self->process();
+
+    /* Calculate overall duration */
+    duration = millis() - timestamp;
+
+    /* Processing shall take place in aquidistant intervals. */
+    delay(PROCESS_TASK_PERIOD - (duration % PROCESS_TASK_PERIOD));
+}
+
+void DisplayMgr::updateTask(DisplayMgr* self)
+{
+    uint32_t timestamp           = millis(); /* ms */
+    uint32_t duration            = 0U;       /* ms */
+    uint32_t timestampPhyUpdate  = 0U;       /* ms */
+    uint32_t durationPhyUpdate   = 0U;       /* ms */
+    bool     abort               = false;
+
+    /* Observe the physical display refresh and limit the duration to 70% of refresh period. */
+    const uint32_t MAX_LOOP_TIME = (UPDATE_TASK_PERIOD * 7U) / (10U);
+
+    /* Refresh display content periodically */
+    self->update();
+
+#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
+    /* Update statistics for active plugin processing time. */
+    self->m_statistics.pluginProcessing.update(millis() - timestamp);
+#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
+
+    /* Wait until the physical update is ready to avoid flickering
+     * and artifacts on the display, because of e.g. webserver flash
+     * access.
+     */
+    timestampPhyUpdate = millis();
+    while ((false == Display::getInstance().isReady()) && (false == abort))
     {
-        /* Create binary semaphore to signal task exit. */
-        m_processTaskSemaphore = xSemaphoreCreateBinary();
+        durationPhyUpdate = millis() - timestampPhyUpdate;
 
-        if (nullptr != m_processTaskSemaphore)
+        if (MAX_LOOP_TIME <= durationPhyUpdate)
         {
-            BaseType_t osRet  = pdFAIL;
-
-            /* Task shall run */
-            m_processTaskExit = false;
-
-            osRet             = xTaskCreateUniversal(processTask,
-                "processTask",
-                PROCESS_TASK_STACK_SIZE,
-                this,
-                PROCESS_TASK_PRIORITY,
-                &m_processTaskHandle,
-                PROCESS_TASK_RUN_CORE);
-
-            /* Couldn't task be created? */
-            if (pdPASS != osRet)
-            {
-                vSemaphoreDelete(m_processTaskSemaphore);
-                m_processTaskSemaphore = nullptr;
-            }
-            else
-            {
-                (void)xSemaphoreGive(m_processTaskSemaphore);
-
-                LOG_DEBUG("ProcessTask is up.");
-
-                isSuccessful = true;
-            }
+            abort = true;
         }
     }
 
-    return isSuccessful;
-}
-
-void DisplayMgr::destroyProcessTask()
-{
-    /* Is the task running? */
-    if (nullptr != m_processTaskSemaphore)
-    {
-        /* Request task to exit and wait until its done. */
-        m_processTaskExit = true;
-        (void)xSemaphoreTake(m_processTaskSemaphore, portMAX_DELAY);
-        m_processTaskHandle = nullptr;
-
-        /* After task is destroyed, the signal semaphore can safely be destroyed. */
-        vSemaphoreDelete(m_processTaskSemaphore);
-        m_processTaskSemaphore = nullptr;
-
-        LOG_DEBUG("ProcessTask is down.");
-    }
-}
-
-bool DisplayMgr::createUpdateTask()
-{
-    bool isSuccessful = false;
-
-    if (nullptr == m_updateTaskSemaphore)
-    {
-        /* Create binary semaphore to signal task exit. */
-        m_updateTaskSemaphore = xSemaphoreCreateBinary();
-
-        if (nullptr != m_updateTaskSemaphore)
-        {
-            BaseType_t osRet = pdFAIL;
-
-            /* Task shall run */
-            m_updateTaskExit = false;
-
-            osRet            = xTaskCreateUniversal(updateTask,
-                "updateTask",
-                UPDATE_TASK_STACK_SIZE,
-                this,
-                UPDATE_TASK_PRIORITY,
-                &m_updateTaskHandle,
-                UPDATE_TASK_RUN_CORE);
-
-            /* Couldn't task be created? */
-            if (pdPASS != osRet)
-            {
-                vSemaphoreDelete(m_updateTaskSemaphore);
-                m_updateTaskSemaphore = nullptr;
-            }
-            else
-            {
-                (void)xSemaphoreGive(m_updateTaskSemaphore);
-
-                LOG_DEBUG("UpdateTask is up.");
-
-                isSuccessful = true;
-            }
-        }
-    }
-
-    return isSuccessful;
-}
-
-void DisplayMgr::destroyUpdateTask()
-{
-    /* Is the task running? */
-    if (nullptr != m_updateTaskSemaphore)
-    {
-        /* Request task to exit and wait until its done. */
-        m_updateTaskExit = true;
-        (void)xSemaphoreTake(m_updateTaskSemaphore, portMAX_DELAY);
-        m_updateTaskHandle = nullptr;
-
-        /* After task is destroyed, the signal semaphore can safely be destroyed. */
-        vSemaphoreDelete(m_updateTaskSemaphore);
-        m_updateTaskSemaphore = nullptr;
-
-        LOG_DEBUG("UpdateTask is down.");
-    }
-}
-
-void DisplayMgr::processTask(void* parameters)
-{
-    DisplayMgr* tthis = static_cast<DisplayMgr*>(parameters);
-
-    if ((nullptr != tthis) &&
-        (nullptr != tthis->m_processTaskSemaphore))
-    {
-        (void)xSemaphoreTake(tthis->m_processTaskSemaphore, portMAX_DELAY);
-
-        while (false == tthis->m_processTaskExit)
-        {
-            uint32_t timestamp = millis();
-            uint32_t duration  = 0U;
-
-            /* Process all slot and plugin related stuff. */
-            tthis->process();
-
-            /* Calculate overall duration */
-            duration = millis() - timestamp;
-
-            /* Give other tasks a chance. */
-            if (PROCESS_TASK_PERIOD <= duration)
-            {
-                delay(1U);
-            }
-            else
-            {
-                delay(PROCESS_TASK_PERIOD - duration);
-            }
-        }
-
-        (void)xSemaphoreGive(tthis->m_processTaskSemaphore);
-    }
-
-    vTaskDelete(nullptr);
-}
-
-void DisplayMgr::updateTask(void* parameters)
-{
-    DisplayMgr* tthis = static_cast<DisplayMgr*>(parameters);
-
-    if ((nullptr != tthis) &&
-        (nullptr != tthis->m_updateTaskSemaphore))
-    {
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-        Statistics     statistics;
-        SimpleTimer    statisticsLogTimer;
-        const uint32_t STATISTICS_LOG_PERIOD = 4000U; /* [ms] */
-        uint32_t       timestampLastUpdate   = millis();
+    /* Update statistics for physical display update time. */
+    self->m_statistics.displayUpdate.update(durationPhyUpdate);
 
-        statisticsLogTimer.start(STATISTICS_LOG_PERIOD);
+    /* Update statistics for total processing time. */
+    self->m_statistics.total.update(self->m_statistics.pluginProcessing.getCurrent() + self->m_statistics.displayUpdate.getCurrent());
 
+    if (true == self->m_statisticsLogTimer.isTimeout())
+    {
+        LOG_DEBUG("Refresh period   : min %2u avg %2u max %2u",
+            self->m_statistics.refreshPeriod.getMin(),
+            self->m_statistics.refreshPeriod.getAvg(),
+            self->m_statistics.refreshPeriod.getMax());
+
+        LOG_DEBUG("Plugin processing: min %2u avg %2u max %2u",
+            self->m_statistics.pluginProcessing.getMin(),
+            self->m_statistics.pluginProcessing.getAvg(),
+            self->m_statistics.pluginProcessing.getMax());
+
+        LOG_DEBUG("Display update   : min %2u avg %2u max %2u",
+            self->m_statistics.displayUpdate.getMin(),
+            self->m_statistics.displayUpdate.getAvg(),
+            self->m_statistics.displayUpdate.getMax());
+
+        LOG_DEBUG("Total            : min %2u avg %2u max %2u",
+            self->m_statistics.total.getMin(),
+            self->m_statistics.total.getAvg(),
+            self->m_statistics.total.getMax());
+
+        /* Reset the statistics to get a new min./max. determination. */
+        self->m_statistics.pluginProcessing.reset();
+        self->m_statistics.displayUpdate.reset();
+        self->m_statistics.total.reset();
+        self->m_statistics.refreshPeriod.reset();
+
+        self->m_statisticsLogTimer.restart();
+    }
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
 
-        (void)xSemaphoreTake(tthis->m_updateTaskSemaphore, portMAX_DELAY);
+    /* Calculate overall duration */
+    duration = millis() - timestamp;
 
-        while (false == tthis->m_updateTaskExit)
-        {
-            uint32_t timestamp           = millis();
-            uint32_t duration            = 0U;
-            uint32_t timestampPhyUpdate  = 0U;
-            uint32_t durationPhyUpdate   = 0U;
-            bool     abort               = false;
-
-            /* Observe the physical display refresh and limit the duration to 70% of refresh period. */
-            const uint32_t MAX_LOOP_TIME = (UPDATE_TASK_PERIOD * 7U) / (10U);
-
-            /* Refresh display content periodically */
-            tthis->update();
+    /* Updating the display shall take place in aquidistant intervals. */
+    delay(UPDATE_TASK_PERIOD - (duration % UPDATE_TASK_PERIOD));
 
 #if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.pluginProcessing.update(millis() - timestamp);
+    self->m_statistics.refreshPeriod.update(millis() - self->m_timestampLastUpdate);
+    self->m_timestampLastUpdate = millis();
 #endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
-            /* Wait until the physical update is ready to avoid flickering
-             * and artifacts on the display, because of e.g. webserver flash
-             * access.
-             */
-            timestampPhyUpdate = millis();
-            while ((false == Display::getInstance().isReady()) && (false == abort))
-            {
-                durationPhyUpdate = millis() - timestampPhyUpdate;
-
-                if (MAX_LOOP_TIME <= durationPhyUpdate)
-                {
-                    abort = true;
-                }
-            }
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.displayUpdate.update(durationPhyUpdate);
-            statistics.total.update(statistics.pluginProcessing.getCurrent() + statistics.displayUpdate.getCurrent());
-
-            if (true == statisticsLogTimer.isTimeout())
-            {
-                LOG_DEBUG("[ %2u, %2u, %2u ]",
-                    statistics.refreshPeriod.getMin(),
-                    statistics.refreshPeriod.getAvg(),
-                    statistics.refreshPeriod.getMax());
-
-                LOG_DEBUG("[ %2u, %2u, %2u ] [ %2u, %2u, %2u ] [ %2u, %2u, %2u ]",
-                    statistics.pluginProcessing.getMin(),
-                    statistics.pluginProcessing.getAvg(),
-                    statistics.pluginProcessing.getMax(),
-                    statistics.displayUpdate.getMin(),
-                    statistics.displayUpdate.getAvg(),
-                    statistics.displayUpdate.getMax(),
-                    statistics.total.getMin(),
-                    statistics.total.getAvg(),
-                    statistics.total.getMax());
-
-                /* Reset the statistics to get a new min./max. determination. */
-                statistics.pluginProcessing.reset();
-                statistics.displayUpdate.reset();
-                statistics.total.reset();
-                statistics.refreshPeriod.reset();
-
-                statisticsLogTimer.restart();
-            }
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-
-            /* Calculate overall duration */
-            duration = millis() - timestamp;
-
-            /* Give other tasks a chance. */
-            if (UPDATE_TASK_PERIOD <= duration)
-            {
-                delay(1U);
-            }
-            else
-            {
-                delay(UPDATE_TASK_PERIOD - duration);
-            }
-
-#if (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS)
-            statistics.refreshPeriod.update(millis() - timestampLastUpdate);
-            timestampLastUpdate = millis();
-#endif /* (0 != CONFIG_DISPLAY_MGR_ENABLE_STATISTICS) */
-        }
-
-        (void)xSemaphoreGive(tthis->m_updateTaskSemaphore);
-    }
-
-    vTaskDelete(nullptr);
 }
 
 /******************************************************************************

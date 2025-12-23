@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   DateTimePlugin.h
  * @brief  DateTime plugin
  * @author Yann Le Glaz <yann_le@web.de>
  *
@@ -345,14 +346,14 @@ private:
     /**
      * Get configuration in JSON.
      * 
-     * @param[out] cfg  Configuration
+     * @param[out] jsonCfg  Configuration
      */
     void getConfiguration(JsonObject& jsonCfg) const final;
 
     /**
      * Set configuration in JSON.
      * 
-     * @param[in] cfg   Configuration
+     * @param[in] jsonCfg   Configuration
      * 
      * @return If successful set, it will return true otherwise false.
      */

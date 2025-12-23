@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdRestart.h
  * @brief  Websocket command to restart the system
  * @author Andreas Merkle <web@blue-andi.de>
  *

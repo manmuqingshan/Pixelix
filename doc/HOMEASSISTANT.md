@@ -3,98 +3,149 @@
 
 ![PIXELIX](./images/LogoBlack.png)
 
-# Home Assistant <!-- omit in toc -->
+## Home Assistant <!-- omit in toc -->
 
 - [Purpose](#purpose)
-- [REST API](#rest-api)
-  - [Installation](#installation)
-  - [Setting up REST command](#setting-up-rest-command)
-  - [Import Blueprint](#import-blueprint)
-  - [Generate an automation](#generate-an-automation)
-- [MQTT](#mqtt)
-  - [Installation](#installation-1)
-  - [MQTT Discovery](#mqtt-discovery)
+- [Communication](#communication)
+  - [REST API](#rest-api)
+    - [Installation (REST Command)](#installation-rest-command)
+    - [Automation (REST Command)](#automation-rest-command)
+  - [MQTT API](#mqtt-api)
+    - [Installation (MQTT)](#installation-mqtt)
+    - [MQTT Discovery](#mqtt-discovery)
+    - [Automation (MQTT)](#automation-mqtt)
+- [Automation Blueprint](#automation-blueprint)
 - [Issues, Ideas And Bugs](#issues-ideas-and-bugs)
 - [License](#license)
 - [Contribution](#contribution)
 
 ## Purpose
 
-To display e.g. sensor data from your [Home Assistant](https://www.home-assistant.io/) instance, there are two possibilitis. Using the REST API or MQTT.
+[Home Assistant](https://www.home-assistant.io/) is a popular open-source platform for smart home automation. Pixelix supports displaying sensor data from Home Assistant using both the REST API and the MQTT API. Especially the MQTT automatic discovery support is fast and seamless.
 
-## REST API
+## Communication
 
-The following wrapper supports for now only the JustTextPlugin.
+Every Pixelix device provides a REST API and some may provide the MQTT API. To see whether MQTT is supported by your Pixelix device, open the *Settings* web page and search
+for *MQTT broker URL*. If its there, MQTT is supported.
 
-### Installation
+### REST API
 
-If you want to add the wrapper to your Home Assistant instance you first need to add a REST command to your `configuration.yaml`.
+With the [RESTful Command integration](https://www.home-assistant.io/integrations/rest_command) PIXELIX can be controlled by REST API and with the [RESTful integration](https://www.home-assistant.io/integrations/rest) sensor entities can be created.
 
-### Setting up REST command
+#### Installation (REST Command)
 
-Add the following lines of code to your `configuration.yaml`:
+Setup corresponding entities in the Home Assistant `configuration.yaml` and use them via the automation wizard or manually in the `automations.yaml`.
+
+A simple REST command example looks like:
 
 ```yaml
 rest_command:
-  pixelix_just_text:
-    url: 'http://192.168.178.10/rest/api/v1/display/uid/{{ uid }}/text?text={{ "%5C" + align + "%5C" + color + text }}'
+  pixelix_notify:
+    url: 'http://<IP-ADDRESS>/rest/api/v1/display/uid/{{ uid }}/iconText?text={{ text | urlencode() }}'
     method: POST
 ```
 
-You need to replace the IP `192.168.178.10` with your Pixelix instance IP.
+The REST API is desribed in detail on the [SwaggerHub](https://app.swaggerhub.com/apis/BlueAndi/Pixelix/1.8.0).
 
-### Import Blueprint
+#### Automation (REST Command)
 
-You can use this link to add the wrapper to your Home Assistant installation.
+Extend the `automations.yaml` manually for using the Pixelix MQTT device, e.g.
 
-[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FBlueAndi%2FPixelix%2Fblob%2Fmaster%2Fdoc%2Fhomeassistant%2Fpixelix-justtext.yaml)
-
-As an alternative you can copy the yaml to  `/config/blueprints/automation/homeassistant/`.
-You can find the raw YAML file [here](./homeassistant/pixelix-justtext.yaml "here")
-
-### Generate an automation
-
-First of all you need to install a "JustText"-Plugin in a slot in your Pixelix installation. Then note down the uid of the plugin.
-
-![Example Home Assistant Automation](./../doc/images/HomeassistantJustTextAutomation.png)
-
-The fields should be pretty self-explanatory.
-Just note that you have to enter the sensor labels in the following format:
-
-```
-- Sensor Label 1
-- Sensor Label 2
-- Sensor Label 3
+```yaml
+- id: garage_door_state_on_pixelix
+  alias: Garage door state on Pixelix
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - cover.garage_door
+  conditions: []
+  actions:
+    - service: rest_command.pixelix_notify
+      data:
+        uid: 42798
+        text: "{{ states('cover.garage_door') }}"
+  mode: single
 ```
 
-See it in the example screenshot above.
-**Important:** Each sensor entry **must have** an corresponding sensor label entry!
+[Home Assistant automation blueprints](https://www.home-assistant.io/docs/automation/using_blueprints/) are a game changer in sense of simple integration, without the necessity to battle in low level yaml and jinja2 programming. See [Automation Blueprint chapter](#automation-blueprint) how to import it for Pixelix.
 
-## MQTT
+### MQTT API
 
-MQTT is not part of every Pixelix installation. It depends on the development board specific configuration or in other words, mainly on the available flash size. For development boards with less than 8 MB flash, its disabled by default, except the Ulanzi TC001. You can enable it, but need to compile it by yourself and throw other plugins out to get it fit.
+Using the MQTT API requires that a MQTT broker is available in network and Pixelix as well as Home Assistant have access to it.
 
-### Installation
+#### Installation (MQTT)
 
-If not already installed, you will need to add the MQTT integration
+If not already installed, you will need first to install the MQTT integration to your Home Assistant instance.
 
 [![MQTT Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start?domain=mqtt)
 
-### MQTT Discovery
+Then configure Pixelix in the *Settings* web page like:
+
+1. Enter the MQTT broker URL to *MQTT broker URL*.
+2. If necessary, update the *Home Assistant Discovery Prefix*.
+3. Activate the checkbox *Enable Home Assistant MQTT Discovery*.
+4. Restart PIXELIX.
+
+#### MQTT Discovery
 
 The Home Assistant MQTT discovery is supported by several plugins and features, here are some examples:
 
-* Display on/off
-* Device restart
-* Sensor information
-* JustTextPlugin
-* IconTextPlugin
-* IconTextLampPlugin
-* MultiIconPlugin
+- Display on/off
+- Device restart
+- Sensor information
+- IconTextPlugin
+- IconTextLampPlugin
+- MultiIconPlugin
 
 Pixelix will be shown as device with its entities. Every installed plugin will be shown as at least one entity.
 
 [More technical details about MQTT](./MQTT.md)
+
+#### Automation (MQTT)
+
+Extend the `automations.yaml` manually for using the Pixelix MQTT device, e.g.
+
+```yaml
+- id: garage_door_state_on_pixelix
+  alias: Garage door state on Pixelix
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - cover.garage_door
+  conditions: []
+  actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: '0'
+      topic: pixelix-6F1AD6B8/display/uid/42798/iconText/set
+      payload: '{ "text": "{{ states(''cover.garage_door'') }}" }'
+  mode: single
+```
+
+[Home Assistant automation blueprints](https://www.home-assistant.io/docs/automation/using_blueprints/) are a game changer in sense of simple integration, without the necessity to battle in low level yaml and jinja2 programming. See [Automation Blueprint chapter](#automation-blueprint) how to import it for Pixelix.
+
+## Automation Blueprint
+
+Home Assistant Automation Blueprints are reusable templates that simplify the creation of automations by providing a guided, fill-in-the-blanks interface. They help users quickly set up complex automations without needing to write YAML code from scratch, making smart home customization more accessible and efficient.
+
+Pixelix provides with the following link such an automation blueprint to your Home Assistant installation. It supports to communicate with a Pixelix device by REST API and via MQTT API.
+
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FBlueAndi%2FPixelix%2Fblob%2Fmaster%2Fdoc%2Fhomeassistant%2Fblueprint%2Fpixelix_send_sensor_data.yaml)
+
+As an alternative copy the [pixelix_send_sensor_data.yaml](./homeassistant/blueprint/pixelix_send_sensor_data.yaml) file to  `/config/blueprints/automation/homeassistant/`.
+
+Only for communicate via REST API with Pixelix, the following REST command needs to be added to the `configuration.yaml`:
+
+```yaml
+rest_command:
+  pixelix_plugin_command:
+    url: "http://{{ hostname }}{{ endpoint }}?{{ url_parameter }}"
+    method: POST
+```
 
 ## Issues, Ideas And Bugs
 

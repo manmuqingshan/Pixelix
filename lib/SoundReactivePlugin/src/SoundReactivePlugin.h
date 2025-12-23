@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SoundReactivePlugin.h
  * @brief  Sound reactive plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -358,14 +359,14 @@ private:
     /**
      * Get configuration in JSON.
      * 
-     * @param[out] cfg  Configuration
+     * @param[out] jsonCfg   Configuration
      */
     void getConfiguration(JsonObject& jsonCfg) const final;
 
     /**
      * Set configuration in JSON.
      * 
-     * @param[in] cfg   Configuration
+     * @param[in] jsonCfg   Configuration
      * 
      * @return If successful set, it will return true otherwise false.
      */
@@ -381,8 +382,6 @@ private:
      * 
      * @param[out]  freqBins    Frequency bin buffer
      * @param[in]   freqBinLen  Length of frequency bin buffer in elements.
-     * 
-     * @return If successful, it will return true otherwise false.
      */
     void handleFreqBins(float* freqBins, size_t freqBinLen);
 

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IFadeEffect.hpp
  * @brief  Basic fade effect interface
  * @author Andreas Merkle <web@blue-andi.de>
  *

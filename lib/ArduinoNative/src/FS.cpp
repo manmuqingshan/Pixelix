@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FS.cpp
  * @brief  Arduino stuff for test
  * @author Andreas Merkle <web@blue-andi.de>
  */

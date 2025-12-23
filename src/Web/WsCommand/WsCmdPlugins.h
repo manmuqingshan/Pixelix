@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdPlugins.h
  * @brief  Websocket command get plugins information
  * @author Andreas Merkle <web@blue-andi.de>
  *

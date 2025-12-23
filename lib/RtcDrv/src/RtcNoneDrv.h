@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RtcNoneDrv.h
  * @brief  RTC driver without functionality
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestApiTopicHandler.h
  * @brief  REST API topic handler
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -144,6 +145,20 @@ public:
         (void)topic;
     }
 
+    /**
+     * Maximum content length for HTTP POST/PUT requests.
+     * If the content length exceeds this value, the request will be rejected.
+     * This is a safety mechanism to avoid memory exhaustion.
+     */
+    static const size_t MAX_CONTENT_LENGTH = 50U * 1024U; /* 50 KB */
+
+    /**
+     * Maximum body length for HTTP POST/PUT requests.
+     * If the body length exceeds this value, the request will be rejected.
+     * This is a safety mechanism to avoid memory exhaustion.
+     */
+    static const size_t MAX_BODY_LENGTH    = 8U * 1024U; /* 8 KB */
+
 private:
 
     /**
@@ -218,6 +233,18 @@ private:
      * @param[in] topicMetaData The related topic meta data.
      */
     void uploadHandler(AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final, TopicMetaData* topicMetaData);
+
+    /**
+     * Body handler.
+     *
+     * @param[in] request       HTTP request.
+     * @param[in] data          Next data part of body.
+     * @param[in] len           Data part size in byte.
+     * @param[in] index         Current body offset.
+     * @param[in] total         Total size of body.
+     * @param[in] topicMetaData The related topic meta data.
+     */
+    void bodyHandler(AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total, TopicMetaData* topicMetaData);
 
     /**
      * Convert HTTP parameters to JSON format.

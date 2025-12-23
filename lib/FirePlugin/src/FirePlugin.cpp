@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   FirePlugin.cpp
  * @brief  Fire demo plugin
  * @author Andreas Merkle <web@blue-andi.de>
  */

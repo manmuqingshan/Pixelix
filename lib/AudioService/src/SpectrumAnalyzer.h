@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SpectrumAnalyzer.h
  * @brief  Spectrum analyzer
  * @author Andreas Merkle <web@blue-andi.de>
  * 
@@ -82,7 +83,7 @@ public:
     /**
      * Destroys the spectrum analyzer instance.
      */
-    ~SpectrumAnalyzer()
+    ~SpectrumAnalyzer() override
     {
         m_mutex.destroy();
     }

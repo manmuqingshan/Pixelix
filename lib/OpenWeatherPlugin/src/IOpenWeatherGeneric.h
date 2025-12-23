@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IOpenWeatherGeneric.h
  * @brief  Interface for the weather
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -84,6 +85,13 @@ public:
     virtual void setApiKey(const String& apiKey) = 0;
 
     /**
+     * Set the API key.
+     * 
+     * @param[in] apiKey    The API key which to set.
+     */
+    virtual void setApiKey(const char* apiKey) = 0;
+
+    /**
      * Get the latitude.
      * 
      * @return Latitude
@@ -91,11 +99,18 @@ public:
     virtual const String& getLatitude() const = 0;
 
     /**
-     * Set thel latidue.
+     * Set the latitude.
      * 
      * @param[in] latitude  The latitude which to set.
      */
     virtual void setLatitude(const String& latitude) = 0;
+
+    /**
+     * Set the latitude.
+     * 
+     * @param[in] latitude  The latitude which to set.
+     */
+    virtual void setLatitude(const char* latitude) = 0;
 
     /**
      * Get the longitude.
@@ -112,6 +127,13 @@ public:
     virtual void setLongitude(const String& longitude) = 0;
 
     /**
+     * Set the longitude.
+     * 
+     * @param[in] longitude The longitude which to set.
+     */
+    virtual void setLongitude(const char* longitude) = 0;
+
+    /**
      * Get the units which are used for temperature and
      * wind speed.
      * 
@@ -125,6 +147,13 @@ public:
      * @param[in] units The units which to set.
      */
     virtual void setUnits(const String& units) = 0;
+
+    /**
+     * Set the units to use temperature and wind speed.
+     * 
+     * @param[in] units The units which to set.
+     */
+    virtual void setUnits(const char* units) = 0;
 
     /**
      * Adds the URI to the base URL.

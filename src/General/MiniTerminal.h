@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MiniTerminal.h
  * @brief  Mini-Terminal
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -73,8 +74,7 @@ public:
     MiniTerminal(Stream& stream) :
         m_stream(stream),
         m_input(),
-        m_writeIndex(0U),
-        m_isRestartRequested(false)
+        m_writeIndex(0U)
     {
         /* Don't wait for any input. */
         m_stream.setTimeout(0U);
@@ -93,30 +93,15 @@ public:
      */
     void process();
 
-    /**
-     * Is restart requested?
-     * 
-     * @return If restart requested, it will return true otherwise false.
-     */
-    bool isRestartRequested()
-    {
-        bool isRestartRequested = m_isRestartRequested;
-
-        m_isRestartRequested = false;
-
-        return isRestartRequested;
-    }
+private:
 
     /**
-     * @brief Table entry for known terminal commands
-     * 
+     * Table entry for known terminal commands
      */
     struct CmdTableEntry {
         const char *cmdStr;                           /**< Command string.           */
         void (MiniTerminal::*handler)(const char *);  /**< Command handler function. */
     };
-
-private:
 
     static const char   ASCII_BS            = 8;    /**< ASCII backspace value */
     static const char   ASCII_LF            = 10;   /**< ASCII line feed value */
@@ -128,7 +113,6 @@ private:
     Stream& m_stream;                   /**< In/Out-stream. */
     char    m_input[INPUT_BUFFER_SIZE]; /**< Input command line buffer. */
     size_t  m_writeIndex;               /**< Write index to the command line buffer. */
-    bool    m_isRestartRequested;       /**< Restart requested? */
 
     static const CmdTableEntry m_cmdTable[]; /**< Table with supported commands. */
 

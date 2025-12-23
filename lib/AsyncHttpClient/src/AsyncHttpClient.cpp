@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AsyncHttpClient.cpp
  * @brief  Asynchronous HTTP client
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -59,13 +60,13 @@
  *****************************************************************************/
 
 /** Mutex buffer required for counting semaphore. */
-static StaticSemaphore_t    gxMutexBuffer;
+static StaticSemaphore_t gxMutexBuffer;
 
 /**
  * Counting semaphore to serialize all asynchronous HTTP client requests.
  *  This is necessary, because a secure connection needs about 50k of heap.
  */
-static SemaphoreHandle_t    ghMutex         = xSemaphoreCreateMutexStatic(&gxMutexBuffer);
+static SemaphoreHandle_t ghMutex = xSemaphoreCreateMutexStatic(&gxMutexBuffer);
 
 /******************************************************************************
  * Public Methods
@@ -75,6 +76,7 @@ AsyncHttpClient::AsyncHttpClient() :
     m_processTaskHandle(nullptr),
     m_processTaskExit(false),
     m_processTaskSemaphore(nullptr),
+    m_allocator(),
     m_tcpClient(),
     m_cmdQueue(),
     m_evtQueue(),
@@ -106,89 +108,85 @@ AsyncHttpClient::AsyncHttpClient() :
     m_contentIndex(0U),
     m_chunkSize(0U),
     m_chunkIndex(0U),
-    m_chunkBodyPart(CHUNK_SIZE)
+    m_chunkBodyPart(CHUNK_SIZE),
+    m_isError(false)
 {
     (void)m_cmdQueue.create(CMD_QUEUE_SIZE);
     (void)m_evtQueue.create(EVT_QUEUE_SIZE);
     (void)m_mutex.create();
 
-    m_tcpClient.onConnect(  [this](void* arg, AsyncClient* client)
-                            {
-                                Event   evt;
+    m_tcpClient.onConnect([this](void* arg, AsyncClient* client) {
+        Event evt;
 
-                                UTIL_NOT_USED(arg);
-                                UTIL_NOT_USED(client);
+        UTIL_NOT_USED(arg);
+        UTIL_NOT_USED(client);
 
-                                memset(&evt, 0, sizeof(evt));
-                                evt.id = EVENT_ID_CONNECTED;
+        memset(&evt, 0, sizeof(evt));
+        evt.id = EVENT_ID_CONNECTED;
 
-                                (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
-                            });
+        (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
+    });
 
-    m_tcpClient.onDisconnect(   [this](void* arg, AsyncClient* client)
-                                {
-                                    Event   evt;
-                                    
-                                    UTIL_NOT_USED(arg);
-                                    UTIL_NOT_USED(client);
+    m_tcpClient.onDisconnect([this](void* arg, AsyncClient* client) {
+        Event evt;
 
-                                    memset(&evt, 0, sizeof(evt));
-                                    evt.id = EVENT_ID_DISCONNECTED;
-                                    
-                                    (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
-                                });
+        UTIL_NOT_USED(arg);
+        UTIL_NOT_USED(client);
 
-    m_tcpClient.onError(    [this](void* arg, AsyncClient* client, int8_t error)
-                            {
-                                Event   evt;
+        memset(&evt, 0, sizeof(evt));
+        evt.id = EVENT_ID_DISCONNECTED;
 
-                                UTIL_NOT_USED(arg);
-                                UTIL_NOT_USED(client);
+        (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
+    });
 
-                                memset(&evt, 0, sizeof(evt));
-                                evt.id      = EVENT_ID_ERROR;
-                                evt.u.error = error;
+    m_tcpClient.onError([this](void* arg, AsyncClient* client, int8_t error) {
+        Event evt;
 
-                                (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
-                            });
+        UTIL_NOT_USED(arg);
+        UTIL_NOT_USED(client);
 
-    m_tcpClient.onData( [this](void* arg, AsyncClient* client, void* data, size_t len)
-                        {
-                            Event   evt;
+        memset(&evt, 0, sizeof(evt));
+        evt.id      = EVENT_ID_ERROR;
+        evt.u.error = error;
 
-                            UTIL_NOT_USED(arg);
+        (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
+    });
 
-                            memset(&evt, 0, sizeof(evt));
-                            evt.id          = EVENT_ID_DATA;
-                            evt.u.data.data = new(std::nothrow) uint8_t[len];
+    m_tcpClient.onData([this](void* arg, AsyncClient* client, void* data, size_t len) {
+        Event evt;
 
-                            if (nullptr == evt.u.data.data)
-                            {
-                                LOG_ERROR("Couldn't allocate %u memory.", len);
+        UTIL_NOT_USED(arg);
 
-                                evt.u.data.size = 0U;
-                            }
-                            else
-                            {
-                                evt.u.data.size = len;
-                                memcpy(evt.u.data.data, data, len);
-                            }
+        memset(&evt, 0, sizeof(evt));
+        evt.id          = EVENT_ID_DATA;
+        evt.u.data.data = m_allocator.allocateArray(len);
 
-                            (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
-                        });
+        if (nullptr == evt.u.data.data)
+        {
+            LOG_ERROR("Couldn't allocate %u memory.", len);
 
-    m_tcpClient.onTimeout(  [this](void* arg, AsyncClient* client, uint32_t timeout)
-                            {
-                                Event   evt;
+            evt.u.data.size = 0U;
+        }
+        else
+        {
+            evt.u.data.size = len;
+            memcpy(evt.u.data.data, data, len);
+        }
 
-                                UTIL_NOT_USED(arg);
+        (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
+    });
 
-                                memset(&evt, 0, sizeof(evt));
-                                evt.id          = EVENT_ID_TIMEOUT;
-                                evt.u.timeout   = timeout;
+    m_tcpClient.onTimeout([this](void* arg, AsyncClient* client, uint32_t timeout) {
+        Event evt;
 
-                                (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
-                            });
+        UTIL_NOT_USED(arg);
+
+        memset(&evt, 0, sizeof(evt));
+        evt.id        = EVENT_ID_TIMEOUT;
+        evt.u.timeout = timeout;
+
+        (void)m_evtQueue.sendToBack(evt, portMAX_DELAY);
+    });
 }
 
 AsyncHttpClient::~AsyncHttpClient()
@@ -211,9 +209,9 @@ AsyncHttpClient::~AsyncHttpClient()
 
 bool AsyncHttpClient::begin(const String& url)
 {
-    bool    status      = true;
-    int     index       = url.indexOf(':');
-    bool    isReqOpen   = false;
+    bool status    = true;
+    int  index     = url.indexOf(':');
+    bool isReqOpen = false;
 
     if (nullptr == m_processTaskHandle)
     {
@@ -222,8 +220,8 @@ bool AsyncHttpClient::begin(const String& url)
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
-        
+        MutexGuard<Mutex> guard(m_mutex);
+
         isReqOpen = m_isReqOpen;
     }
 
@@ -251,17 +249,17 @@ bool AsyncHttpClient::begin(const String& url)
 
         /* Get protocol http or https */
         String protocol = url.substring(patternBegin, index);
-        patternBegin = index + 3; /* Overstep '://' too. */
+        patternBegin    = index + 3; /* Overstep '://' too. */
 
         /* Determine port from protocol */
         if (protocol == "http")
         {
-            m_port = HTTP_PORT;
+            m_port     = HTTP_PORT;
             m_isSecure = false;
         }
         else if (protocol == "https")
         {
-            m_port = HTTPS_PORT;
+            m_port     = HTTPS_PORT;
             m_isSecure = true;
         }
         else
@@ -277,7 +275,7 @@ bool AsyncHttpClient::begin(const String& url)
 
             /* Get host (incl. authorization and port) */
             index = url.indexOf('/', patternBegin);
-            host = url.substring(patternBegin, index);
+            host  = url.substring(patternBegin, index);
 
             /* Get URI */
             if (0 > index)
@@ -298,7 +296,7 @@ bool AsyncHttpClient::begin(const String& url)
             }
             else
             {
-                auth = host.substring(0, index);
+                auth                  = host.substring(0, index);
                 m_base64Authorization = base64::encode(auth);
 
                 /* Remove authorization from host string. */
@@ -314,13 +312,13 @@ bool AsyncHttpClient::begin(const String& url)
             }
             else
             {
-                String  port;
-                long    portNo  = 0;
+                String port;
+                long   portNo = 0;
 
                 /* Get port */
-                port = host.substring(index + 1);
+                port          = host.substring(index + 1);
 
-                portNo = port.toInt();
+                portNo        = port.toInt();
 
                 if ((0 > portNo) ||
                     (UINT16_MAX < portNo))
@@ -368,13 +366,12 @@ void AsyncHttpClient::end()
     clearCmdQueue();
     clearEvtQueue();
     clear();
-    giveGlobalMutex();
 }
 
 bool AsyncHttpClient::isConnected()
 {
-    MutexGuard<Mutex>   guard(m_mutex);
-    bool                isConnected = m_isConnected;
+    MutexGuard<Mutex> guard(m_mutex);
+    bool              isConnected = m_isConnected;
 
     return isConnected;
 }
@@ -450,7 +447,7 @@ void AsyncHttpClient::regOnError(const OnError& onError)
 bool AsyncHttpClient::GET()
 {
     Cmd cmd;
-    
+
     memset(&cmd, 0, sizeof(cmd));
     cmd.id = CMD_ID_GET;
 
@@ -460,9 +457,9 @@ bool AsyncHttpClient::GET()
 bool AsyncHttpClient::POST(const uint8_t* payload, size_t size)
 {
     Cmd cmd;
-    
+
     memset(&cmd, 0, sizeof(cmd));
-    cmd.id = CMD_ID_POST;
+    cmd.id          = CMD_ID_POST;
     cmd.u.data.data = payload;
     cmd.u.data.size = size;
 
@@ -472,9 +469,9 @@ bool AsyncHttpClient::POST(const uint8_t* payload, size_t size)
 bool AsyncHttpClient::POST(const String& payload)
 {
     Cmd cmd;
-    
+
     memset(&cmd, 0, sizeof(cmd));
-    cmd.id = CMD_ID_POST;
+    cmd.id          = CMD_ID_POST;
     cmd.u.data.data = reinterpret_cast<const uint8_t*>(payload.c_str());
     cmd.u.data.size = payload.length();
 
@@ -500,18 +497,18 @@ bool AsyncHttpClient::createProcessTask()
 
         if (nullptr != m_processTaskSemaphore)
         {
-            BaseType_t  osRet   = pdFAIL;
+            BaseType_t osRet  = pdFAIL;
 
             /* Task shall run */
             m_processTaskExit = false;
 
-            osRet = xTaskCreateUniversal(   processTask,
-                                            "AsyncHttpClientTask",
-                                            PROCESS_TASK_STACK_SIZE,
-                                            this,
-                                            PROCESS_TASK_PRIORITY,
-                                            &m_processTaskHandle,
-                                            PROCESS_TASK_RUN_CORE);
+            osRet             = xTaskCreateUniversal(processTask,
+                "AsyncHttpClientTask",
+                PROCESS_TASK_STACK_SIZE,
+                this,
+                PROCESS_TASK_PRIORITY,
+                &m_processTaskHandle,
+                PROCESS_TASK_RUN_CORE);
 
             /* Couldn't task be created? */
             if (pdPASS != osRet)
@@ -526,7 +523,7 @@ bool AsyncHttpClient::createProcessTask()
             }
         }
     }
-    
+
     return isSuccessful;
 }
 
@@ -550,7 +547,7 @@ void AsyncHttpClient::clearCmdQueue()
 {
     Cmd cmd;
 
-    while(true == m_cmdQueue.receive(&cmd, 0U))
+    while (true == m_cmdQueue.receive(&cmd, 0U))
     {
         (void)cmd;
     }
@@ -560,13 +557,13 @@ void AsyncHttpClient::clearEvtQueue()
 {
     Event evt;
 
-    while(true == m_evtQueue.receive(&evt, 0U))
+    while (true == m_evtQueue.receive(&evt, 0U))
     {
         if (EVENT_ID_DATA == evt.id)
         {
             if (nullptr != evt.u.data.data)
             {
-                delete[] evt.u.data.data;
+                m_allocator.deallocateArray(evt.u.data.data);
                 evt.u.data.data = nullptr;
                 evt.u.data.size = 0U;
             }
@@ -583,7 +580,7 @@ void AsyncHttpClient::processTask(void* parameters)
     {
         (void)xSemaphoreTake(tthis->m_processTaskSemaphore, portMAX_DELAY);
 
-        while(false == tthis->m_processTaskExit)
+        while (false == tthis->m_processTaskExit)
         {
             tthis->processCmdQueue();
             tthis->processEvtQueue();
@@ -593,6 +590,11 @@ void AsyncHttpClient::processTask(void* parameters)
 
         /* Ensure that any pending request/connection is aborted. */
         tthis->abort();
+
+        /* The global mutex must be released from the same task it
+         * was taken, otherwise it will lead to a assertion in FreeRTOS.
+         */
+        tthis->giveGlobalMutex();
 
         (void)xSemaphoreGive(tthis->m_processTaskSemaphore);
     }
@@ -608,11 +610,13 @@ void AsyncHttpClient::processCmdQueue()
 
         if (true == m_cmdQueue.receive(&cmd, 0U))
         {
-            switch(cmd.id)
+            switch (cmd.id)
             {
             case CMD_ID_GET:
                 if (false == getRequest())
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -620,6 +624,8 @@ void AsyncHttpClient::processCmdQueue()
             case CMD_ID_POST:
                 if (false == postRequest(cmd.u.data.data, cmd.u.data.size))
                 {
+                    onError(ERR_CONN);
+                    notifyClosed();
                     giveGlobalMutex();
                 }
                 break;
@@ -639,9 +645,9 @@ void AsyncHttpClient::processEvtQueue()
 {
     Event evt;
 
-    while(true == m_evtQueue.receive(&evt, 0U))
+    while (true == m_evtQueue.receive(&evt, 0U))
     {
-        switch(evt.id)
+        switch (evt.id)
         {
         case EVENT_ID_CONNECTED:
             onConnect();
@@ -660,7 +666,7 @@ void AsyncHttpClient::processEvtQueue()
 
             if (nullptr != evt.u.data.data)
             {
-                delete[] evt.u.data.data;
+                m_allocator.deallocateArray(evt.u.data.data);
                 evt.u.data.data = nullptr;
                 evt.u.data.size = 0U;
             }
@@ -681,15 +687,15 @@ void AsyncHttpClient::onConnect()
     bool isReqOpen = false;
 
     LOG_INFO("Connected to %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
+        MutexGuard<Mutex> guard(m_mutex);
 
-        m_isConnected   = true;
-        isReqOpen       = m_isReqOpen;
-        m_isReqOpen     = false;
+        m_isConnected = true;
+        isReqOpen     = m_isReqOpen;
+        m_isReqOpen   = false;
     }
 
     /* Is there a queued request, which to send? */
@@ -704,17 +710,35 @@ void AsyncHttpClient::onConnect()
 
 void AsyncHttpClient::onDisconnect()
 {
+    bool isConnected;
+
     LOG_INFO("Disconnected from %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
-        
+        MutexGuard<Mutex> guard(m_mutex);
+
+        isConnected   = m_isConnected;
         m_isConnected = false;
     }
 
+    if ((false == isConnected) && (false == m_isError))
+    {
+        onError(ERR_CONN);
+    }
+
+    m_isError = false;
     clear();
+
+    /* It happens that during the connection establishment the SSL handshake fails.
+     * In this case, the connection is closed and no error is reported from the TCP client.
+     */
+    if (false == isConnected)
+    {
+        onError(ERR_CONN);
+    }
+
     notifyClosed();
 
     giveGlobalMutex();
@@ -730,7 +754,7 @@ void AsyncHttpClient::onError(int8_t error)
     }
     else
     {
-        const int8_t HOST_IS_UNREACHABLE    = 113; /* https://github.com/yubox-node-org/AsyncTCPSock/issues/13 */
+        const int8_t HOST_IS_UNREACHABLE = 113; /* https://github.com/yubox-node-org/AsyncTCPSock/issues/13 */
 
         LOG_WARNING("Error occurred: %d", error);
 
@@ -740,16 +764,17 @@ void AsyncHttpClient::onError(int8_t error)
         }
     }
 
+    m_isError = true;
     notifyError();
     disconnect();
 }
 
 void AsyncHttpClient::onData(const uint8_t* data, size_t len)
 {
-    size_t      index       = 0U;
-    const void* vData       = data;
-    const char* asciiData   = static_cast<const char*>(vData);
-    bool        isError     = false;
+    size_t      index     = 0U;
+    const void* vData     = data;
+    const char* asciiData = static_cast<const char*>(vData);
+    bool        isError   = false;
 
     /* RFC2616 - Response = Status-Line
      *                      *(( general-header
@@ -759,9 +784,9 @@ void AsyncHttpClient::onData(const uint8_t* data, size_t len)
      *                [ message-body ]
      */
 
-    while((len > index) && (false == isError))
+    while ((len > index) && (false == isError))
     {
-        switch(m_rspPart)
+        switch (m_rspPart)
         {
         case RESPONSE_PART_STATUS_LINE:
             if (true == parseRspStatusLine(asciiData, len, index))
@@ -809,15 +834,15 @@ void AsyncHttpClient::onData(const uint8_t* data, size_t len)
                     notifyResponse();
 
                     m_transferCoding = TRANSFER_CODING_IDENTITY;
-                    m_rspPart = RESPONSE_PART_STATUS_LINE;
+                    m_rspPart        = RESPONSE_PART_STATUS_LINE;
                     m_rsp.clear();
                 }
             }
             else
             {
-                size_t available    = len - index;
-                size_t needed       = m_contentLength - m_contentIndex;
-                size_t copySize     = 0U;
+                size_t available = len - index;
+                size_t needed    = m_contentLength - m_contentIndex;
+                size_t copySize  = 0U;
 
                 if (available >= needed)
                 {
@@ -828,18 +853,26 @@ void AsyncHttpClient::onData(const uint8_t* data, size_t len)
                     copySize = available;
                 }
 
-                m_rsp.addPayload(&data[index], copySize);
-                m_contentIndex += copySize;
-                index += copySize;
-
-                if (m_contentLength <= m_contentIndex)
+                if (false == m_rsp.addPayload(&data[index], copySize))
                 {
-                    notifyResponse();
+                    LOG_FATAL("Couldn't allocate memory for payload.");
+                    m_tcpClient.close();
+                    isError = true;
+                }
+                else
+                {
+                    m_contentIndex += copySize;
+                    index          += copySize;
 
-                    m_rspPart = RESPONSE_PART_STATUS_LINE;
-                    m_rsp.clear();
-                    m_contentLength = 0U;
-                    m_contentIndex = 0U;
+                    if (m_contentLength <= m_contentIndex)
+                    {
+                        notifyResponse();
+
+                        m_rspPart = RESPONSE_PART_STATUS_LINE;
+                        m_rsp.clear();
+                        m_contentLength = 0U;
+                        m_contentIndex  = 0U;
+                    }
                 }
             }
             break;
@@ -864,7 +897,7 @@ void AsyncHttpClient::onTimeout(uint32_t timeout)
 bool AsyncHttpClient::connect()
 {
     LOG_INFO("Connecting to %s:%u%s.", m_hostname.c_str(), m_port, m_uri.c_str());
-    LOG_DEBUG("Available heap: %u", ESP.getFreeHeap());
+    LOG_DEBUG("Available heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DEFAULT));
 
     return m_tcpClient.connect(m_hostname.c_str(), m_port, m_isSecure);
 }
@@ -889,36 +922,36 @@ void AsyncHttpClient::abort()
 
 bool AsyncHttpClient::getRequest()
 {
-    bool status     = false;
-    bool isReqOpen  = false;
+    bool status    = false;
+    bool isReqOpen = false;
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
+        MutexGuard<Mutex> guard(m_mutex);
 
         isReqOpen = m_isReqOpen;
     }
 
     if (false == isReqOpen)
     {
-        m_method        = "GET";
-        m_payload       = nullptr;
-        m_payloadSize   = 0U;
+        m_method      = "GET";
+        m_payload     = nullptr;
+        m_payloadSize = 0U;
 
         if (false == m_tcpClient.connected())
         {
-            status = connect();
+            status    = connect();
             isReqOpen = status;
         }
         else
         {
-            status = sendRequest();
+            status    = sendRequest();
             isReqOpen = false;
         }
 
         /* Protect against concurrent access. */
         {
-            MutexGuard<Mutex>   guard(m_mutex);
+            MutexGuard<Mutex> guard(m_mutex);
 
             m_isReqOpen = isReqOpen;
         }
@@ -929,36 +962,36 @@ bool AsyncHttpClient::getRequest()
 
 bool AsyncHttpClient::postRequest(const uint8_t* payload, size_t size)
 {
-    bool status     = false;
-    bool isReqOpen  = false;
+    bool status    = false;
+    bool isReqOpen = false;
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
+        MutexGuard<Mutex> guard(m_mutex);
 
         isReqOpen = m_isReqOpen;
     }
 
     if (false == isReqOpen)
     {
-        m_method        = "POST";
-        m_payload       = payload;
-        m_payloadSize   = size;
+        m_method      = "POST";
+        m_payload     = payload;
+        m_payloadSize = size;
 
         if (false == m_tcpClient.connected())
         {
-            status = connect();
+            status    = connect();
             isReqOpen = status;
         }
         else
         {
-            status = sendRequest();
+            status    = sendRequest();
             isReqOpen = false;
         }
 
         /* Protect against concurrent access. */
         {
-            MutexGuard<Mutex>   guard(m_mutex);
+            MutexGuard<Mutex> guard(m_mutex);
 
             m_isReqOpen = isReqOpen;
         }
@@ -969,11 +1002,11 @@ bool AsyncHttpClient::postRequest(const uint8_t* payload, size_t size)
 
 bool AsyncHttpClient::sendRequest()
 {
-    bool        status      = false;
+    bool        status = false;
     String      request;
-    const char* PROTOCOL    = "HTTP";
-    const char* SP          = " ";
-    const char* CRLF        = "\r\n";
+    const char* PROTOCOL  = "HTTP";
+    const char* SP        = " ";
+    const char* CRLF      = "\r\n";
 
     /* RFC2616
      * Request = Request-Line
@@ -988,8 +1021,8 @@ bool AsyncHttpClient::sendRequest()
     /* Request-Line: Method SP Request-URI SP HTTP-Version CRLF */
 
     /* Method */
-    request += m_method;
-    request += SP;
+    request              += m_method;
+    request              += SP;
 
     /* Request-URI    = "*" | absoluteURI | abs_path | authority */
     if (true == m_uri.isEmpty())
@@ -1091,21 +1124,21 @@ bool AsyncHttpClient::sendRequest()
     }
     else if (false == m_urlEncodedPars.isEmpty())
     {
-        request += "Content-Type: application/x-www-form-urlencoded";
-        request += CRLF;
-        request += "Content-Length: ";
-        request += m_urlEncodedPars.length();
-        request += CRLF;
+        request       += "Content-Type: application/x-www-form-urlencoded";
+        request       += CRLF;
+        request       += "Content-Length: ";
+        request       += m_urlEncodedPars.length();
+        request       += CRLF;
 
-        m_payload       = reinterpret_cast<const uint8_t*>(m_urlEncodedPars.c_str());
-        m_payloadSize   = m_urlEncodedPars.length();
+        m_payload      = reinterpret_cast<const uint8_t*>(m_urlEncodedPars.c_str());
+        m_payloadSize  = m_urlEncodedPars.length();
     }
 
     request += m_headers;
     request += CRLF;
 
     /* Send header */
-    status = (request.length() == m_tcpClient.write(request.c_str(), request.length()));
+    status   = (request.length() == m_tcpClient.write(request.c_str(), request.length()));
 
     /* Send payload */
     if ((true == status) &&
@@ -1131,15 +1164,15 @@ void AsyncHttpClient::clear()
     m_rsp.clear();
     m_rspLine.clear();
     m_transferCoding = TRANSFER_CODING_IDENTITY;
-    m_contentLength = 0U;
-    m_contentIndex = 0U;
-    m_chunkSize = 0U;
-    m_chunkIndex = 0U;
-    m_chunkBodyPart = CHUNK_SIZE;
+    m_contentLength  = 0U;
+    m_contentIndex   = 0U;
+    m_chunkSize      = 0U;
+    m_chunkIndex     = 0U;
+    m_chunkBodyPart  = CHUNK_SIZE;
 
     /* Protect against concurrent access. */
     {
-        MutexGuard<Mutex>   guard(m_mutex);
+        MutexGuard<Mutex> guard(m_mutex);
 
         m_isReqOpen = false;
     }
@@ -1147,11 +1180,11 @@ void AsyncHttpClient::clear()
 
 bool AsyncHttpClient::isEOL(const String& str, size_t& len)
 {
-    bool        isEOL               = false;
-    const char  TERMINATOR_LF[]     = "\n";
-    const char  TERMINATOR_CRLF[]   = "\r\n";
+    bool       isEOL             = false;
+    const char TERMINATOR_LF[]   = "\n";
+    const char TERMINATOR_CRLF[] = "\r\n";
 
-    len = 0U;
+    len                          = 0U;
 
     /* RFC7230 - 3.5. Message Parsing Robustness
      * Although the line terminator for the start-line and header fields is
@@ -1177,8 +1210,8 @@ bool AsyncHttpClient::isEOL(const String& str, size_t& len)
 
 bool AsyncHttpClient::handleRspHeader()
 {
-    bool    isSuccess = true;
-    String  value;
+    bool   isSuccess = true;
+    String value;
 
     /* Connection = "Connection" ":" 1#(connection-token)
      * connection-token = token
@@ -1237,11 +1270,11 @@ bool AsyncHttpClient::parseChunkedResponseSize(const char* data, size_t len, siz
 {
     bool isSizeEOF = false;
 
-    while((len > index) && (false == isSizeEOF))
+    while ((len > index) && (false == isSizeEOF))
     {
-        size_t terminatorLen = 0U;
+        size_t terminatorLen  = 0U;
 
-        m_rspLine += data[index];
+        m_rspLine            += data[index];
         ++index;
 
         if (true == isEOL(m_rspLine, terminatorLen))
@@ -1261,10 +1294,10 @@ bool AsyncHttpClient::parseChunkedResponseSize(const char* data, size_t len, siz
 
 bool AsyncHttpClient::parseChunkedResponseChunkData(const uint8_t* data, size_t len, size_t& index)
 {
-    size_t  available   = len - index;
-    size_t  needed      = m_chunkSize - m_chunkIndex;
-    size_t  copySize    = 0U;
-    bool    isDataEOF   = false;
+    size_t available = len - index;
+    size_t needed    = m_chunkSize - m_chunkIndex;
+    size_t copySize  = 0U;
+    bool   isDataEOF = false;
 
     if (available >= needed)
     {
@@ -1275,14 +1308,24 @@ bool AsyncHttpClient::parseChunkedResponseChunkData(const uint8_t* data, size_t 
         copySize = available;
     }
 
-    m_rsp.addPayload(&data[index], copySize);
-    index += copySize;
-    m_chunkIndex += copySize;
-
-    if (m_chunkSize <= m_chunkIndex)
+    if (false == m_rsp.addPayload(&data[index], copySize))
     {
+        LOG_FATAL("Couldn't add chunk payload.");
+
+        /* Abort by set EOF. */
         m_chunkIndex = 0U;
         isDataEOF = true;
+    }
+    else
+    {
+        index        += copySize;
+        m_chunkIndex += copySize;
+
+        if (m_chunkSize <= m_chunkIndex)
+        {
+            m_chunkIndex = 0U;
+            isDataEOF    = true;
+        }
     }
 
     return isDataEOF;
@@ -1292,11 +1335,11 @@ bool AsyncHttpClient::parseChunkedResponseChunkDataEnd(const char* data, size_t 
 {
     bool isDataEOF = false;
 
-    while((len > index) && (false == isDataEOF))
+    while ((len > index) && (false == isDataEOF))
     {
-        size_t terminatorLen = 0U;
+        size_t terminatorLen  = 0U;
 
-        m_rspLine += data[index];
+        m_rspLine            += data[index];
         ++index;
 
         if (true == isEOL(m_rspLine, terminatorLen))
@@ -1313,11 +1356,11 @@ bool AsyncHttpClient::parseChunkedResponseTrailer(const char* data, size_t len, 
 {
     bool isTrailerEOF = false;
 
-    while((len > index) && (false == isTrailerEOF))
+    while ((len > index) && (false == isTrailerEOF))
     {
-        size_t terminatorLen = 0U;
+        size_t terminatorLen  = 0U;
 
-        m_rspLine += data[index];
+        m_rspLine            += data[index];
         ++index;
 
         if (true == isEOL(m_rspLine, terminatorLen))
@@ -1344,9 +1387,9 @@ bool AsyncHttpClient::parseChunkedResponseTrailer(const char* data, size_t len, 
 
 bool AsyncHttpClient::parseChunkedResponse(const uint8_t* data, size_t len, size_t& index)
 {
-    const void* vData       = data;
-    const char* asciiData   = static_cast<const char*>(vData);
-    bool        isChunkEOF  = false;
+    const void* vData      = data;
+    const char* asciiData  = static_cast<const char*>(vData);
+    bool        isChunkEOF = false;
 
     /*
      * Chunked-Body   = *chunk
@@ -1366,9 +1409,9 @@ bool AsyncHttpClient::parseChunkedResponse(const uint8_t* data, size_t len, size
      * trailer        = *(entity-header CRLF)
      */
 
-    while((len > index) && (false == isChunkEOF))
+    while ((len > index) && (false == isChunkEOF))
     {
-        switch(m_chunkBodyPart)
+        switch (m_chunkBodyPart)
         {
         /* Handle chunk or last-chunk size */
         case CHUNK_SIZE:
@@ -1409,7 +1452,7 @@ bool AsyncHttpClient::parseChunkedResponse(const uint8_t* data, size_t len, size
             if (true == parseChunkedResponseTrailer(asciiData, len, index))
             {
                 m_chunkBodyPart = CHUNK_SIZE;
-                isChunkEOF = true;
+                isChunkEOF      = true;
             }
             break;
 
@@ -1426,11 +1469,11 @@ bool AsyncHttpClient::parseRspStatusLine(const char* data, size_t len, size_t& i
 {
     bool isStatusLineEOF = false;
 
-    while((len > index) && (false == isStatusLineEOF))
+    while ((len > index) && (false == isStatusLineEOF))
     {
-        size_t terminatorLen = 0U;
+        size_t terminatorLen  = 0U;
 
-        m_rspLine += data[index];
+        m_rspLine            += data[index];
         ++index;
 
         if (true == isEOL(m_rspLine, terminatorLen))
@@ -1451,11 +1494,11 @@ bool AsyncHttpClient::parseRspHeader(const char* data, size_t len, size_t& index
 {
     bool isHeaderEOF = false;
 
-    while((len > index) && (false == isHeaderEOF))
+    while ((len > index) && (false == isHeaderEOF))
     {
-        size_t terminatorLen = 0U;
+        size_t terminatorLen  = 0U;
 
-        m_rspLine += data[index];
+        m_rspLine            += data[index];
         ++index;
 
         if (true == isEOL(m_rspLine, terminatorLen))
@@ -1506,16 +1549,16 @@ void AsyncHttpClient::notifyError()
 
 String AsyncHttpClient::urlEncode(const String& str)
 {
-    String      encodedStr;
-    size_t      index               = 0U;
-    const char  SP                  = ' ';
-    const char  DIGIT_LOW           = '0';
-    const char  DIGIT_HIGH          = '9';
-    const char  ALPHA_UC_LOW        = 'A';
-    const char  ALPHA_UC_HIGH       = 'Z';
-    const char  ALPHA_LC_LOW        = 'a';
-    const char  ALPHA_LC_HIGH       = 'z';
-    const char  UNRESERVED_CHARS[]  = "-/._~";
+    String     encodedStr;
+    size_t     index              = 0U;
+    const char SP                 = ' ';
+    const char DIGIT_LOW          = '0';
+    const char DIGIT_HIGH         = '9';
+    const char ALPHA_UC_LOW       = 'A';
+    const char ALPHA_UC_HIGH      = 'Z';
+    const char ALPHA_LC_LOW       = 'a';
+    const char ALPHA_LC_HIGH      = 'z';
+    const char UNRESERVED_CHARS[] = "-/._~";
 
     /* https://www.w3.org/TR/html401/interact/forms.html#h-17.13.4.1
      *
@@ -1523,7 +1566,7 @@ String AsyncHttpClient::urlEncode(const String& str)
      *
      * RFC3986 - 2.3 Unreserved Characters
      */
-    while(str.length() > index)
+    while (str.length() > index)
     {
         if (SP == str[index])
         {
@@ -1569,12 +1612,12 @@ const char* AsyncHttpClient::errorToStr(int8_t error)
 {
     const char* errorDescription = nullptr;
 
-    switch(error)
+    switch (error)
     {
     case ERR_MEM:
         errorDescription = "Out of memory error.";
         break;
-    
+
     case ERR_BUF:
         errorDescription = "Buffer error.";
         break;
@@ -1650,10 +1693,10 @@ bool AsyncHttpClient::takeGlobalMutex()
         {
             m_hasGlobalMutex = true;
 
-            isTaken = true;
+            isTaken          = true;
         }
     }
-    
+
     return isTaken;
 }
 

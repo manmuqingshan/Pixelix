@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TwoButtonCtrl.hpp
  * @brief  Two button controller
  * @author Andreas Merkle <web@blue-andi.de>
  * 

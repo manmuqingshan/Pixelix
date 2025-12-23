@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WifiStatusPlugin.h
  * @brief  WiFi status plugin
  * @author Andreas Merkle <web@blue-andi.de>
  *

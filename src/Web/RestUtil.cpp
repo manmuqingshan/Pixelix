@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   RestUtil.cpp
  * @brief  REST API Utilities
  * @author Andreas Merkle <web@blue-andi.de>
  */

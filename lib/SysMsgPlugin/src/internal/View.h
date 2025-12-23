@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   View.h
  * @brief  SysMsgPlugin view
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN

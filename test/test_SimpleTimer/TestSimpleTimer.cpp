@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestSimpleTimer.cpp
  * @brief  Test simple timer.
  * @author Andreas Merkle <web@blue-andi.de>
  */

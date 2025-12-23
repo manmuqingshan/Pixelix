@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   YAGfxBitmap.h
  * @brief  Yet anoterh GFX bitmap class
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -45,6 +46,8 @@
  *****************************************************************************/
 #include <BaseGfxBitmap.hpp>
 #include <YAColor.h>
+#include <TypedAllocator.hpp>
+#include <PsAllocator.hpp>
 
 /******************************************************************************
  * Macros
@@ -66,7 +69,7 @@ template < uint16_t width, uint16_t height >
 using YAGfxStaticBitmap = BaseGfxStaticBitmap<Color, width, height>;
 
 /** GFX dynamic bitmap with concrete color. */
-using YAGfxDynamicBitmap = BaseGfxDynamicBitmap<Color>;
+using YAGfxDynamicBitmap = BaseGfxDynamicBitmap<Color, TypedAllocator<Color, PsAllocator>>;
 
 /******************************************************************************
  * Functions

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdLog.cpp
  * @brief  Websocket command to get/set logging
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ClockDrv.cpp
  * @brief  Clock driver
  * @author Yann Le Glaz <yann_le@web.de>
  */
@@ -56,45 +57,33 @@
  * Prototypes
  *****************************************************************************/
 
-extern void sntpCallback(struct timeval *tv);
+extern void sntpCallback(struct timeval* tv);
 
 /******************************************************************************
  * Local Variables
  *****************************************************************************/
 
-/* Initialize static constants. */
-const char* ClockDrv::TZ_UTC = "UTC+0";
-
 /******************************************************************************
  * Public Methods
  *****************************************************************************/
 
-void ClockDrv::init(IRtc* rtc)
+void ClockDrv::init()
 {
-    SettingsService&    settings            = SettingsService::getInstance();
-    char                tzBuffer[TZ_MIN_SIZE];
-    String              ntpServerAddress;
+    SettingsService& settings = SettingsService::getInstance();
+    char             tzBuffer[TZ_MIN_SIZE];
+    String           ntpServerAddress;
 
-    /* Handle RTC */
-    m_rtc = rtc;
-
-    if (nullptr == m_rtc)
+    /* Check whether RTC is available and initialize it. */
+    if (false == m_rtc.begin())
     {
         LOG_INFO("No RTC is available.");
     }
     else
     {
-        /* Check whether RTC is available and initialize it. */
-        if (false == m_rtc->begin())
-        {
-            LOG_INFO("No RTC is available.");
-            m_rtc = nullptr;
-        }
-        else
-        {
-            LOG_INFO("RTC is available.");
-            syncTimeByRtc();
-        }
+        LOG_INFO("RTC is available.");
+
+        /* Synchronize time by RTC at startup. */
+        syncTimeByRtc();
     }
 
     /* Get the GMT offset, daylight saving enabled/disabled and NTP server address from persistent memory. */
@@ -102,14 +91,19 @@ void ClockDrv::init(IRtc* rtc)
     {
         LOG_WARNING("Use default values for NTP request.");
 
-        m_timeZone          = settings.getTimezone().getDefault();
-        ntpServerAddress    = settings.getNTPServerAddress().getDefault();
+        m_timeZone       = settings.getTimeZone().getDefault();
+        ntpServerAddress = settings.getNTPServerAddress().getDefault();
     }
     else
     {
-        m_timeZone          = settings.getTimezone().getValue();
-        ntpServerAddress    = settings.getNTPServerAddress().getValue();
+        m_timeZone       = settings.getTimeZone().getValue();
+        ntpServerAddress = settings.getNTPServerAddress().getValue();
         settings.close();
+    }
+
+    if (true == m_timeZone.isEmpty())
+    {
+        m_timeZone = settings.getTimeZone().getDefault();
     }
 
     if (sizeof(m_ntpServerAddress) <= ntpServerAddress.length())
@@ -128,7 +122,7 @@ void ClockDrv::init(IRtc* rtc)
      * https://github.com/espressif/esp-idf/issues/3046
      * https://newlib.sourceware.narkive.com/6VfBYW7D/how-to-use-a-static-environment
      */
-    strcpy(tzBuffer, TZ_UTC);
+    strcpy(tzBuffer, m_timeZone.c_str());
     fillUpWithSpaces(tzBuffer, TZ_MIN_SIZE);
 
     /* Configure NTP:
@@ -137,7 +131,7 @@ void ClockDrv::init(IRtc* rtc)
      * To modify the variable, set CONFIG_LWIP_SNTP_UPDATE_DELAY in project configuration.
      * https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/system/system_time.html
      * https://github.com/espressif/esp-idf/issues/4386
-     * 
+     *
      * Important: The NTP server address is not copied by configTzTime(). It will access the
      * string periodically, therefore its important to keep it as member variable!
      */
@@ -151,12 +145,8 @@ void ClockDrv::init(IRtc* rtc)
 
 bool ClockDrv::getTime(struct tm& timeInfo)
 {
-    return getTzTime(m_timeZone.c_str(), timeInfo);
-}
-
-bool ClockDrv::getUtcTime(struct tm& timeInfo)
-{
-    const uint32_t WAIT_TIME_MS = 0U;
+    const uint32_t WAIT_TIME_MS = 10U;
+    bool           result       = false;
 
     syncTimeByRtc();
 
@@ -165,14 +155,15 @@ bool ClockDrv::getUtcTime(struct tm& timeInfo)
 
 bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 {
-    const uint32_t  WAIT_TIME_MS    = 0U;
-    bool            result          = false;
+    const uint32_t WAIT_TIME_MS = 10U;
+    bool           result       = false;
 
     syncTimeByRtc();
 
-    if (nullptr != tz)
+    if ((nullptr != tz) &&
+        (m_timeZone != tz))
     {
-        /* Configure timezone */
+        /* Configure time zone */
         if (nullptr != m_internalTimeZoneBuffer)
         {
             /* Not nice, just a workaround which replaces
@@ -188,16 +179,17 @@ bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 
     result = getLocalTime(&timeInfo, WAIT_TIME_MS);
 
-    if (nullptr != tz)
+    if ((nullptr != tz) &&
+        (m_timeZone != tz))
     {
-        /* Reset timezone to UTC */
+        /* Reset time zone to UTC */
         if (nullptr != m_internalTimeZoneBuffer)
         {
             /* Not nice, just a workaround which replaces
              * setenv("TZ", TZ_UTC, 1);
              * to avoid memory leaks.
              */
-            strncpy(m_internalTimeZoneBuffer, TZ_UTC, TZ_MIN_SIZE - 1U);
+            strncpy(m_internalTimeZoneBuffer, m_timeZone.c_str(), TZ_MIN_SIZE - 1U);
             m_internalTimeZoneBuffer[TZ_MIN_SIZE - 1U] = '\0';
 
             tzset();
@@ -217,10 +209,10 @@ bool ClockDrv::getTzTime(const char* tz, struct tm& timeInfo)
 
 void ClockDrv::fillUpWithSpaces(char* str, size_t size)
 {
-    size_t idx          = strlen(str);
-    size_t maxLength    = size - 1U;
+    size_t idx       = strlen(str);
+    size_t maxLength = size - 1U;
 
-    while(maxLength > idx)
+    while (maxLength > idx)
     {
         str[idx] = ' ';
         ++idx;
@@ -229,56 +221,94 @@ void ClockDrv::fillUpWithSpaces(char* str, size_t size)
     str[size - 1U] = '\0';
 }
 
-void ClockDrv::setTimeByRtc()
+bool ClockDrv::setTimeByRtc()
 {
-    if (nullptr != m_rtc)
+    bool      isSuccessful = false;
+    struct tm timeInfo;
+
+    /* Get UTC from RTC. */
+    if (true == m_rtc.getTime(timeInfo))
     {
-        struct tm timeInfo;
+        time_t         tLocal;
+        time_t         tRev;
+        time_t         tDiff;
+        time_t         tUtc;
+        struct timeval tv;
 
-        if (false == m_rtc->getTime(timeInfo))
-        {
-            time_t          timeSinceEpoch  = mktime(&timeInfo);
-            struct timeval  tv              = { timeSinceEpoch, 0 };
+        /* https://github.com/espressif/esp-idf/issues/10876
+         * https://stackoverflow.com/questions/48566198/how-to-convert-utc-date-to-time-t
+         */
+        timeInfo.tm_isdst = 0; /* Not daylight saving time. */
+        tLocal            = mktime(&timeInfo);
+        timeInfo          = *gmtime(&tLocal);
+        timeInfo.tm_isdst = 0; /* Not daylight saving time. */
+        tRev              = mktime(&timeInfo);
+        tDiff             = tLocal - tRev;
+        tUtc              = tLocal + tDiff;
+        tv                = { tUtc, 0 };
 
-            settimeofday(&tv, nullptr);
-        }
+        LOG_INFO("Update time by RTC: %04u-%02u-%02u %02u:%02u:%02u UTC",
+            static_cast<uint32_t>(timeInfo.tm_year + 1900),
+            static_cast<uint32_t>(timeInfo.tm_mon + 1),
+            static_cast<uint32_t>(timeInfo.tm_mday),
+            static_cast<uint32_t>(timeInfo.tm_hour),
+            static_cast<uint32_t>(timeInfo.tm_min),
+            static_cast<uint32_t>(timeInfo.tm_sec));
+
+        /* Set UTC. */
+        (void)settimeofday(&tv, nullptr);
+
+        isSuccessful = true;
     }
+
+    return isSuccessful;
 }
 
 void ClockDrv::setRtcByTime()
 {
-    if (nullptr != m_rtc)
-    {
-        struct tm timeInfo;
+    time_t    now      = time(nullptr); /* Get local time. */
+    struct tm timeInfo = *gmtime(&now); /* Get UTC from local time. */
 
-        if (true == getUtcTime(timeInfo))
-        {
-            m_rtc->setTime(timeInfo);
-        }
-    }
+    LOG_INFO("Update RTC by time: %04u-%02u-%02u %02u:%02u:%02u UTC",
+        static_cast<uint32_t>(timeInfo.tm_year + 1900),
+        static_cast<uint32_t>(timeInfo.tm_mon + 1),
+        static_cast<uint32_t>(timeInfo.tm_mday),
+        static_cast<uint32_t>(timeInfo.tm_hour),
+        static_cast<uint32_t>(timeInfo.tm_min),
+        static_cast<uint32_t>(timeInfo.tm_sec));
+
+    m_rtc.setTime(timeInfo);
 }
 
 void ClockDrv::syncTimeByRtc()
 {
-    if (nullptr != m_rtc)
+    bool sync = false;
+
+    if (false == m_syncTimeByRtcTimer.isTimerRunning())
     {
-        bool sync = false;
+        m_syncTimeByRtcTimer.start(SYNC_TIME_BY_RTC_PERIOD);
+        sync = true;
+    }
+    else if (true == m_syncTimeByRtcTimer.isTimeout())
+    {
+        sync = true;
+    }
+    else
+    {
+        /* Nothing to do. */
+        ;
+    }
 
-        if (false == m_syncTimeByRtcTimer.isTimerRunning())
+    if (true == sync)
+    {
+        /* RTC not initialized yet or not available? */
+        if (false == setTimeByRtc())
         {
-            m_syncTimeByRtcTimer.start(SYNC_TIME_BY_RTC_PERIOD);
-            sync = true;
+            /* Force update in the next call again by stopping the timer. */
+            m_syncTimeByRtcTimer.stop();
         }
-        else if (true == m_syncTimeByRtcTimer.isTimeout())
+        else
         {
-            sync = true;
-        }
-
-        if (true == sync)
-        {
-            LOG_INFO("Sync time by RTC.");
-
-            setTimeByRtc();
             m_syncTimeByRtcTimer.restart();
         }
     }
@@ -286,27 +316,23 @@ void ClockDrv::syncTimeByRtc()
 
 void ClockDrv::syncRtcByTime()
 {
-    if (nullptr != m_rtc)
+    bool sync = false;
+
+    if (false == m_syncRtcByNtpTimer.isTimerRunning())
     {
-        bool sync = false;
+        m_syncRtcByNtpTimer.start(SYNC_RTC_BY_TIME_PERIOD);
+        sync = true;
+    }
+    else if (true == m_syncRtcByNtpTimer.isTimeout())
+    {
+        sync = true;
+    }
 
-        if (false == m_syncRtcByNtpTimer.isTimerRunning())
-        {
-            m_syncRtcByNtpTimer.start(SYNC_RTC_BY_TIME_PERIOD);
-            sync = true;
-        }
-        else if (true == m_syncRtcByNtpTimer.isTimeout())
-        {
-            sync = true;
-        }
+    if (true == sync)
+    {
+        setRtcByTime();
 
-        if (true == sync)
-        {
-            LOG_INFO("Sync RTC by time.");
-
-            setRtcByTime();
-            m_syncRtcByNtpTimer.restart();
-        }
+        m_syncRtcByNtpTimer.restart();
     }
 }
 
@@ -317,25 +343,22 @@ void ClockDrv::syncRtcByTime()
 /**
  * This function is called by the SNTP for every received time information
  * from the NTP.
- * 
+ *
  * @param[in] tv    Time information
  */
-extern void sntpCallback(struct timeval *tv)
+extern void sntpCallback(struct timeval* tv)
 {
     ClockDrv& clockDrv = ClockDrv::getInstance();
-    
+
     (void)tv;
 
-    if (nullptr != clockDrv.m_rtc)
-    {
-        /* As long as updates from NTP are received, no synchronization from the RTC
-         * to the local timer shall be done.
-         */
-        clockDrv.m_syncTimeByRtcTimer.restart();
-        
-        /* Synchronize RTC by time. */
-        clockDrv.syncRtcByTime();
-    }
+    /* As long as updates from NTP are received, no synchronization from the RTC
+     * to the local timer shall be done.
+     */
+    clockDrv.m_syncTimeByRtcTimer.restart();
+
+    /* Synchronize RTC by time. */
+    clockDrv.syncRtcByTime();
 }
 
 /******************************************************************************

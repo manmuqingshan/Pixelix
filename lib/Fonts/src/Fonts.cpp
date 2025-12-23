@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Fonts.cpp
  * @brief  Fonts
  * @author Andreas Merkle <web@blue-andi.de>
  */

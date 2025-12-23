@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   WsCmdMove.h
  * @brief  Websocket command to move a plugin to a different slot.
  * @author Andreas Merkle <web@blue-andi.de>
  *

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   KeyValueBool.h
  * @brief  Key value pair with bool type
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -94,7 +95,7 @@ public:
     /**
      * Destroys a key value pair.
      */
-    ~KeyValueBool()
+    ~KeyValueBool() override
     {
     }
 

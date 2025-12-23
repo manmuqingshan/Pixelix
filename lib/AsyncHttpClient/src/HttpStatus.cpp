@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   HttpStatus.cpp
  * @brief  HTTP status
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CanvasViewBase.hpp
  * @brief  Base class for view with canvas and bitmap.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,7 +44,7 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/CanvasViewGeneric.h"
+#include "./layout/CanvasViewGeneric.h"
 
 /******************************************************************************
  * Macros

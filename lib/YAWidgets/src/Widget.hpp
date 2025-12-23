@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Widget.hpp
  * @brief  Base Widget
  * @author Andreas Merkle <web@blue-andi.de>
  * 
@@ -297,8 +298,8 @@ protected:
 
 private:
 
-    /* Default constructor not allowed. */
-    Widget();
+    /** Default constructor not allowed. */
+    Widget() = delete;
 };
 
 /******************************************************************************

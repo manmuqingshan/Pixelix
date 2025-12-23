@@ -52,7 +52,7 @@
                 <canvas id="canvas" width="353" height="89" style="border: 1px solid #000000; background-color: black;"></canvas>
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <button id="displayPowerButton" class="btn btn-light" type="button" onclick="triggerDisplayState()" value="off" disabled>Power Off</button>
                             <button id="updateDisplayButton" class="btn btn-light" type="button" onclick="updateDisplay()" value="false" disabled>Enable auto. display update</button>
                             <button class="btn btn-light" type="button" onclick="prevSlot()" disabled>Previous slot</button>
@@ -62,8 +62,8 @@
                 </div>
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
-                        <div class="form-group">
-                            <label class="form-label" for="bNextEffect">Currently active fade effect: <span id="lableFadeEffect"> Linear</span></label>
+                        <div class="form-group mb-3">
+                            <label class="form-label" for="bNextEffect">Currently active fade effect: <span id="lableFadeEffect" class="text-primary"> Linear</span></label>
                             <button class="btn btn-light" id="bNextEffect" type="button" onclick="nextEffect()" disabled>Next fade effect</button>
                         </div>
                     </form>
@@ -79,7 +79,7 @@
                 </ul>
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <select class="form-select" id="pluginToInstall" size="1">
                             </select>
                             <br />
@@ -89,21 +89,21 @@
                 </div>
                 <div class="h-100 p-2 bg-body-tertiary border rounded-3 mt-2">
                     <form>
-                        <div class="form-group">
-                            <label class="form-label" for="bAutoBrightnessCtrl">Automatic brightness control:</label>
-                            <button class="btn btn-light" id="bAutoBrightnessCtrl" type="button" value="false" onclick="triggerAutoBrightnessCtrl();changeBrightness();" disabled>?</button>
+                        <div class="form-group mb-3">
+                            <label class="form-label" for="bAutoBrightnessCtrl">Automatic brightness control: <span id="autoBrightnessStatus" class="text-primary">?</span></label>
+                            <button class="btn btn-light" id="bAutoBrightnessCtrl" type="button" value="false" onclick="triggerAutoBrightnessCtrl();changeBrightness();" disabled>Enable</button>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="currentBrightness">Current Brightness:</label>
                             <div class="text-primary" id="currentBrightnessValue">?</div>
                             <input type="range" class="form-range" id="currentBrightness" min="0" max="255" onchange="changeBrightness();" oninput="$('#currentBrightnessValue').text(calcPercentage(this.value) + ' %')" disabled />
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="minBrightness">Min. brightness soft limit:</label>
                             <div class="text-primary" id="minBrightnessValue">?</div>
                             <input type="range" class="form-range" id="minBrightness" min="0" max="255" onchange="changeBrightness();" oninput="$('#minBrightnessValue').text(calcPercentage(this.value) + ' %')" disabled />
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="form-label" for="maxBrightness">Max. brightness soft limit:</label>
                             <div class="text-primary" id="maxBrightnessValue">?</div>
                             <input type="range" class="form-range" id="maxBrightness" min="0" max="255" onchange="changeBrightness();" oninput="$('#maxBrightnessValue').text(calcPercentage(this.value) + ' %')" disabled />
@@ -764,10 +764,12 @@
 
             function updateAutoBrightnessCtrl(autoBrightnessCtrl) {
                 if (false === autoBrightnessCtrl) {
+                    $("#autoBrightnessStatus").text("Disabled");
                     $("#bAutoBrightnessCtrl").text("Enable");
                     $("#bAutoBrightnessCtrl").val("false");
                     $("#currentBrightness").prop("disabled", false);
                 } else {
+                    $("#autoBrightnessStatus").text("Enabled");
                     $("#bAutoBrightnessCtrl").text("Disable");
                     $("#bAutoBrightnessCtrl").val("true");
                     $("#currentBrightness").prop("disabled", true);
@@ -778,9 +780,11 @@
                 var autoBrightnessCtrl = $("#bAutoBrightnessCtrl").val() === "true";
 
                 if (false === autoBrightnessCtrl) {
+                    $("#autoBrightnessStatus").text("Enabled");
                     $("#bAutoBrightnessCtrl").text("Disable");
                     $("#bAutoBrightnessCtrl").val("true");
                 } else {
+                    $("#autoBrightnessStatus").text("Disabled");
                     $("#bAutoBrightnessCtrl").text("Enable");
                     $("#bAutoBrightnessCtrl").val("false");
                 }

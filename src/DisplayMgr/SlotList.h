@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SlotList.h
  * @brief  Slot list
  * @author Andreas Merkle <web@blue-andi.de>
  *

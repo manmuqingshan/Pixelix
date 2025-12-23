@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BuzzerDrv.cpp
  * @brief  Buzzer driver
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -90,11 +91,11 @@ void BuzzerDrv::play(uint32_t freq)
     }
 }
 
-void BuzzerDrv::play(uint32_t freq, uint8_t dc)
+void BuzzerDrv::play(uint32_t freq, uint16_t dc)
 {
     if (IoPin::NC != Board::buzzerOut.getPinNo())
     {
-        m_dutyCycle = (1023U * static_cast<uint32_t>(dc)) / 100U;
+        m_dutyCycle = dc;
 
         if (false == m_isInit)
         {
@@ -109,11 +110,11 @@ void BuzzerDrv::play(uint32_t freq, uint8_t dc)
     }
 }
 
-void BuzzerDrv::changeDutyCycle(uint8_t dc)
+void BuzzerDrv::changeDutyCycle(uint16_t dc)
 {
     if (IoPin::NC != Board::buzzerOut.getPinNo())
     {
-        m_dutyCycle = (1023U * static_cast<uint32_t>(dc)) / 100U;
+        m_dutyCycle = dc;
 
         if (false == m_isInit)
         {

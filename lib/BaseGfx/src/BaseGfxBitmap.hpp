@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   BaseGfxBitmap.hpp
  * @brief  Basic graphics bitmap
  * @author Andreas Merkle <web@blue-andi.de>
  *
@@ -393,9 +394,10 @@ private:
 /**
  * This class provides a dynamic allocated bitmap.
  * 
- * @tparam TColor   The color representation.
+ * @tparam TColor       The color representation.
+ * @tparam TAllocator   The allocator type.
  */
-template < typename TColor >
+template < typename TColor, typename TAllocator >
 class BaseGfxDynamicBitmap : public BaseGfxBitmap<TColor>
 {
 public:
@@ -805,7 +807,9 @@ private:
     {
         if (nullptr != pixels)
         {
-            delete[] pixels;
+            TAllocator allocator;
+
+            allocator.deallocateArray(pixels);
             pixels = nullptr;
         }
     }
@@ -825,7 +829,9 @@ private:
         if ((0U < width) &&
             (0U < height))
         {
-            buffer = new(std::nothrow) TColor[width * height];
+            TAllocator allocator;
+            
+            buffer = allocator.allocateArray(width * height);
         }
 
         return buffer;

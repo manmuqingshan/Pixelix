@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   TestLampWidget.cpp
  * @brief  Test lamp widget.
  * @author Andreas Merkle <web@blue-andi.de>
  */

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   IconTextViewBase.hpp
  * @brief  Base class for view with icon and text.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,10 +44,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/IconTextViewGeneric.h"
-#include "./layouts/IconTextView32x8.h"
-#include "./layouts/IconTextView32x16.h"
-#include "./layouts/IconTextView64x64.h"
+#include "./layout/IconTextViewGeneric.h"
+#include "./layout/IconTextView32x8.h"
+#include "./layout/IconTextView32x16.h"
+#include "./layout/IconTextView64x64.h"
 
 /******************************************************************************
  * Macros

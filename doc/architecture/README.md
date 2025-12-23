@@ -23,6 +23,10 @@
   - [Widgets](#widgets)
   - [User Button Handling](#user-button-handling)
   - [Audio Service](#audio-service)
+  - [Rest Service](#rest-service)
+    - [Get Request](#get-request)
+    - [Service Stop](#service-stop)
+    - [Plugin Stop](#plugin-stop)
   - [Topic Handler Service](#topic-handler-service)
   - [Plugin Handling](#plugin-handling)
     - [Static View](#static-view)
@@ -57,7 +61,7 @@ The diagram shows the task deployment on the esp32 dual core derivates.
 | --------- | ---- | ----------- |
 | arduinoEvents | APP_CPU | WiFi handling, see details in Arduino framework WiFiGeneric.cpp |
 | AsyncHttpClientTask | APP_CPU | The AsyncHttpClient uses the task for decoupling. |
-| async_tcp | PRO_CPU | AsnycTCPSock library uses the task to interact with the LwIP TCP/IP stack and the application. |
+| async_tcp | PRO_CPU | AsyncTCPSock library uses the task to interact with the LwIP TCP/IP stack and the application. |
 | buttonTask | APP_CPU | The task is triggered by a hardware button and provides its status. |
 | esp_timer | PRO_CPU | [High resolution timer](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/esp_timer.html#high-resolution-timer) task, which calls the timer callbacks. |
 | eventTask | PRO_CPU | ? TODO ? |
@@ -85,7 +89,7 @@ The diagram shows the task deployment on the esp32 dual core derivates.
 
 ### Services
 
-![hal-layer](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/service_layer.wsd)
+![service-layer](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/service_layer.wsd)
 
 ### Hardware Abstraction Layer (HAL)
 
@@ -122,6 +126,22 @@ The diagram shows the task deployment on the esp32 dual core derivates.
 ### Audio Service
 
 ![audio-service-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/audio_service.wsd)
+
+### Rest Service
+
+![rest-service-class-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/rest_service.wsd)
+
+#### Get Request
+
+![rest-service-get-request-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/rest_service_get_request.wsd)
+
+#### Service Stop
+
+![rest-service-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/rest_service_stop.wsd)
+
+#### Plugin Stop
+
+![rest-service-plugin-stop-diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/Pixelix/master/doc/architecture/uml/rest_service_plugin_stop.wsd)
 
 ### Topic Handler Service
 

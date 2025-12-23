@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PlayerViewBase.hpp
  * @brief  Base class for view with icon, text and progress bar.
  * @author Andreas Merkle <web@blue-andi.de>
  * @addtogroup PLUGIN
@@ -43,10 +44,10 @@
  * Includes
  *****************************************************************************/
 #include "Layouts.h"
-#include "./layouts/PlayerViewGeneric.h"
-#include "./layouts/PlayerView32x8.h"
-#include "./layouts/PlayerView32x16.h"
-#include "./layouts/PlayerView64x64.h"
+#include "./layout/PlayerViewGeneric.h"
+#include "./layout/PlayerView32x8.h"
+#include "./layout/PlayerView32x16.h"
+#include "./layout/PlayerView64x64.h"
 
 /******************************************************************************
  * Macros

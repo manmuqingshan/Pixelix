@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   Rtc3231Drv.h
  * @brief  RTC 3231 driver
  * @author Andreas Merkle <web@blue-andi.de>
  *

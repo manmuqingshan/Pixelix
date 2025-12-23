@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   MemMon.cpp
  * @brief  Memory monitor
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -60,26 +61,32 @@
  * Public Methods
  *****************************************************************************/
 
+bool MemMon::start()
+{
+    bool                    isSuccessful        = true;
+    esp_alloc_failed_hook_t failedAllocCallback = [](size_t size, uint32_t caps, const char* functionName) -> void {
+        LOG_ERROR("Failed to allocate memory, size: %u bytes, caps: 0x%04X, func: %s", size, caps, functionName);
+        LOG_ERROR("Largest available HEAP block: %u bytes", heap_caps_get_largest_free_block(MEM_CAPABILITIES));
+    };
+
+    m_timer.start(PROCESSING_CYCLE);
+
+    if (ESP_OK != heap_caps_register_failed_alloc_callback(failedAllocCallback))
+    {
+        stop();
+        isSuccessful = false;
+    }
+
+    return isSuccessful;
+}
+
 void MemMon::process()
 {
-    bool isProcessingTime = false;
-
-    if (false == m_timer.isTimerRunning())
+    if (true == m_timer.isTimeout())
     {
-        m_timer.start(PROCESSING_CYCLE);
-        isProcessingTime = true;
-    }
-    else if (true == m_timer.isTimeout())
-    {
-        isProcessingTime = true;
-        m_timer.restart();
-    }
-
-    if (true == isProcessingTime)
-    {
-        uint32_t availableHeap          = ESP.getFreeHeap();        /* Current available heap memory. */
-        uint32_t lowestAvailableHeap    = ESP.getMinFreeHeap();     /* Lowest level of available heap since boot. */
-        uint32_t largestHeapBlock       = ESP.getMaxAllocHeap();    /* Largest block of heap that can be allocated at once. */
+        uint32_t availableHeap       = heap_caps_get_free_size(MEM_CAPABILITIES);          /* Current available heap memory. */
+        uint32_t lowestAvailableHeap = heap_caps_get_minimum_free_size(MEM_CAPABILITIES);  /* Lowest level of available heap since boot. */
+        uint32_t largestHeapBlock    = heap_caps_get_largest_free_block(MEM_CAPABILITIES); /* Largest block of heap that can be allocated at once. */
 
         if (MIN_HEAP_MEMORY >= availableHeap)
         {
@@ -101,7 +108,14 @@ void MemMon::process()
         {
             LOG_FATAL("----- Heap corrupt! ------");
         }
+
+        m_timer.restart();
     }
+}
+
+void MemMon::stop()
+{
+    m_timer.stop();
 }
 
 /******************************************************************************

@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   InitState.cpp
  * @brief  System state: Init
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -41,6 +42,7 @@
 #include <SensorDataProvider.h>
 #include <Wire.h>
 #include <IconTextPlugin.h>
+#include <ViewConfig.h>
 
 #include "ButtonDrv.h"
 #include "ClockDrv.h"
@@ -48,7 +50,6 @@
 #include "SysMsg.h"
 #include "Version.h"
 #include "MyWebServer.h"
-#include "UpdateMgr.h"
 #include "PluginMgr.h"
 #include "WebConfig.h"
 #include "FileSystem.h"
@@ -170,7 +171,7 @@ void InitState::entry(StateMachine& sm)
     else
     {
         /* Initialize clock driver */
-        ClockDrv::getInstance().init(&m_rtcDrv);
+        ClockDrv::getInstance().init();
 
         /* Initialize sensors */
         SensorDataProvider::getInstance().begin();
@@ -204,13 +205,6 @@ void InitState::entry(StateMachine& sm)
     {
         LOG_FATAL("Failed to initialize system message handler.");
         errorId = ErrorState::ERROR_ID_SYS_MSG;
-        isError = true;
-    }
-    /* Initialize over-the-air update server */
-    else if (false == UpdateMgr::getInstance().init())
-    {
-        LOG_FATAL("Failed to initialize Arduino OTA.");
-        errorId = ErrorState::ERROR_ID_UPDATE_MGR;
         isError = true;
     }
     else
@@ -255,6 +249,8 @@ void InitState::entry(StateMachine& sm)
         {
             m_isQuiet = settings.getQuietMode().getDefault();
         }
+
+        configureViews();
 
         /* Don't store the wifi configuration in the NVS.
          * This seems to cause a reset after a client connected to the access point.
@@ -318,13 +314,13 @@ void InitState::process(StateMachine& sm)
     if (BUTTON_STATE_RELEASED == buttonState)
     {
         m_isApModeRequested = false;
-        SysMsg::getInstance().disableSignal();
+        DisplayMgr::getInstance().setIndicator(DisplayMgr::INDICATOR_ID_ALL, false);
     }
     /* Does the user request for setting up an wifi access point? */
     else if (BUTTON_STATE_PRESSED == buttonState)
     {
         m_isApModeRequested = true;
-        SysMsg::getInstance().enableSignal();
+        DisplayMgr::getInstance().setIndicator(DisplayMgr::INDICATOR_ID_ALL, true);
     }
     else
     {
@@ -377,6 +373,9 @@ void InitState::exit(StateMachine& sm)
         if (false == m_isApModeRequested)
         {
             wifiMode = WIFI_MODE_STA;
+
+            /* Set hostname before wifi station mode is set. */
+            (void)WiFi.setHostname(hostname.c_str());
         }
         else
         {
@@ -413,6 +412,7 @@ void InitState::exit(StateMachine& sm)
              * See http://www.dns-sd.org/serviceTypes.html
              */
             MDNS.addService("http", "tcp", WebConfig::WEBSERVER_PORT);
+            MDNS.addService("pixelix", "tcp", WebConfig::WEBSERVER_PORT);
 
             /* Do some stuff only in wifi station mode. */
             if (false == m_isApModeRequested)
@@ -441,10 +441,6 @@ void InitState::exit(StateMachine& sm)
                     /* Save the plugin installation, so the user can configure it by its own in the web page settings. */
                     PluginMgr::getInstance().save();
                 }
-
-                /* Start over-the-air update server. */
-                UpdateMgr::getInstance().begin();
-                MDNS.enableArduino(WebConfig::ARDUINO_OTA_PORT, true); /* This typically set by ArduinoOTA, but is disabled there. */
             }
 
             /* Start webserver after the wifi access point is running.
@@ -543,7 +539,7 @@ bool InitState::isFsCompatible()
 
         if (false == jsonVersion.isNull())
         {
-            String fileSystemVersion = jsonVersion.as<String>();
+            String fileSystemVersion = jsonVersion.as<const char*>();
             String firmwareVersion   = Version::getSoftwareVersion();
 
             /* Note that the firmware version may have a additional postfix.
@@ -596,6 +592,71 @@ void InitState::getDeviceUniqueId(String& deviceUniqueId)
 
     deviceUniqueId += "-";
     deviceUniqueId += chipId.substring(4U);
+}
+
+void InitState::configureViews()
+{
+    SettingsService& settings                   = SettingsService::getInstance();
+    ViewConfig&      viewConfig                 = ViewConfig::getInstance();
+    uint8_t          brushType                  = settings.getBrushType().getDefault();
+    const uint8_t    BRUSH_TYPE_LINEAR_GRADIENT = 1U;
+    String           solidBrushColorStr         = "0x" + settings.getSolidBrushColor().getDefault();
+    String           linearGradientColor1Str    = "0x" + settings.getLinearGradientColor1().getDefault();
+    String           linearGradientColor2Str    = "0x" + settings.getLinearGradientColor2().getDefault();
+    int16_t          linearGradientOffset       = settings.getLinearGradientOffset().getDefault();
+    uint16_t         linearGradientLength       = settings.getLinearGradientLength().getDefault();
+    bool             linearGradientVertical     = settings.getLinearGradientVertical().getDefault();
+    uint32_t         solidBrushColor;
+    uint32_t         linearGradientColor1;
+    uint32_t         linearGradientColor2;
+    bool             solidBrushColorStatus      = false;
+    bool             linearGradientColor1Status = false;
+    bool             linearGradientColor2Status = false;
+
+    if (true == settings.open(true))
+    {
+        brushType               = settings.getBrushType().getValue();
+        solidBrushColorStr      = "0x" + settings.getSolidBrushColor().getValue();
+        linearGradientColor1Str = "0x" + settings.getLinearGradientColor1().getValue();
+        linearGradientColor2Str = "0x" + settings.getLinearGradientColor2().getValue();
+        linearGradientOffset    = settings.getLinearGradientOffset().getValue();
+        linearGradientLength    = settings.getLinearGradientLength().getValue();
+        linearGradientVertical  = settings.getLinearGradientVertical().getValue();
+
+        settings.close();
+    }
+
+    solidBrushColorStatus      = Util::strToUInt32(solidBrushColorStr, solidBrushColor);
+    linearGradientColor1Status = Util::strToUInt32(linearGradientColor1Str, linearGradientColor1);
+    linearGradientColor2Status = Util::strToUInt32(linearGradientColor2Str, linearGradientColor2);
+
+    if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush(solidBrushColor);
+    }
+
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status))
+    {
+        viewConfig.setLinearGradientBrush(linearGradientColor1, linearGradientColor2, linearGradientOffset, linearGradientLength, linearGradientVertical);
+    }
+
+    /* Set general view configuration. */
+    if ((true == linearGradientColor1Status) &&
+        (true == linearGradientColor2Status) &&
+        (BRUSH_TYPE_LINEAR_GRADIENT == brushType))
+    {
+        viewConfig.setLinearGradientBrush();
+    }
+    else if (true == solidBrushColorStatus)
+    {
+        viewConfig.setSolidBrush();
+    }
+    else
+    {
+        /* Default brush is already set in the constructor. */
+        ;
+    }
 }
 
 /******************************************************************************

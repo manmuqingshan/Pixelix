@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   SysMsg.cpp
  * @brief  System message
  * @author Andreas Merkle <web@blue-andi.de>
  */
@@ -96,22 +97,6 @@ void SysMsg::show(const String& msg, uint32_t duration, uint32_t max)
         {
             LOG_WARNING("System message suppressed.");
         }
-    }
-}
-
-void SysMsg::enableSignal()
-{
-    if (nullptr != m_plugin)
-    {
-        m_plugin->enableSignal();
-    }
-}
-
-void SysMsg::disableSignal()
-{
-    if (nullptr != m_plugin)
-    {
-        m_plugin->disableSignal();
     }
 }
 

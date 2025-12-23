@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   CaptivePortal.h
  * @brief  Captive portal web page
  * @author Andreas Merkle <web@blue-andi.de>
  *

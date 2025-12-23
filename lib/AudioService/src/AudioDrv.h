@@ -25,9 +25,10 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   AudioDrv.h
  * @brief  Audio driver
  * @author Andreas Merkle <web@blue-andi.de>
- * 
+ *
  * @addtogroup HAL
  *
  * @{
@@ -42,6 +43,7 @@
 #include <stdint.h>
 #include <driver/i2s.h>
 #include <Mutex.hpp>
+#include <Task.hpp>
 
 /******************************************************************************
  * Compiler Switches
@@ -73,7 +75,7 @@ public:
     /**
      * The audio driver will call this method to notify about a complete available
      * number of samples.
-     * 
+     *
      * @param[in]   data    Audio sample data buffer
      * @param[in]   size    Number of audio samples
      */
@@ -87,7 +89,6 @@ protected:
     IAudioObserver()
     {
     }
-
 };
 
 /**
@@ -100,19 +101,19 @@ public:
 
     /**
      * Get audio driver instance.
-     * 
+     *
      * @return Audio driver instance
      */
     static AudioDrv& getInstance()
     {
-        static AudioDrv instance;   /* idiom */
+        static AudioDrv instance; /* idiom */
 
         return instance;
     }
 
     /**
      * Start the audio driver.
-     * 
+     *
      * @return If successful started, it will return true otherwise false.
      */
     bool start();
@@ -124,24 +125,24 @@ public:
 
     /**
      * Register an audio observer.
-     * 
+     *
      * @param[in] observer The audio observer which to register.
-     * 
+     *
      * @return If successful it will return true otherwise false.
      */
     bool registerObserver(IAudioObserver& observer)
     {
-        uint32_t            index           = 0U;
-        bool                isSuccessful    = false;
-        MutexGuard<Mutex>   guard(m_mutex);
+        uint32_t          index        = 0U;
+        bool              isSuccessful = false;
+        MutexGuard<Mutex> guard(m_mutex);
 
-        while((index < MAX_OBSERVERS) && (false == isSuccessful))
+        while ((index < MAX_OBSERVERS) && (false == isSuccessful))
         {
             if (nullptr == m_observers[index])
             {
                 m_observers[index] = &observer;
 
-                isSuccessful = true;
+                isSuccessful       = true;
             }
             else
             {
@@ -154,15 +155,15 @@ public:
 
     /**
      * Unregister an audio observer.
-     * 
+     *
      * @param[in] observer The audio observer which to unregister.
      */
     void unregisterObserver(IAudioObserver& observer)
     {
-        uint32_t            index           = 0U;
-        MutexGuard<Mutex>   guard(m_mutex);
+        uint32_t          index = 0U;
+        MutexGuard<Mutex> guard(m_mutex);
 
-        while(index < MAX_OBSERVERS)
+        while (index < MAX_OBSERVERS)
         {
             if (m_observers[index] == (&observer))
             {
@@ -177,95 +178,91 @@ public:
      * The sample rate in Hz. According to the Nyquist theorem, it shall be
      * twice as the max. audio frequency, which to support.
      */
-    static const uint32_t               SAMPLE_RATE             = 14080U;
+    static const uint32_t SAMPLE_RATE = 14080U;
 
     /**
      * The number of samples over the spectrum. This shall be always a power of 2!
      */
-    static const uint32_t               SAMPLES                 = 512U;
+    static const uint32_t SAMPLES     = 512U;
 
 private:
 
     /** Task stack size in bytes */
-    static const uint32_t               TASK_STACK_SIZE         = 8096U;
+    static const uint32_t TASK_STACK_SIZE                  = 8096U;
 
     /** MCU core where the task shall run */
-    static const BaseType_t             TASK_RUN_CORE           = PRO_CPU_NUM;
+    static const BaseType_t TASK_RUN_CORE                  = PRO_CPU_NUM;
 
     /** Task priority. */
-    static const UBaseType_t            TASK_PRIORITY           = 1U;
+    static const UBaseType_t TASK_PRIORITY                 = 1U;
 
     /**
      * The I2S port, which to use for the audio input.
      */
-    static const i2s_port_t             I2S_PORT                = I2S_NUM_0;
+    static const i2s_port_t I2S_PORT                       = I2S_NUM_0;
 
     /**
      * I2S event queue size in number of events.
      */
-    static const size_t                 I2S_EVENT_QUEUE_SIZE    = 4U;
+    static const size_t I2S_EVENT_QUEUE_SIZE               = 4U;
 
     /**
      * I2S bits per sample.
      * If you change this, consider to change the sample datatypes at the
      * place where i2s_read() is used.
-     * 
+     *
      * The INMP441 microphone provides 24-bit sample with MSB first by
      * 32 clock cycles. This means we have to configure here a 32 bit
      * sample and shift it down after its received.
      */
-    static const i2s_bits_per_sample_t  I2S_BITS_PER_SAMPLE     = I2S_BITS_PER_SAMPLE_32BIT;
+    static const i2s_bits_per_sample_t I2S_BITS_PER_SAMPLE = I2S_BITS_PER_SAMPLE_32BIT;
 
     /**
      * The INMP441 microphone provides 24-bit sample with MSB first by
      * 32 clock cycles. This means we have to configure here a 32 bit
      * sample and shift it down after its received.
      */
-    static const uint32_t               I2S_SAMPLE_SHIFT        = 8U;
+    static const uint32_t I2S_SAMPLE_SHIFT                 = 8U;
 
     /**
      * I2S DMA block size in bytes.
      */
-    static const int32_t                DMA_BLOCK_SIZE          = 256;
+    static const int32_t DMA_BLOCK_SIZE                    = 256;
 
     /**
      * I2S DMA number of blocks.
      */
-    static const int32_t                DMA_BLOCKS              = 4;
+    static const int32_t DMA_BLOCKS                        = 4;
 
     /**
      * Calculated number of samples per DMA block.
      */
-    static const uint32_t               SAMPLES_PER_DMA_BLOCK   = DMA_BLOCK_SIZE / (I2S_BITS_PER_SAMPLE / 8);
+    static const uint32_t SAMPLES_PER_DMA_BLOCK            = DMA_BLOCK_SIZE / (I2S_BITS_PER_SAMPLE / 8);
 
     /**
      * Calculated the up rounded wait time in ms, till one DMA block is complete.
      */
-    static const uint32_t               DMA_BLOCK_TIMEOUT       = ((SAMPLES_PER_DMA_BLOCK * 1000U) + (SAMPLE_RATE / 2U)) / SAMPLE_RATE;
+    static const uint32_t DMA_BLOCK_TIMEOUT                = ((SAMPLES_PER_DMA_BLOCK * 1000U) + (SAMPLE_RATE / 2U)) / SAMPLE_RATE;
 
     /**
      * Maximum number of observers which can be registered.
      */
-    static const uint32_t               MAX_OBSERVERS           = 3U;
+    static const uint32_t MAX_OBSERVERS                    = 3U;
 
-    mutable Mutex       m_mutex;                    /**< Mutex used for concurrent access protection. */
-    TaskHandle_t        m_taskHandle;               /**< Task handle */
-    bool                m_taskExit;                 /**< Flag to signal the task to exit. */
-    SemaphoreHandle_t   m_xSemaphore;               /**< Binary semaphore used to signal the task exit. */
-    QueueHandle_t       m_i2sEventQueueHandle;      /**< The I2S event queue handle, used for rx done notification. Note, the queue is created by I2S driver. */
-    bool                m_isMicAvailable;           /**< Is a microphone as input device available? */
-    int32_t             m_sampleBuffer[SAMPLES];    /**< Sample buffer */
-    uint16_t            m_sampleWriteIndex;         /**< The current sample write index to the input buffer. */
-    IAudioObserver*     m_observers[MAX_OBSERVERS]; /**< A list of registered audio observers. */
+    mutable Mutex         m_mutex;                    /**< Mutex used for concurrent access protection. */
+    Task<AudioDrv>        m_task;                     /**< The audio driver task, which will process the audio samples. */
+    QueueHandle_t         m_i2sEventQueueHandle;      /**< The I2S event queue handle, used for rx done notification. Note, the queue is created by I2S driver. */
+    bool                  m_isMicAvailable;           /**< Is a microphone as input device available? */
+    int32_t               m_sampleBuffer[SAMPLES];    /**< Sample buffer */
+    uint16_t              m_sampleWriteIndex;         /**< The current sample write index to the input buffer. */
+    IAudioObserver*       m_observers[MAX_OBSERVERS]; /**< A list of registered audio observers. */
 
     /**
      * Constructs the audio driver instance.
      */
     AudioDrv() :
         m_mutex(),
-        m_taskHandle(nullptr),
-        m_taskExit(false),
-        m_xSemaphore(nullptr),
+        m_task("AudioDrvTask", processTask, TASK_STACK_SIZE, TASK_PRIORITY, TASK_RUN_CORE),
         m_i2sEventQueueHandle(nullptr),
         m_isMicAvailable(false),
         m_sampleBuffer(),
@@ -288,9 +285,9 @@ private:
     /**
      * Processing task.
      *
-     * @param[in]   parameters  Task pParameters
+     * @param[in] self    Pointer to the audio driver instance.
      */
-    static void processTask(void* parameters);
+    static void processTask(AudioDrv* self);
 
     /**
      * Process the main part in the processing task.
@@ -299,7 +296,7 @@ private:
 
     /**
      * Setup the I2S driver.
-     * 
+     *
      * @return If successful, it will return true otherwise false.
      */
     bool initI2S();
@@ -318,6 +315,6 @@ private:
  * Functions
  *****************************************************************************/
 
-#endif  /* AUDIO_DRV_H */
+#endif /* AUDIO_DRV_H */
 
 /** @} */

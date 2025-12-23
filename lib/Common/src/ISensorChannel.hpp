@@ -25,9 +25,10 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   ISensorChannel.hpp
  * @brief  Abstract sensor data channel interface
  * @author Andreas Merkle <web@blue-andi.de>
- * 
+ *
  * @addtogroup HAL
  *
  * @{
@@ -66,11 +67,12 @@ public:
      */
     enum DataType
     {
-        DATA_TYPE_INVALID = 0,  /**< Invalid data type */
-        DATA_TYPE_UINT32,       /**< 32 bit unsigned integer */
-        DATA_TYPE_INT32,        /**< 32 bit signed integer */
-        DATA_TYPE_FLOAT32,      /**< 32 bit float */
-        DATA_TYPE_BOOL          /**< Boolean value */
+        DATA_TYPE_INVALID = 0, /**< Invalid data type */
+        DATA_TYPE_UINT64,      /**< 64 bit unsigned integer */
+        DATA_TYPE_UINT32,      /**< 32 bit unsigned integer */
+        DATA_TYPE_INT32,       /**< 32 bit signed integer */
+        DATA_TYPE_FLOAT32,     /**< 32 bit float */
+        DATA_TYPE_BOOL         /**< Boolean value */
     };
 
     /**
@@ -78,11 +80,16 @@ public:
      */
     enum Type
     {
-        TYPE_RAW_NONE = 0,                  /**< Raw digits */
-        TYPE_TEMPERATURE_DEGREE_CELSIUS,    /**< Temperature in [°C] */
-        TYPE_HUMIDITY_PERCENT,              /**< Humidity in [%] */
-        TYPE_ILLUMINANCE_LUX,               /**< Illuminance in [lux] */
-        TYPE_STATE_OF_CHARGE_PERCENT        /**< State of Charge in [%] */
+        TYPE_RAW_NONE = 0,               /**< Raw digits */
+        TYPE_TEMPERATURE_DEGREE_CELSIUS, /**< Temperature in [°C] */
+        TYPE_HUMIDITY_PERCENT,           /**< Humidity in [%] */
+        TYPE_ILLUMINANCE_LUX,            /**< Illuminance in [lux] */
+        TYPE_STATE_OF_CHARGE_PERCENT,    /**< State of Charge in [%] */
+        TYPE_FREE_HEAP_BYTES,            /**< Size in [bytes] */
+        TYPE_MIN_FREE_HEAP_BYTES,        /**< Size in [bytes] */
+        TYPE_MAX_ALLOC_HEAP_BYTES,       /**< Size in [bytes] */
+        TYPE_SIGNAL_STRENGTH_DBM,        /**< Signal strength in [dBm] */
+        TYPE_UPTIME_S                    /**< Uptime in [s] */
     };
 
     /**
@@ -94,39 +101,39 @@ public:
 
     /**
      * Get the data type.
-     * 
+     *
      * @return Sensor data type
      */
-    virtual DataType getDataType() const = 0;
+    virtual DataType getDataType() const                = 0;
 
     /**
      * Get sensor channel type.
-     * 
+     *
      * @return Sensor channel type
      */
-    virtual Type getType() const = 0;
+    virtual Type getType() const                        = 0;
 
     /**
      * Get value as string.
-     * 
+     *
      * @param[in] precision The precision (ignored for integer values) of the value.
-     * 
+     *
      * @return Value as string
      */
     virtual String getValueAsString(uint32_t precision) = 0;
 
     /**
      * Get the channel type as string from the corresponding sensor channel type.
-     * 
+     *
      * @param[in] channelType   Channel type
-     * 
+     *
      * @return Unit as string
      */
     static String channelTypeToName(ISensorChannel::Type channelType)
     {
         String name;
 
-        switch(channelType)
+        switch (channelType)
         {
         case ISensorChannel::TYPE_RAW_NONE:
             name = "raw";
@@ -148,6 +155,26 @@ public:
             name = "soc";
             break;
 
+        case ISensorChannel::TYPE_FREE_HEAP_BYTES:
+            name = "freeHeap";
+            break;
+
+        case ISensorChannel::TYPE_MIN_FREE_HEAP_BYTES:
+            name = "minFreeHeap";
+            break;
+
+        case ISensorChannel::TYPE_MAX_ALLOC_HEAP_BYTES:
+            name = "maxAllocHeap";
+            break;
+
+        case ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM:
+            name = "signalStrength";
+            break;
+
+        case ISensorChannel::TYPE_UPTIME_S:
+            name = "uptime";
+            break;
+
         default:
             break;
         }
@@ -157,23 +184,23 @@ public:
 
     /**
      * Get the unit as string from the corresponding sensor channel type.
-     * 
+     *
      * @param[in] channelType   Channel type
-     * 
+     *
      * @return Unit as string
      */
     static String channelTypeToUnit(ISensorChannel::Type channelType)
     {
         String unit;
 
-        switch(channelType)
+        switch (channelType)
         {
         case ISensorChannel::TYPE_RAW_NONE:
             unit = "digits";
             break;
 
         case ISensorChannel::TYPE_TEMPERATURE_DEGREE_CELSIUS:
-            unit  = "°C";
+            unit = "°C";
             break;
 
         case ISensorChannel::TYPE_HUMIDITY_PERCENT:
@@ -186,6 +213,18 @@ public:
 
         case ISensorChannel::TYPE_STATE_OF_CHARGE_PERCENT:
             unit = "%";
+            break;
+
+        case ISensorChannel::TYPE_FREE_HEAP_BYTES:
+            /* fallthrough */
+        case ISensorChannel::TYPE_MIN_FREE_HEAP_BYTES:
+            /* fallthrough */
+        case ISensorChannel::TYPE_MAX_ALLOC_HEAP_BYTES:
+            unit = "bytes";
+            break;
+
+        case ISensorChannel::TYPE_SIGNAL_STRENGTH_DBM:
+            unit = "dBm";
             break;
 
         default:
@@ -205,13 +244,12 @@ protected:
     }
 
 private:
-
 };
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-#endif  /* ISENSOR_CHANNEL_HPP */
+#endif /* ISENSOR_CHANNEL_HPP */
 
 /** @} */

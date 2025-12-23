@@ -25,6 +25,7 @@
     DESCRIPTION
 *******************************************************************************/
 /**
+ * @file   PluginFactory.h
  * @brief  Plugin factory
  * @author Andreas Merkle <web@blue-andi.de>
  *
